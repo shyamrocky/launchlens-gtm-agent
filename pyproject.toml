@@ -1,0 +1,10 @@
+[project]
+name = "launchlens-gtm-agent"
+version = "0.0.0"
+description = "LaunchLens — Launch-Aware GTM Agent educational project"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[tool.uv]
+package = false

@@ -1,0 +1,60 @@
+# Secrets and local identity
+.env
+.env.*
+!/.env.example
+.envrc
+.credentials/
+.secrets/
+secrets/
+credentials*.json
+client_secret*.json
+token*.json
+oauth*.json
+service_account*.json
+service-account*.json
+*.pem
+*.key
+*.p12
+*.pfx
+.netrc
+.pypirc
+.streamlit/secrets.toml
+
+# Local environments and Python caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+
+# Tests, packaging and builds
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+build/
+dist/
+*.egg-info/
+
+# Development memory, private generated data and temporary downloads
+/workspace/
+/data/private/
+/data/generated/
+/data/downloads/
+/data/raw/
+/data/cache/
+/tmp/
+/temp/
+/downloads/
+*.log
+logs/
+
+# Machine-local settings
+.DS_Store
+.idea/
+.vscode/
