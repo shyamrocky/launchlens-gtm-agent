@@ -31,19 +31,12 @@
   Never store credentials or confidential material in them.
 - Clearly distinguish verified results, assumptions, proposals and owner approvals.
 
-## Reproducibility and storage
+## Canonical files and workspace boundary
 
-- workspace/ is Git-ignored development memory. docs/ and source control preserve
-  durable project knowledge. Maintained code, scripts and tests belong in their
-  normal repository locations.
-- The application, tests and deployment must not require undocumented files in
-  workspace/. Required artifacts need an explicit provisioning process and safe
-  fixtures or substitutes where appropriate.
-- A clean checkout may recreate the lightweight workspace notes from these rules;
-  missing development notes must not prevent application setup or testing.
-- Git ignore rules do not protect manual uploads, deployment packages, archives
-  or prompt content. Inspect their contents explicitly before sharing and exclude
-  workspace/, credentials, confidential material and private generated artifacts.
+- Follow [the canonical file and workspace policy](docs/project-governance.md).
+  Read it before choosing a new file destination and during milestone verification.
+- Keep the detailed policy in that document; do not introduce competing copies.
+- Report existing violations before any relocation or historical-binding change.
 
 ## Data and security
 
