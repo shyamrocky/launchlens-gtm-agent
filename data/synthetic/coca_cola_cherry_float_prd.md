@@ -2,7 +2,7 @@
 
 ## A. Document metadata and authority
 
-Product: Coca-Cola Cherry Float. Version: 0.2 (draft for owner review). Fictional document owner: Product Manager. Status: Synthetic educational scenario. Scenario designation: Fictional pre-launch planning exercise; no simulation date is set.
+Product: Coca-Cola Cherry Float. Version: 0.3 (draft for owner review). Fictional document owner: Product Manager. Status: Synthetic educational scenario. Scenario designation: Fictional pre-launch planning exercise; no simulation date is set.
 
 This Product Requirements Document is independently authored synthetic material for an educational Agentic AI simulation. It does not represent actual Coca-Cola product requirements, internal decisions, research, or development plans.
 
@@ -13,6 +13,16 @@ Evidence timing: The Product Brief uses retrospective public research accessed o
 ## B. Product opportunity / problem statement
 
 Synthetic hypothesis: Adults who enjoy cherry-flavored soda may welcome a cherry-and-vanilla option evoking a familiar float experience. The opportunity requires consumer validation.
+
+### Market & Competitive Context
+
+Retrospective public research accessed on 2026-11-04 informs this simulation; it does not establish what a Product Manager knew at an unspecified earlier planning date.
+
+- Pepsi Wild Cherry & Cream combines cherry and vanilla flavors, with regular and zero-sugar versions, positioned as an indulgent treat ([PepsiCo release, 2025-01-14](https://www.bevnet.com/pr/2025/01/14/pepsi-and-pepsi-zero-sugar-wild-cherry--cream-available-nationwide-this-month)).
+
+- Dr Pepper Strawberries & Cream combines its signature flavor blend with strawberry and a creamy finish, with original and zero-sugar versions, positioned as a beverage treat ([Keurig Dr Pepper release, 2023-05-03](https://www.keurigdrpepper.com/dr-pepper-and-rapper-yung-gravy-team-up-to-drop-a-new-single-and-custom-merchandise/)).
+
+Product opportunity: fruit-and-cream beverages already exist, and cherry/vanilla alone is not unique. Differentiation hypothesis: emphasize classic soda-float inspiration and Coca-Cola identity (PROD-002, PROD-003), without claiming flavor exclusivity, superior taste or consumer preference.
 
 ## C. Product vision and objectives
 

@@ -5,11 +5,16 @@
 - The user is the product owner and final architectural decision-maker.
 - Work one explicitly approved milestone at a time. M0 bootstrap is complete.
   The owner formally accepted the M1.1 Cherry Float Product Brief v0.2 and M1.2
-  Synthetic PRD v0.2 on 2026-11-04. The current request authorizes acceptance records,
-  final confidentiality/diff review and commit/push of approved artifacts and
-  supporting documentation to the existing private repository. Preserve accepted
-  datasets unchanged. Another dataset, milestone or agent implementation requires
-  separate explicit execution approval.
+  Synthetic PRD v0.2 on 2026-11-04; their approved private GitHub sync is complete.
+  The latest owner review authorizes the two approved competitor comparisons in
+  the local M1.3 GTM brief, the Proposed Cherry Float Differentiation column name,
+  related positioning alignment and one concise PRD v0.3 competitive-context
+  addition with regenerated PDF. Preserve Product Brief/manifest and accepted v0.2
+  history. The owner subsequently authorized the specific Notion competitor and
+  positioning/research-gap updates, now verified. The latest request authorizes
+  committing/pushing the reviewed PRD v0.3, GTM v0.2 and supporting records to the
+  existing private repository. Do not edit Notion in this GitHub-sync task. No
+  other dataset, next milestone, agent or integration is authorized.
 - Require owner approval before expanding scope or advancing milestones.
 - Read [the canonical milestone plan](docs/planning/milestones.md) before planning
   or executing milestone work. A sequence update alone does not authorize execution.
@@ -93,12 +98,17 @@
 
 ## Current implementation boundary
 
-The accepted datasets and authority roles are recorded in the canonical milestone
-plan and M1.1/M1.2 review records. Owner acceptance authorizes their reviewed
-GitHub sync and supporting documentation, not another implementation milestone.
+Accepted data and authority roles are recorded in the milestone plan and M1.1/M1.2
+reviews. The latest owner-scoped M1.3 GTM brief is distinct from the original
+M1.3 Schema Validation planning label; no schema validation is authorized by it.
+See docs/planning/m1.3-gtm-brief-review.md for scope and template mapping.
 No agents, orchestration, ingestion pipelines, external integrations, application
 dependencies, Docker, Kubernetes, CI/CD or cloud deployment infrastructure are
-authorized. Do not create the PMM Brief, Launch Calendar or Readiness Tracker yet.
-The owner authorized the current accepted-artifact commit/push to the existing
-private repository. Future publication, repository visibility changes or unrelated
-commits require separate owner authorization.
+authorized. Limit changes to the approved PRD/GTM documentation update and its
+verification/status records; no Launch Calendar, Readiness Tracker or full market
+study. Only Pepsi Wild Cherry & Cream and Dr Pepper Strawberries & Cream are in
+competitive scope. Record retrospective evidence and hypothetical differentiation.
+The owner authorized this bounded GitHub update to the existing private repository;
+it does not grant ongoing commit/push permission, formal milestone acceptance or
+further Notion edits. Report the verified push and version-specific PRD link, then
+stop. Preserve Product Brief/manifest, prior accepted versions and audit history.
