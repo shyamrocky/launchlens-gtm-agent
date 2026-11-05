@@ -12,7 +12,7 @@
   the existing private repository. No next dataset, milestone, agent, schema
   validation or external-tool implementation is authorized. Do not edit Notion
   in this GitHub task; the owner's final screenshot confirms corrected labels.
-- Current closure (2026-11-05): the owner explicitly accepts and closes the
+- Prior closure (2026-11-05): the owner explicitly accepts and closes the
   owner-scoped M1.4 Launch Calendar and Readiness Tracker milestone following
   the final PASS audit. Both Notion datasets were populated under prior approval;
   all 126 calendar and 108 readiness values were verified against the CSVs.
@@ -22,6 +22,15 @@
   No Notion edits, app/API/agent work, paid call, M1.5 or other advancement.
   See docs/planning/m1.4-final-validation.md and the canonical milestone plan.
   This bounded sync does not grant ongoing publication permission.
+- Current closure (2026-11-05): M1.5a External Data Source Connectivity &
+  Validation is OWNER ACCEPTED. The owner authorizes credential/confidentiality
+  and Git diff review, then commit/push of the accepted verification documentation
+  and supporting acceptance/status records to the existing private repository.
+  Preserve datasets, integrations, credentials and historical audit results.
+  No connectivity rerun, external-system edits, Pinecone/embedding calls, agents,
+  dependency changes or next milestone authorized. See the canonical milestone
+  plan and docs/planning/m1.5-connectivity-validation.md. This scoped publication
+  does not grant ongoing commit/push permission.
 - Require owner approval before expanding scope or advancing milestones.
 - Read [the canonical milestone plan](docs/planning/milestones.md) before planning
   or executing milestone work. A sequence update alone does not authorize execution.
@@ -123,6 +132,6 @@ links are the current-document convention; pinned links remain historical eviden
 No ongoing commit/push permission, further Notion edits or next milestone is
 inferred. Report the verified push and stop for the owner's next scoped instruction.
 
-The latest explicit M1.4 owner authorization above supersedes the prior completed
-M1.3-only execution boundary only for the described M1.4 acceptance/sync. Preserve
-all prior acceptance and verification; no general connectivity approval inferred.
+The latest explicit M1.5a owner authorization above supersedes earlier milestone
+execution boundaries only for the described documentation acceptance/sync.
+Preserve all prior acceptance and verification; no next milestone is inferred.

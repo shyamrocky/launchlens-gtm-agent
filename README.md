@@ -51,15 +51,20 @@ repository. Employer-confidential research and internal documents are prohibited
 Current status: **M0 complete; Product Brief v0.2, Synthetic PRD v0.3 and the
 owner-scoped M1.3 GTM/PMM Brief v0.2 OWNER ACCEPTED (2026-11-04)**. Formal acceptance
 is recorded in the milestone plan and review records. **Owner-scoped M1.4 Launch
-Calendar and Readiness Tracker OWNER ACCEPTED and CLOSED (2026-11-05)**. Original dataset draft/pending
+Calendar and Readiness Tracker OWNER ACCEPTED and CLOSED (2026-11-05)**.
+**M1.5a — External Data Source Connectivity & Validation OWNER ACCEPTED
+(2026-11-05)**: [verification record](docs/planning/m1.5-connectivity-validation.md)
+covers anonymous Drive PDF downloads and read-only Notion API access. It preserves
+PDF integrity/checksum results and exact calendar/readiness CSV comparisons.
+Original dataset draft/pending
 labels are preserved as historical metadata and superseded by those records.
 
-The owner authorizes the bounded M1.4 accepted-data and documentation sync to the
-existing private GitHub repository. The
-owner-scoped M1.3 GTM task is distinct from the original M1.3 Schema Validation
-plan; that validation and M1.4 connectivity remain unstarted. No agents,
-orchestration, ingestion or external integrations are implemented. Further work
-requires a separate scoped owner instruction.
+The owner authorizes the bounded M1.5a verification-documentation and acceptance
+sync to the existing private GitHub repository. Original milestone planning labels
+remain recorded separately from the owner-scoped acceptance checkpoints. Source
+connectivity has been verified; agents, orchestration, ingestion and maintained
+application integration adapters are not implemented. Further work requires a
+separate scoped owner instruction.
 
 ## Educational and independent use
 

@@ -24,8 +24,9 @@ bytes are retained; this explicit acceptance supersedes them. No new independent
 sign-off or runtime validation is implied. See the [final audit](data-source-final-audit.md)
 and current PRD/GTM reviews for evidence and accepted hashes.
 
-Schema Validation, External Tool Connectivity, remaining datasets and agent work
-remain unstarted and require separate authorization. No automatic advancement.
+The owner has separately accepted the bounded Drive/Notion connectivity checks
+as M1.5a below. Remaining schema work, datasets, Pinecone and agents require
+separate authorization. No automatic advancement.
 
 ## Current owner-scoped M1.4 - Launch Calendar and Readiness Tracker
 
@@ -62,6 +63,29 @@ other milestone authorized. This closes the owner-scoped data task, not the
 historical External Tool Connectivity planning label. See [design](m1.4-data-design.md)
 and [verification history](m1.4-validation-report.md).
 
+## M1.5a - External Data Source Connectivity & Validation
+
+Status: **OWNER ACCEPTED / CLOSED**, 2026-11-05 (America/Los_Angeles).
+Authority: explicit owner message "Owner Approval — M1.5a", formally approving
+External Data Source Connectivity & Validation and directing acceptance recording,
+credential/confidentiality review, commit and push of approved verification
+documentation to the existing private repository. Existing datasets and
+integrations must remain unchanged; stop before the next milestone.
+
+Accepted evidence: [source connectivity verification](m1.5-connectivity-validation.md).
+Anonymous Python HTTP downloads of Product Brief v0.2 and Synthetic PRD v0.3
+matched approved local PDF bytes, extracted text and SHA-256 checksums. Python
+Notion API reads returned HTTP 200 for all 21 requests: recursive PMM content plus
+nine calendar records/126 matching values and 12 readiness records/108 matching
+values, with pagination and product filtering. No browser or connector required
+for those HTTP/API tests. The Notion token remains in ignored local configuration.
+
+Approval covers these source-access results and their preserved documentation,
+not a maintained integration adapter, negative-error tests, Pinecone ingestion,
+embeddings, agent behavior or broader M1.5 completion. Historical audit results
+and acceptance records remain preserved. Authorize only this reviewed private
+documentation sync; no subsequent milestone or further external reads/writes.
+
 ## Owner-provided M1 sequence (original planning labels)
 
 The table preserves the original sequence. The later owner-scoped M1.3 GTM brief
@@ -73,7 +97,7 @@ It does not authorize or complete the original Schema Validation checkpoint.
 | M1.1 | Dataset Content Design | Product Brief v0.2 OWNER ACCEPTED (2026-11-04); bounded dataset scope |
 | M1.2 | Codex-Assisted Dataset Generation | Synthetic PRD v0.2 OWNER ACCEPTED (2026-11-04); other datasets not started |
 | M1.3 | Schema Validation | Not started |
-| M1.4 | External Tool Connectivity | Not started |
+| M1.4 | External Tool Connectivity | Original planning label; bounded Drive/Notion checks accepted as M1.5a; remaining scope not started |
 
 ## Owner-scoped M1.1 Product Brief Dataset
 
