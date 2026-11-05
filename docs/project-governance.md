@@ -42,10 +42,25 @@ provider or provisioning implementation is selected by this policy.
 
 ## Development memory and sharing
 
-Keep BUILD_CONTEXT.md concise and current. IMPLEMENTATION_PROGRESS.md records
-milestones and actual verification evidence; detailed history belongs in justified
-task-specific files. Distinguish verified results, assumptions, proposals and owner
-approvals. Never store credentials or employer-confidential material in context.
+Owner refinement: 2026-11-04. Development memory has three complementary roles:
+
+- workspace/MEMORY.md: persistent, append-only dated discussion summaries,
+  including material clarifications, rationale, open questions and next steps.
+- workspace/BUILD_CONTEXT.md: concise, mutable current-state summary.
+- workspace/IMPLEMENTATION_PROGRESS.md: milestone/implementation status and actual
+  verification evidence, with historical results preserved.
+
+The exact read/write triggers are maintained once in
+[AGENTS.md](../AGENTS.md#read-and-maintain-development-context). "Update memory"
+appends to MEMORY.md only; ordinary authorized work refreshes state/progress when
+material changes warrant it. Before handoff, check relevant files for currency.
+
+Summaries must distinguish verified results, assumptions, proposals and explicit
+owner approvals; none of these files grants authority over canonical docs or the
+owner. Keep entries concise, link to evidence and exclude full transcripts,
+routine command dumps, credentials and employer-confidential material. Existing
+historical checkpoints may remain in progress; new discussion summaries belong
+in MEMORY.md. No prior discussion is claimed to have been recorded verbatim.
 
 Git ignore rules do not protect manual uploads, archives, deployment packages or
 prompt content. Inspect what is shared and exclude workspace/, credentials,
