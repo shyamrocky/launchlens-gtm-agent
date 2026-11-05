@@ -32,8 +32,13 @@ The scoped Notion competitor/positioning updates were verified after reload; the
 owner's final screenshot confirms generic document labels. Current source links
 use main. Fictional dates/readiness may remain in Notion without a duplicate local
 schedule. [Final audit and closure](docs/planning/data-source-final-audit.md) preserve
-actual verification and its limitations. Launch Calendar and Readiness Tracker
-are not created. Employer-confidential research and internal documents are prohibited.
+actual verification and its limitations. The owner accepted and closed the scoped
+[M1.4 calendar/readiness milestone](docs/planning/m1.4-final-validation.md) on
+2026-11-05 after its final PASS audit: nine calendar milestones and 12 readiness
+records, with all 234 saved Notion values matching the canonical CSVs. Working team
+is Product Marketing (PMM); coordinators are fictional. The accepted datasets and
+supporting documentation are authorized for publication to the existing private
+repository. Employer-confidential research and internal documents are prohibited.
 
 ## Milestones and current status
 
@@ -45,11 +50,12 @@ are not created. Employer-confidential research and internal documents are prohi
 
 Current status: **M0 complete; Product Brief v0.2, Synthetic PRD v0.3 and the
 owner-scoped M1.3 GTM/PMM Brief v0.2 OWNER ACCEPTED (2026-11-04)**. Formal acceptance
-is recorded in the milestone plan and review records. Original dataset draft/pending
+is recorded in the milestone plan and review records. **Owner-scoped M1.4 Launch
+Calendar and Readiness Tracker OWNER ACCEPTED and CLOSED (2026-11-05)**. Original dataset draft/pending
 labels are preserved as historical metadata and superseded by those records.
 
-The owner authorizes reviewed publication of the final reference cleanup, audit
-closure and acceptance records to the existing private GitHub repository. The
+The owner authorizes the bounded M1.4 accepted-data and documentation sync to the
+existing private GitHub repository. The
 owner-scoped M1.3 GTM task is distinct from the original M1.3 Schema Validation
 plan; that validation and M1.4 connectivity remain unstarted. No agents,
 orchestration, ingestion or external integrations are implemented. Further work

@@ -27,6 +27,41 @@ and current PRD/GTM reviews for evidence and accepted hashes.
 Schema Validation, External Tool Connectivity, remaining datasets and agent work
 remain unstarted and require separate authorization. No automatic advancement.
 
+## Current owner-scoped M1.4 - Launch Calendar and Readiness Tracker
+
+Authority: owner M1.4 dataset prompt and latest explicit calendar-write request,
+2026-11-05. This reuses M1.4 for bounded operational datasets; the original
+External Tool Connectivity label below remains historical and unimplemented.
+
+Create two canonical CSVs, design and validation report; inspect/preserve the
+existing calendar and populate it under the owner's direct authorization. Prepare
+separate typed Notion readiness schema, matching Product ID/Market ID, and underlying
+statuses/evidence instead of embedding outcomes. Readiness database destination
+supplied; owner explicitly approved population on 2026-11-05. Current status: local
+9-record calendar / 12-record readiness datasets pass checks; calendar saved/readback verified against all 126 CSV values. Fictional coordinators
+added at owner request in Text, with real Person fields empty. Working team was
+subsequently changed from Person to Text under explicit approval and populated
+with Product Marketing (PMM). Readiness now has nine typed properties and 12 saved
+records; all 108 values match the canonical CSV after reload. Population approval
+alone did not constitute milestone acceptance; the later explicit closure below does.
+
+### Owner acceptance and closure - 2026-11-05
+
+Status: **OWNER ACCEPTED / CLOSED** for the owner-scoped M1.4 Launch Calendar and
+Readiness Tracker. Authority: owner explicitly requested, "Close M1.4" and directed
+recording approval, committing and pushing accepted datasets and validation
+documentation to the private repository, following the [final PASS audit](m1.4-final-validation.md).
+Accepted scope: unchanged nine-record calendar and 12-record readiness CSVs, their
+saved Notion copies, design, validation history and final audit. All 234 Notion
+values matched the local CSVs. UK Missing / India Pending are intentional fixtures.
+
+Authorize only reviewed commit/push of these accepted artifacts and supporting
+acceptance/status documentation. Preserve earlier Product Brief/PRD/PMM and audit
+history. No Notion edit, application, API module, paid call, extra market, M1.5 or
+other milestone authorized. This closes the owner-scoped data task, not the
+historical External Tool Connectivity planning label. See [design](m1.4-data-design.md)
+and [verification history](m1.4-validation-report.md).
+
 ## Owner-provided M1 sequence (original planning labels)
 
 The table preserves the original sequence. The later owner-scoped M1.3 GTM brief

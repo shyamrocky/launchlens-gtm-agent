@@ -12,6 +12,16 @@
   the existing private repository. No next dataset, milestone, agent, schema
   validation or external-tool implementation is authorized. Do not edit Notion
   in this GitHub task; the owner's final screenshot confirms corrected labels.
+- Current closure (2026-11-05): the owner explicitly accepts and closes the
+  owner-scoped M1.4 Launch Calendar and Readiness Tracker milestone following
+  the final PASS audit. Both Notion datasets were populated under prior approval;
+  all 126 calendar and 108 readiness values were verified against the CSVs.
+  Authorize confidentiality/diff review, commit and push of the unchanged accepted
+  datasets and supporting design/validation/acceptance documentation to the existing
+  private repository. Preserve approved Product Brief/PRD/PMM and audit history.
+  No Notion edits, app/API/agent work, paid call, M1.5 or other advancement.
+  See docs/planning/m1.4-final-validation.md and the canonical milestone plan.
+  This bounded sync does not grant ongoing publication permission.
 - Require owner approval before expanding scope or advancing milestones.
 - Read [the canonical milestone plan](docs/planning/milestones.md) before planning
   or executing milestone work. A sequence update alone does not authorize execution.
@@ -112,3 +122,7 @@ explicit acceptance records, not rewritten through PDF regeneration. Generic mai
 links are the current-document convention; pinned links remain historical evidence.
 No ongoing commit/push permission, further Notion edits or next milestone is
 inferred. Report the verified push and stop for the owner's next scoped instruction.
+
+The latest explicit M1.4 owner authorization above supersedes the prior completed
+M1.3-only execution boundary only for the described M1.4 acceptance/sync. Preserve
+all prior acceptance and verification; no general connectivity approval inferred.
