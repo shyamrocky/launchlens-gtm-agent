@@ -5,18 +5,27 @@ Authority: owner-provided revised M1 sequence, 2026-11-04
 
 ## Current status
 
-M0 repository bootstrap is complete. The owner subsequently authorized a bounded
-M1.1 Product Brief Dataset for Cherry Float, distinct from fictional launch context.
-On 2026-11-04, the owner formally accepted Product Brief v0.2 and Synthetic PRD
-v0.2 as the LaunchLens datasets delivered under the bounded M1.1/M1.2 scopes.
-The owner authorized final confidentiality/Git diff review and commit/push of the
-unchanged artifacts and supporting documentation to the existing private GitHub
-repository; that approved sync completed at c123b7c. The later explicit owner request
-authorized the bounded M1.3 GTM brief below. A subsequent explicit request now
-authorizes a reviewed private-GitHub update of PRD v0.3, GTM v0.2 and supporting
-records; the original no-push boundaries below are historical.
-Accepted-file draft/pending labels remain untouched; these records capture owner
-acceptance. Schema Validation and External Tool Connectivity remain unstarted.
+M0 is complete. Product Brief v0.2 and original Synthetic PRD v0.2 were formally
+accepted and synced at c123b7c. The later owner-scoped GTM task and PRD extension
+were published at b7d2a10, then underwent final source audit and reference cleanup.
+
+On 2026-11-04, following the final corrected Notion screenshot, the owner explicitly
+stated: "I approve this milestone ! please update github." Status: OWNER ACCEPTED
+for the current owner-scoped M1.3 GTM/PMM milestone, including GTM Brief v0.2 and
+its related PRD v0.3 competitive-context revision, final reference cleanup and
+audit closure. The owner authorizes confidentiality/diff review and commit/push
+of those supporting records and cleanup to the existing private repository.
+
+FINAL-01 is closed by the final owner screenshot showing Product Brief, Synthetic
+PRD and Claim-source manifest; link targets are unchanged per the owner. FINAL-02
+is closed by the local GTM Documents main-link cleanup. The audit preserves the
+limits of live inspection. Historical draft/pending labels and original artifact
+bytes are retained; this explicit acceptance supersedes them. No new independent
+sign-off or runtime validation is implied. See the [final audit](data-source-final-audit.md)
+and current PRD/GTM reviews for evidence and accepted hashes.
+
+Schema Validation, External Tool Connectivity, remaining datasets and agent work
+remain unstarted and require separate authorization. No automatic advancement.
 
 ## Owner-provided M1 sequence (original planning labels)
 
@@ -72,12 +81,14 @@ columns. Use accepted PRD intent and Product Brief facts within their distinct
 authority. No Notion edits, other datasets, agents, external integration or
 commit/push/publication. Formal Schema Validation is not part of this task.
 
-Status: GTM brief v0.2 WORKING REVISION PRODUCED; owner review pending. Browser inspection
-succeeded; no API connectivity tested. [Template map and verification](m1.3-gtm-brief-review.md)
+Status: GTM brief v0.2 OWNER ACCEPTED on 2026-11-04, with the related PRD v0.3
+revision and final documentation cleanup. Browser inspection succeeded; no API
+connectivity tested. [Template map and verification](m1.3-gtm-brief-review.md)
 record 18 headings, six tables, three messaging pillars and unresolved launch
 fields. Launch Calendar and Readiness Tracker remain separate future datasets.
-Stop for owner approval; this scope does not rename the earlier sequence silently
-or approve any subsequent implementation.
+Owner acceptance closes this bounded task; it does not rename the earlier sequence
+or approve any subsequent implementation. The dated authorization paragraphs below
+preserve their original historical scope and pending-review statements.
 
 ### Owner-approved competitive-context extension - 2026-11-04
 
@@ -141,7 +152,6 @@ material, private-project copies or credentials may enter committed data.
 The future architecture is unchanged. Initial sequence approval did not authorize
 execution; the later Product Brief and PRD requests authorize only their bounded
 outputs described above. No agents, application dependencies, external integrations
-or paid model usage are authorized. Latest checkpoint: owner review of local
-PRD v0.3 and GTM brief v0.2. The latest explicit owner request authorizes their
-bounded private-repository update described above, then a handoff with the new
-PRD URL. No automatic advancement or unrelated accepted-data edits.
+or paid model usage are authorized. Current checkpoint: owner acceptance recorded;
+perform the authorized private-repository acceptance/cleanup sync and report its
+verified result, then stop. No automatic advancement or unrelated dataset edits.

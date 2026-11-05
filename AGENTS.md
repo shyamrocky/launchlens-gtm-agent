@@ -4,17 +4,14 @@
 
 - The user is the product owner and final architectural decision-maker.
 - Work one explicitly approved milestone at a time. M0 bootstrap is complete.
-  The owner formally accepted the M1.1 Cherry Float Product Brief v0.2 and M1.2
-  Synthetic PRD v0.2 on 2026-11-04; their approved private GitHub sync is complete.
-  The latest owner review authorizes the two approved competitor comparisons in
-  the local M1.3 GTM brief, the Proposed Cherry Float Differentiation column name,
-  related positioning alignment and one concise PRD v0.3 competitive-context
-  addition with regenerated PDF. Preserve Product Brief/manifest and accepted v0.2
-  history. The owner subsequently authorized the specific Notion competitor and
-  positioning/research-gap updates, now verified. The latest request authorizes
-  committing/pushing the reviewed PRD v0.3, GTM v0.2 and supporting records to the
-  existing private repository. Do not edit Notion in this GitHub-sync task. No
-  other dataset, next milestone, agent or integration is authorized.
+  On 2026-11-04 the owner formally accepted the owner-scoped M1.3 GTM/PMM
+  milestone, including GTM Brief v0.2, its related PRD v0.3 competitive-context
+  update and final documentation cleanup/audit closure. Product Brief v0.2 and
+  original accepted PRD v0.2 history remain preserved. The owner explicitly
+  authorizes reviewed commit/push of the cleanup, acceptance and audit records to
+  the existing private repository. No next dataset, milestone, agent, schema
+  validation or external-tool implementation is authorized. Do not edit Notion
+  in this GitHub task; the owner's final screenshot confirms corrected labels.
 - Require owner approval before expanding scope or advancing milestones.
 - Read [the canonical milestone plan](docs/planning/milestones.md) before planning
   or executing milestone work. A sequence update alone does not authorize execution.
@@ -108,7 +105,10 @@ authorized. Limit changes to the approved PRD/GTM documentation update and its
 verification/status records; no Launch Calendar, Readiness Tracker or full market
 study. Only Pepsi Wild Cherry & Cream and Dr Pepper Strawberries & Cream are in
 competitive scope. Record retrospective evidence and hypothetical differentiation.
-The owner authorized this bounded GitHub update to the existing private repository;
-it does not grant ongoing commit/push permission, formal milestone acceptance or
-further Notion edits. Report the verified push and version-specific PRD link, then
-stop. Preserve Product Brief/manifest, prior accepted versions and audit history.
+The owner has formally accepted this GTM/PMM milestone and authorized the bounded
+private GitHub acceptance/cleanup sync. Preserve the accepted dataset bytes and
+all historical audit results. Existing draft/pending labels are superseded by the
+explicit acceptance records, not rewritten through PDF regeneration. Generic main
+links are the current-document convention; pinned links remain historical evidence.
+No ongoing commit/push permission, further Notion edits or next milestone is
+inferred. Report the verified push and stop for the owner's next scoped instruction.

@@ -29,10 +29,9 @@ This is an independently authored fictional educational GTM simulation informed 
 
 # 📘 Documents
 
-- [Accepted Product Brief v0.2](https://github.com/shyamrocky/launchlens-gtm-agent/blob/c123b7c77d4c52de3fa274d8016df96423eb90c9/data/public_sources/coca_cola_cherry_float_product_brief.md) — authority for scoped public product facts.
-- [Accepted Synthetic PRD v0.2 snapshot](https://github.com/shyamrocky/launchlens-gtm-agent/blob/c123b7c77d4c52de3fa274d8016df96423eb90c9/data/synthetic/coca_cola_cherry_float_prd.md) — product intent, audience hypotheses and proposed requirements.
-- [Claim-source manifest](https://github.com/shyamrocky/launchlens-gtm-agent/blob/c123b7c77d4c52de3fa274d8016df96423eb90c9/data/public_sources/product_source_manifest.csv) — PROD IDs, source locators and market/variant/date limitations. These repository links require authorized GitHub access.
-- PRD v0.3 working revision: `data/synthetic/coca_cola_cherry_float_prd.md` — local competitive-context update awaiting review; the accepted v0.2 snapshot above remains available in Git history.
+- [Product Brief](https://github.com/shyamrocky/launchlens-gtm-agent/blob/main/data/public_sources/coca_cola_cherry_float_product_brief.md) — authority for scoped public product facts.
+- [Synthetic PRD](https://github.com/shyamrocky/launchlens-gtm-agent/blob/main/data/synthetic/coca_cola_cherry_float_prd.md) — product intent, audience hypotheses and proposed requirements.
+- [Claim-source manifest](https://github.com/shyamrocky/launchlens-gtm-agent/blob/main/data/public_sources/product_source_manifest.csv) — PROD IDs, source locators and market/variant/date limitations. These repository links require authorized GitHub access.
 - Competitive research: [PepsiCo release, 2025-01-14](https://www.bevnet.com/pr/2025/01/14/pepsi-and-pepsi-zero-sugar-wild-cherry--cream-available-nationwide-this-month); [Keurig Dr Pepper release, 2023-05-03](https://www.keurigdrpepper.com/dr-pepper-and-rapper-yung-gravy-team-up-to-drop-a-new-single-and-custom-merchandise/). Accessed 2026-11-04; retrospective research, not a certified earlier planning-date snapshot.
 - Official evidence used: [S1 — corporate release](https://www.coca-colacompany.com/media-center/coca-cola-cherry-float-and-diet-coke-cherry-launch-nationwide.html), [S2 — U.S. product information](https://www.coca-cola.com/us/en/brands/coca-cola/products/coca-cola-flavors), [S3 — Great Britain release](https://www.coca-cola.com/gb/en/media-center/coca-cola-introduces-cherry-float-flavour).
 
