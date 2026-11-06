@@ -7,6 +7,78 @@ The [north star](northstar.md) defines the owner-designated autonomous-agent goa
 MVP boundaries and completion targets. This plan continues to govern execution
 authority and actual milestone acceptance; documenting the goal does not advance it.
 
+## Owner acceptance and authorized Git sync - 2026-11-06
+
+The owner approved “Review and consolidate — Accept or correct the completed tools,
+then authorize Git sync” and explicitly requested the sync. **Both the product-evidence
+retrieval tool and Notion read tools/deterministic launch checks are OWNER ACCEPTED.**
+Acceptance includes the disclosed five-reference cap and incomplete positioning
+summary; the original direct semantic coverage remains7/8, with expected supporting
+records present for all eight fixed cases after reference-following. This does not
+claim eight wholly complete responses or general retrieval accuracy.
+
+The owner authorizes security/diff review, commit and push of these maintained tools,
+tests, validation harnesses, review records and supporting status documentation to
+the existing private repository. Fresh offline verification:77 root tests plus23
+projection/codec tests, **100 PASS**. Historical live results remain unchanged; no
+provider calls are repeated. Full M1.5b.4 acceptance remains a separate decision.
+No autonomous-agent connection, model adoption, Reviewer, UI, dataset/dependency
+change or subsequent milestone is authorized. Stop after verified private Git sync.
+
+## Notion read tools and deterministic launch checks - implementation history, 2026-11-06
+
+Owner explicitly approved checkpoint1 following the proposed next-step explanation.
+Implement scoped read tools for existing PMM, calendar and readiness sources and
+pure deterministic eligibility logic. Exact product/market joins, explicit dates,
+all four required readiness areas, approved source authority and missing-data
+safeguards govern. Reuse the accepted M1.4 data design and existing read-only
+Notion token/API resources. Validate offline and through one bounded live readback,
+comparing all accepted operational values and the three base scenario outcomes.
+Read the full nested PMM content; narrative guidance cannot grant permission.
+
+No Notion writes, datasets/schema/dependency changes, new integrations beyond these
+read tools, model/Pinecone calls, autonomous agent, Reviewer/UI/Tavily, final chat-model
+adoption, formal milestone acceptance, commit/push or subsequent checkpoint authorized.
+Pending retrieval/fullM1.5b.4 acceptance is not inferred. Stop with readable results.
+
+Actual result: **TECHNICAL PASS / OWNER REVIEW PENDING**; [readable review/setup](notion-launch-checks-review.md).
+Fresh100 tests PASS (77root including19new,23projection). One read-only live run:
+26HTTP200,102PMM blocks/18headings/7tables; nine calendar records/126 values and
+12 readiness records/108 values match accepted CSVs exactly. At their own scenario
+dates, deterministic outputs are US Proceed, UK Clarify and India Hold. Pre-launch
+available-now wording is false; future-dated approvals cannot apply retrospectively.
+No new dependency, source/schema edit, model/Pinecone call or Notion write. No
+agent boundary/enforcement is claimed. All prior datasets/artifacts/retrieval work,
+credentials, MEMORY and Git HEAD/index preserved. Stop for owner review; no next
+work, milestone acceptance or publication inferred.
+
+## Product-evidence retrieval tool - implemented, owner review pending
+
+Owner approved completing the proposed bounded tool and validation while on break.
+This is an implementation authorization, not acceptance of full M1.5b.4 or of the
+resulting tool. Build one callable runtime tool using the existing corpus/E5 model,
+source-bound evidence decoder, top-five search and at most five extra declared
+reference records in a single one-hop fetch. Keep ranks, full packets, qualifications,
+citations and distinct authority. PRD-to-public source references retain their
+public identity; search roots remain category-filtered. Missing/invalid/limited
+support must be explicit; no recursive traversal or silent field removal.
+
+Use canonical src/, tests/ and tools/ plus one review/setup document under
+planning. Run local safeguards and one live evaluation of the eight frozen GTM cases.
+No runtime ignored artifact/cache/workspace dependency; no tuning, new dependency,
+index/record writes, Notion adapter, agent/Reviewer/UI/Tavily, model adoption,
+formal milestone acceptance, staging/commit/push or further work. Stop for review.
+
+Actual result: **BOUNDED IMPLEMENTATION COMPLETE / REVIEW REQUIRED**. See
+[review/setup and readable outputs](product-evidence-retrieval-review.md). Fresh81 tests
+PASS; one live run22HTTP200,248 query tokens. All eight cases return their expected
+supporting records with unchanged evidence; direct semantic ranking remains7/8.
+GTM-01 explicitly reports positioning references PROD-014/015 unresolved at the fixed
+five-target cap; its required flavor/inspiration claims are present. Seven responses
+have no issues; one remains incomplete. No tuning or hidden budget enlargement.
+Source datasets/prior artifacts/cases/locks/credentials and Git HEAD/index preserved.
+No formal tool/fullM1.5b.4 acceptance or next work inferred. Stop for owner review.
+
 ## Current publication authorization - 2026-11-05
 
 The owner explicitly approved the proposed security/diff review, commit and push

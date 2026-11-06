@@ -3,6 +3,48 @@
 ## Authority and milestone scope
 
 - The user is the product owner and final architectural decision-maker.
+- Latest owner acceptance/publication authority (2026-11-06): owner accepted the
+  completed product-evidence retrieval and Notion read/deterministic launch-check
+  tools and explicitly approved Git sync after review. Record both acceptances;
+  review credentials/confidentiality, exact file set and diff; commit and push only
+  these tools, tests, harnesses, reviews and supporting status records to the existing
+  private repository. Preserve the documented partial-reference limit, frozen
+  datasets, prior audit results, dependencies and credentials. Full M1.5b.4 acceptance
+  remains separate. This supersedes earlier pending-tool/no-publication boundaries
+  only for this sync; no live provider rerun, final model adoption, autonomous agent,
+  Reviewer/UI/Tavily or next milestone. Verify private visibility/remote commit;
+  stop. Canonical closure: docs/planning/milestones.md.
+- Latest scoped execution (2026-11-06): owner explicitly approved checkpoint1,
+  Notion read tools plus deterministic launch checks. Authorize maintained read-only
+  PMM/calendar/readiness tools, pure four-area/date eligibility checks, focused
+  offline failures/scenario tests and one bounded live readback validation against
+  accepted CSVs. Existing read-only Notion token/resources only; no page/database
+  edits, new dependency, model/Pinecone calls, agents, Reviewer/UI/Tavily, final
+  model selection, milestone acceptance or Git publication. Preserve pending
+  retrieval-tool/fullM1.5b.4 review, all datasets/artifacts and prior results.
+  Mandatory distinctions: hypothetical permission is not real availability or
+  publishing; pre-launch drafts cannot claim available now; future-dated approvals
+  cannot apply retrospectively. Missing/contradictory/inaccessible data withholds
+  affected permissions. Implemented technical PASS:100 tests and one live readback,
+  26HTTP200;102 PMM blocks/18 headings/7tables;all126 calendar and108 readiness
+  values match accepted CSVs. At scenario dates:US Proceed,UK Clarify,IN Hold.
+  See docs/planning/notion-launch-checks-review.md. Owner review pending; stop.
+- Latest bounded implementation authorization (2026-11-05): owner approved the
+  proposed product-evidence retrieval tool while away. Authorize maintained
+  src/launchlens/retrieval.py, focused tests, one bounded live run of the existing
+  eight GTM cases, and a readable canonical review/setup record. Reuse the existing
+  E5 model/validation namespace and evidence codec; top five search hits plus at
+  most five unique reference targets in one batched fetch, one hop, no retries.
+  Preserve complete packets, source bindings and original ranks; cross-authority
+  PRD-to-public-claim references retain the target's public authority. Report
+  incomplete/invalid evidence explicitly. No runtime generated-file/cache/workspace
+  dependency, new package/framework/index, corpus write, tuning, Notion adapter,
+  agent/Reviewer/UI/Tavily, final model adoption, milestone acceptance or Git sync.
+  Implemented result:81 local tests PASS, one eight-case live run yielded8/8 expected
+  combined evidence coverage, original direct ranking7/8. GTM-01 remains explicitly
+  incomplete for lower-ranked positioning refs014/015 beyond the fixed cap; do not
+  claim every response is complete. See docs/planning/product-evidence-retrieval-review.md.
+  Stop for owner review; no acceptance, rerun, tuning, next milestone or Git sync.
 - Latest scoped publication approval (2026-11-05): the owner approved the proposed
   credential/confidentiality and diff review, commit and push of the existing
   preparation code, schemas/tests, locked tooling, validation tools/reports,

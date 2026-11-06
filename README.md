@@ -9,19 +9,30 @@ The [LaunchLens north star](docs/planning/northstar.md) is the canonical goal,
 MVP scope and completion checklist. Read it alongside the authorized milestone;
 its targets are not claims of implemented functionality.
 
-## Current checkpoint - 2026-11-05
+## Current checkpoint - 2026-11-06
 
 Local document preparation, chunking and focused embedding preparation
 (M1.5b.1/B2/B3) are owner accepted. Pinecone storage fidelity, the GTM semantic
 baseline, bounded reference-following and a fixed keyword/hybrid comparison have
 been tested; full M1.5b.4 remains pending owner acceptance. Semantic baseline:
 7/8 predefined checks, with the missing supporting claim recovered in a separate
-one-hop reference test. The combined application retrieval tool, autonomous agent,
-Reviewer and UI are not implemented. Final chat-model selection remains deferred.
+one-hop reference test. The [application retrieval tool](docs/planning/product-evidence-retrieval-review.md)
+is now owner accepted (2026-11-06):81 tests passed at implementation; all eight fixed cases
+returned expected supporting evidence. One response explicitly reports unresolved
+extra positioning references at the five-target cap; direct ranking remains7/8.
+The autonomous agent, Reviewer and UI are not implemented. Final chat-model selection
+remains deferred. Full M1.5b.4 acceptance remains separate from these tool acceptances.
 
-The owner approved committing/pushing this existing code and verification checkpoint
-to the private repository after security review. This approval does not advance
-implementation or accept pending milestones. The sections below preserve results
+[Notion read tools and deterministic launch checks](docs/planning/notion-launch-checks-review.md)
+are now owner accepted (2026-11-06):100 local tests passed; all234 live
+operational values match accepted CSVs. Scenario dates return US Proceed, UK Clarify
+and India Hold. Nested PMM content is readable. These checks are not yet connected
+to an autonomous agent and do not grant actual publishing or inventory assurances.
+
+The owner accepted both completed tool checkpoints and approved their reviewed
+commit/push to the private repository on 2026-11-06. Fresh offline verification:
+100 tests PASS. This approval does not advance implementation or accept full M1.5b.4.
+The sections below preserve results
 and stop boundaries from each checkpoint; later explicit records supersede earlier
 unimplemented/unverified descriptions. See the [milestone plan](docs/planning/milestones.md).
 
