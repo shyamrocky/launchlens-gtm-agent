@@ -3,6 +3,32 @@
 Authority: owner-provided revised M1 sequence, 2026-11-04
 (America/Los_Angeles). This document is the canonical milestone plan.
 
+The [north star](northstar.md) defines the owner-designated autonomous-agent goal,
+MVP boundaries and completion targets. This plan continues to govern execution
+authority and actual milestone acceptance; documenting the goal does not advance it.
+
+## Current publication authorization - 2026-11-05
+
+The owner explicitly approved the proposed security/diff review, commit and push
+of the existing preparation code, schemas/tests, pinned dependencies/tooling,
+validation tools/reports, north star and supporting status records to the existing
+private GitHub repository. This supersedes earlier no-publication boundaries only
+for this checkpoint. It does not constitute formal acceptance of the hosted sample,
+full M1.5b.4, the provider smoke test or the proposed application retrieval strategy.
+M1.5b.1/B2/B3 remain owner accepted; prior audits, frozen datasets and recorded
+ranking misses remain unchanged. No retrieval-tool, agent, Reviewer, UI or Tavily
+implementation is authorized. Stop after verified push; future scope needs approval.
+
+Pre-commit verification: 42 preparation tests and 23 projection/codec tests passed
+freshly (65 total); both uv locks passed offline consistency checks. Six validation
+tools passed their offline preflights. Scoped credential-pattern and exact local
+credential-value comparisons found no secrets in the proposed files; accepted
+tracked datasets are byte unchanged. Workspace, reference clone, generated evidence,
+tokenizer cache, environments and local credentials remain excluded by existing
+ignore rules. These checks do not rerun or strengthen historical hosted results.
+GitHub API confirmed private visibility and starting main at 460405c before staging.
+Publication approval is distinct from approval to begin the next checkpoint.
+
 ## Current status
 
 M0 is complete. Product Brief v0.2 and original Synthetic PRD v0.2 were formally
@@ -85,6 +111,189 @@ not a maintained integration adapter, negative-error tests, Pinecone ingestion,
 embeddings, agent behavior or broader M1.5 completion. Historical audit results
 and acceptance records remain preserved. Authorize only this reviewed private
 documentation sync; no subsequent milestone or further external reads/writes.
+
+## M1.5b.1 - Local Document Preparation
+
+Date: 2026-11-05 (America/Los_Angeles). Status: **OWNER ACCEPTED / CLOSED**;
+implemented preparation and its technical PASS results accepted.
+Authority: the owner approved the local preparation execution plan with three
+refinements: retain extracted line boundaries rather than infer paragraphs;
+validate complete statements with scope/qualifications/references rather than
+ID counts alone; keep the parser specific to the two approved PDFs. Deterministic
+content and manifest regeneration is required. Local compute/developer effort is
+separate from the $0 external-service usage expectation.
+
+Decision M15B1-001 and [setup/verification](m1.5b-document-preparation.md) record the
+bounded implementation: Python 3.12, pypdf 6.21.4, five JSONL page records, page
+schema, stable provenance/authority, exact approved-source hashes, 96 display-block
+checks, 15 complete claims, seven complete requirements and 21 source mappings.
+Generated records/manifest stay in ignored data/generated/ with explicit
+regeneration. Maintained tool/tests/schema/docs and lock remain canonical.
+18 tests PASS; on-disk repeat and clean-copy preparation without workspace/.env
+produce identical records and manifest. Prior accepted datasets/audits preserved.
+
+The read-only Pinecone authentication request authorized separately earlier on
+2026-11-05 returned HTTP 200 for GET /indexes (API 2026-07), no indexes. It does not
+verify data-plane/inference permissions, credit eligibility or authorize writes.
+
+This checkpoint does not approve a generic PDF platform, semantic reconstruction,
+new source download, model call or external integration. Page records are an
+intermediate format; future chunking must preserve shared/cross-page qualifiers
+and claim-source relationships. **M1.5b.2 - Chunking and Evidence Preparation is
+NOT STARTED / NOT AUTHORIZED.** No embeddings, BM25, Pinecone creation/upload,
+agents, commit or push. Owner acceptance on 2026-11-05 ("approve - M1.5b.1")
+closes review of the five records and fidelity results. This records acceptance
+only; the accompanying request asks for a plain-English explanation of M1.5b.2,
+not execution. Previous verification evidence and generated hashes are preserved.
+The original M1.3 Schema Validation label below remains a separate historical
+planning scope, not completed by this page-format contract.
+
+## M1.5b.2 - Chunking and Evidence Preparation
+
+Date: 2026-11-05 (America/Los_Angeles). Status: **OWNER ACCEPTED / CLOSED**;
+implemented evidence preparation and recorded technical PASS accepted.
+Authority: the owner agreed to the three-part chunking explanation (meaningful
+boundaries, attached supporting context, traceability/authority/acceptance metadata)
+and explicitly instructed "go ahead with M1.5b.2". This supersedes the prior
+checkpoint's stop boundary only for the described local stage.
+
+Decision M15B2-001, [implementation and verification](m1.5b-chunking-review.md):
+45 deterministic local chunks, 30 Product Brief/15 PRD; one primary chunk per
+15 complete claim statements/seven complete requirements, plus 23 authored context/
+reference sections. All 96 authored blocks are covered exactly once as primary
+content. Required context is repeated intentionally. The original 21 source
+mappings remain distinct from shared-qualification source links. Each packet
+preserves cross-page lineage, authority, canonical source/preparation acceptance
+and pending chunk status. No generalized splitter or extra dependency introduced.
+
+42 tests PASS, including all 18 accepted preparation tests; clean-copy page/chunk
+regeneration without workspace/.env is byte identical. Original sources, accepted
+page outputs/preparation code/schema/review, prior audits and dependencies unchanged.
+Generated chunks/manifest are ignored local artifacts with explicit provisioning;
+maintained tool/schema/tests/report remain canonical. Git HEAD/index preserved.
+
+Largest primary passage 1,179 characters; largest complete packet 5,379 characters.
+These are not model-token counts. Embedding input/model/tokenizer fit and Pinecone
+payload adaptation require a separate approved checkpoint. No embeddings, BM25,
+Pinecone creation/upload, agent, external API call, commit or push. Stop for owner
+review/acceptance of M1.5b.2; no next milestone authorization is inferred.
+
+## M1.5b.3 - Embedding Model Selection and Token-Fit Validation
+
+Date: 2026-11-05 (America/Los_Angeles). Status: **OWNER ACCEPTED / CLOSED**;
+all three decisions and recorded local technical PASS accepted.
+Authority: owner explicitly requested proceeding with proposed M1.5b.3, including
+readable pre/post examples for audit. The supplied M1.5b.2 architecture review
+recommends acceptance and raised repeated-context dilution; its measured character
+counts (15,005 primary / 160,439 full) match the unchanged artifact. No silent formal
+M1.5b.2 acceptance or dataset regeneration is inferred from that quoted review.
+This later direct owner instruction authorizes the bounded local projection stage.
+
+Decisions M15B3-001/002/003 and [plain-English audit/setup](m1.5b3-embedding-review.md)
+record multilingual-e5-large as baseline pending acceptance, focused primary text
+plus minimal identifying context, and complete evidence serialized alongside its
+future indexed record. Canonical codec/tool/profile/lock/template/tests are maintained;
+ignored outputs/cache have explicit provisioning. Root dependencies and all prior
+source/page/chunk/review artifacts remain unchanged.
+
+Pinned public tokenizer revision, no weights/remote model code; all 45 focused
+inputs <=507 local framed tokens, maximum 279. Full candidate packets 38,974 total
+local tokens versus 4,275 focused (89.03% fewer); evidence restored exactly 45/45.
+Largest flat escaped metadata 21,357 bytes, below conservative 40,000. 23 new tests
+plus all 42 previous tests PASS; clean regeneration without workspace/.env yields
+identical outputs. Decoder also passes using only standard-library Python and
+response fields, without local generated artifacts. Chrome audit checked for the
+nutrition, Canada qualification and synthetic availability examples.
+
+These local measurements do not establish Pinecone-hosted token parity, live
+storage/retrieval, relevance or grounded generation. The proposed co-location
+contract is tested locally only. No embedding API, index creation/upload, BM25,
+agent, commit or push. Owner reviews the concrete model/projection/evidence choices
+before accepting this checkpoint and separately authorizing indexing/retrieval.
+
+## M1.5b.2 and M1.5b.3 - explicit owner acceptance, 2026-11-05
+
+The owner explicitly approved all three M1.5b.3 decisions and directed recording
+acceptance of both checkpoints, then stopping. **M1.5b.2 OWNER ACCEPTED / CLOSED**
+for the unchanged 45 evidence chunks and recorded fidelity/verification results.
+**M1.5b.3 OWNER ACCEPTED / CLOSED** for M15B3-001 multilingual-e5-large baseline,
+M15B3-002 focused embedding projection with full evidence retained and M15B3-003
+co-located serialized evidence/metadata contract. See dated closure records in
+[chunking review](m1.5b-chunking-review.md#formal-owner-acceptance-and-closure---2026-11-05)
+and [embedding review](m1.5b3-embedding-review.md#formal-owner-acceptance-and-closure---2026-11-05).
+
+This supersedes earlier pending-review descriptions without changing their
+historical findings. Artifact/profile/HTML pending labels remain preparation-time
+snapshots; current acceptance is canonical and hash-bound. Reported 65-test PASS
+and limitations are preserved, not rerun for acceptance documentation. Hosted
+parity, live retrieval and relevance remain unverified. No embeddings, Pinecone
+creation/upload, model API, agent, next checkpoint or Git staging/commit/push.
+**Stop after recording acceptance.**
+
+## M1.5b.4 - authorized three-record hosted sample, 2026-11-05
+
+**TECHNICAL PASS / OWNER REVIEW PENDING; full checkpoint incomplete.** Owner
+explicitly authorized the small PROD-008 / PROD-011 / REQ-007 upload/fetch test.
+Later scope supersedes prior no-provider/index stop boundaries only for this sample.
+[Canonical verification](m1.5b4-pinecone-sample-validation.md) records index/namespace,
+API configuration, six HTTP successes, 258 hosted tokens and byte-identical full
+evidence/metadata restoration for all three records. Existing 65 tests rerun PASS.
+No dataset/source/artifact/lock/credential changes; no staging/commit/push.
+Index/sample retained. Remaining 42-record upload, semantic retrieval accuracy,
+unsupported India test, general human-ID resolver and agents require subsequent
+owner authorization. Stop for review; do not mark full M1.5b.4 accepted.
+
+## M1.5b.4 - full45-record storage checkpoint, 2026-11-05
+
+Owner explicitly approved the bounded full validation corpus, explaining the result
+in plain English. **TECHNICAL PASS / OWNER REVIEW PENDING; full milestone incomplete.**
+[Verification](m1.5b4-full-corpus-validation.md):45 exact IDs, complete unchanged
+packets/metadata/citations/qualifications/authority, float32 embedding identity and
+no extra records in isolated m15b4-corpus-validation-v1; original sample unchanged.
+One E5 request4,275 tokens; one upsert; all12 HTTP200;65 existing tests PASS.
+Earlier prohibitions are superseded only for this completed approved scope.
+Semantic search/wrong-passage ranking and agent behavior are not established.
+No formal acceptance of the original sample or full milestone is inferred.
+Next proposed checkpoint: separately authorized GTM-focused retrieval validation.
+No chat-model choice, other integrations, agents/UI, staging/commit/push authorized.
+
+## M1.5b.4 - GTM semantic baseline, 2026-11-05
+
+Owner authorized fixed GTM-focused queries and readable ranked evidence/misses.
+**REVIEW REQUIRED:7/8 top-three checks passed; one direct-claim coverage miss.**
+[Report](m1.5b4-semantic-retrieval-validation.md): eight cases predeclared, one E5
+query batch248tokens, eight read-only top-five searches with explicit product/domain
+filters; all12HTTP200. Forty hit packets/29distinct records verified; full45-record
+before/after snapshots unchanged. No query rewrite/reranker or expectation changes.
+Flavor/inspiration found overview first and PROD-003 second, but no dedicated
+PROD-002 in top five. Existing overview link suggests exact-ID enrichment as a
+next bounded test, not an implemented/proven remedy. Preserve baseline miss.
+No generated answer or actual readiness decision observed; final model choice
+remains deferred. Full milestone not owner-accepted. Stop before follow-up/agent/UI,
+corpus changes, staging/commit/push or broader testing without authorization.
+
+## M1.5b.4 - one-hop claim-reference test, 2026-11-05
+
+Owner approved the bounded exact-ID follow-up first, while keeping keyword/hybrid
+search open. [Result](m1.5b4-claim-link-validation.md): **TECHNICAL PASS / OWNER
+REVIEW PENDING**. Parent links dynamically provided three IDs; two read-only GETs
+verified parent/claims and recovered PROD-002 with unchanged S2/S3 evidence. Both
+GTM-01 claims accessible after follow-up; original direct-ranking metric remains7/8.
+No keyword/hybrid comparison, new semantic query or agent. No formal M1.5b.4/sample
+acceptance inferred. Stop for review; other searches/implementation/publication
+require separate authorization. Existing baseline/hashes remain unchanged.
+
+## M1.5b.4 - fixed keyword and hybrid comparison, 2026-11-05
+
+Owner approved one small same-case comparison with no repeated tuning.
+[Result](m1.5b4-search-comparison.md): completed; semantic7/8,keyword6/8,hybrid7/8.
+Flavor002 ranks6/4/5 respectively; hybrid did not meet predeclared rule of more
+passing cases with no regressions. Semantic top-five lists match original8/8.
+All45 evidence packets/snapshots unchanged. One E5 batch248tokens,eight read-only
+searches,all12HTTP200; lexical/fusion local, no packages/services/index changes.
+Recommend semantic plus bounded explicit-reference enrichment for this MVP;
+keyword/hybrid usefulness is not universally rejected. No strategy adoption or
+agent implementation, formal milestone acceptance, commit/push. Stop for review.
 
 ## Owner-provided M1 sequence (original planning labels)
 

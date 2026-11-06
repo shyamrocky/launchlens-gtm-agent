@@ -1,0 +1,66 @@
+{
+  "version": "gtm-retrieval-v1",
+  "product_id": "CC-CHERRY-FLOAT",
+  "top_k": 5,
+  "acceptance_rank": 3,
+  "evaluation_policy": "All listed expected units must occur in the top three. Scores are ranking diagnostics, not confidence probabilities. Expectations are fixed before hosted execution; no tuning in this run.",
+  "cases": [
+    {
+      "id": "GTM-01",
+      "purpose": "Supported flavor and inspiration for campaign messaging",
+      "query": "For a Coca-Cola Cherry Float launch package, what flavor notes and classic soda-float inspiration can we support in the messaging?",
+      "authority": "public_product_facts",
+      "expected_units": ["PROD-002", "PROD-003"]
+    },
+    {
+      "id": "GTM-02",
+      "purpose": "Variant distinction in the campaign brief",
+      "query": "For the campaign brief, which Coca-Cola Cherry Float variants are documented?",
+      "authority": "public_product_facts",
+      "expected_units": ["PROD-004"]
+    },
+    {
+      "id": "GTM-03",
+      "purpose": "Market-specific packaging claims for US copy",
+      "query": "For US launch copy, which can and bottle sizes are listed for Coca-Cola Cherry Float?",
+      "authority": "public_product_facts",
+      "expected_units": ["PROD-005"]
+    },
+    {
+      "id": "GTM-04",
+      "purpose": "Audience hypotheses for the fictional campaign",
+      "query": "For the fictional Cherry Float campaign brief, who are the proposed target consumers and what motivates them?",
+      "authority": "synthetic_product_intent",
+      "expected_units": ["audience"]
+    },
+    {
+      "id": "GTM-05",
+      "purpose": "Competitive context for proposed differentiation",
+      "query": "What competitive context should inform proposed Cherry Float differentiation against Pepsi Wild Cherry & Cream and Dr Pepper Strawberries & Cream?",
+      "authority": "synthetic_product_intent",
+      "expected_units": ["competitive-context"]
+    },
+    {
+      "id": "GTM-06",
+      "purpose": "Qualified Canadian announcement context for regional messaging",
+      "query": "For regional GTM messaging, when did the Canadian announcement specify Cherry Float versus Diet Coke Cherry, and is that confirmed shelf availability?",
+      "authority": "public_product_facts",
+      "expected_units": ["PROD-012"]
+    },
+    {
+      "id": "GTM-07",
+      "purpose": "Synthetic requirement for availability claims",
+      "query": "Before writing availability claims for a market and date, what must the fictional Launch Calendar and Readiness Tracker establish?",
+      "authority": "synthetic_product_intent",
+      "expected_units": ["REQ-007"]
+    },
+    {
+      "id": "GTM-08",
+      "purpose": "Surface the evidence gap before India availability copy",
+      "query": "For the India GTM package, what evidence supports saying Coca-Cola Cherry Float is available to buy now?",
+      "authority": "public_product_facts",
+      "expected_units": ["unknowns"],
+      "limitation": "Retrieving an explicit evidence gap is not an observed agent abstention or India Hold decision. It neither proves unavailability nor replaces operational Notion readiness checks."
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LaunchLens M1.5b.1 approved PDF page",
+  "description": "Intermediate page record, not a retrieval chunk. Offsets are zero-based Python Unicode character offsets into normalized_text; end is exclusive. Validated blocks and evidence spans identify source text, not inferred semantic units. Runtime uses explicit fixed-document checks rather than a general JSON Schema engine.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format_version", "record_id", "document_id", "document_version", "authority", "source_path", "source_url", "source_sha256", "page_number", "parser_version", "identifiers", "raw_text", "normalized_text", "normalization_changes", "hyperlinks", "evidence_spans", "validated_block_spans", "warnings"],
+  "properties": {
+    "format_version": {"const": "1.0"},
+    "record_id": {"type": "string", "minLength": 1},
+    "document_id": {"enum": ["cherry-float-product-brief", "cherry-float-synthetic-prd"]},
+    "document_version": {"enum": ["0.2", "0.3"]},
+    "authority": {"enum": ["public_product_facts", "synthetic_product_intent"]},
+    "source_path": {"type": "string", "pattern": "^data/(public_sources|synthetic)/[^/]+\\.pdf$"},
+    "source_url": {"type": "string", "pattern": "^https://drive\\.google\\.com/file/d/[^/]+/view$"},
+    "source_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "page_number": {"type": "integer", "minimum": 1, "maximum": 3},
+    "parser_version": {"const": "6.21.4"},
+    "identifiers": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^(PROD|REQ)-[0-9]{3}$"}},
+    "raw_text": {"type": "string", "minLength": 1},
+    "normalized_text": {"type": "string", "minLength": 1},
+    "normalization_changes": {
+      "type": "object", "additionalProperties": false,
+      "required": ["crlf_to_lf", "cr_to_lf", "nbsp_to_space", "trailing_whitespace_removed", "extra_blank_lines_removed"],
+      "properties": {
+        "crlf_to_lf": {"type": "integer", "minimum": 0},
+        "cr_to_lf": {"type": "integer", "minimum": 0},
+        "nbsp_to_space": {"type": "integer", "minimum": 0},
+        "trailing_whitespace_removed": {"type": "integer", "minimum": 0},
+        "extra_blank_lines_removed": {"type": "integer", "minimum": 0}
+      }
+    },
+    "hyperlinks": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false, "required": ["uri", "rect"],
+        "properties": {
+          "uri": {"type": "string", "pattern": "^https://"},
+          "rect": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "number"}}
+        }
+      }
+    },
+    "evidence_spans": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false, "required": ["id", "start", "end", "references"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^(PROD|REQ)-[0-9]{3}$"},
+          "start": {"type": "integer", "minimum": 0},
+          "end": {"type": "integer", "minimum": 1},
+          "references": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^(S[1-5]|PROD-[0-9]{3})$"}}
+        }
+      }
+    },
+    "validated_block_spans": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false, "required": ["start", "end"],
+        "properties": {"start": {"type": "integer", "minimum": 0}, "end": {"type": "integer", "minimum": 1}}
+      }
+    },
+    "warnings": {"type": "array", "maxItems": 0}
+  }
+}

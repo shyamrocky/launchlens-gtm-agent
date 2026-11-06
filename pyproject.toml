@@ -4,7 +4,9 @@ version = "0.0.0"
 description = "LaunchLens — Launch-Aware GTM Agent educational project"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-dependencies = []
+dependencies = [
+    "pypdf==6.21.4",
+]
 
 [tool.uv]
 package = false

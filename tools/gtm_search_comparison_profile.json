@@ -1,0 +1,34 @@
+{
+  "version": "gtm-search-comparison-v1",
+  "text_field": "embedding_text",
+  "query_source": "tools/gtm_retrieval_cases.json",
+  "query_source_sha256": "87fc5d94341f2f6c491bf6240f62b265639fdbde7d6f0d8dc9e0fec350d9105d",
+  "semantic": {"model": "multilingual-e5-large", "input_type": "query", "truncate": "NONE"},
+  "keyword": {
+    "algorithm": "BM25 with positive Lucene-style IDF",
+    "k1": 1.2,
+    "b": 0.75,
+    "token_pattern": "[a-z0-9]+",
+    "lowercase": true,
+    "stopwords": [],
+    "stemming": false,
+    "query_term_frequency": "unique terms; no frequency boost",
+    "statistics_scope": "same product/authority-filtered candidate set",
+    "zero_score_documents": "excluded"
+  },
+  "hybrid": {
+    "algorithm": "reciprocal rank fusion",
+    "rank_constant": 60,
+    "semantic_weight": 1.0,
+    "keyword_weight": 1.0,
+    "candidate_depth": "all eligible records; at most 30",
+    "tie_break": "chunk_id ascending"
+  },
+  "evaluation": {
+    "acceptance_rank": 3,
+    "display_rank": 5,
+    "claim_link_expansion": false,
+    "retuning": false,
+    "decision_rule": "Recommend hybrid only if more fixed cases pass than semantic and no previously passing semantic case regresses. Otherwise retain semantic plus independently validated reference-following unless another method has a clear measured advantage requiring owner review."
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LaunchLens M1.5b.2 local evidence chunk",
+  "description": "Fixed-document local intermediate format. Source/preparation acceptance is distinct from pending chunk acceptance. Segment offsets refer to normalized page text. Runtime verifies the exact regenerated payload and lineage; no generic JSON Schema framework or Pinecone payload adapter is implemented.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format_version", "policy_version", "product_id", "document_id", "document_version", "authority", "unit_id", "chunk_kind", "source_path", "source_url", "source_sha256", "source_acceptance", "preparation_acceptance", "chunk_status", "page_numbers", "primary_text", "segments", "claim_ids", "requirement_ids", "related_claim_ids", "source_references", "claim_source_mappings", "links", "text", "chunk_id", "related_chunk_ids"],
+  "properties": {
+    "format_version": {"const": "1.0"},
+    "policy_version": {"const": "evidence-blocks-v1"},
+    "product_id": {"const": "CC-CHERRY-FLOAT"},
+    "document_id": {"enum": ["cherry-float-product-brief", "cherry-float-synthetic-prd"]},
+    "document_version": {"enum": ["0.2", "0.3"]},
+    "authority": {"enum": ["public_product_facts", "synthetic_product_intent"]},
+    "unit_id": {"type": "string", "minLength": 1},
+    "chunk_kind": {"enum": ["document_context", "context", "product_claim", "requirement", "qualification", "source_reference"]},
+    "source_path": {"type": "string", "pattern": "^data/"},
+    "source_url": {"type": "string", "pattern": "^https://drive\\.google\\.com/"},
+    "source_sha256": {"$ref": "#/$defs/sha256"},
+    "source_acceptance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "date", "record_path", "record_sha256", "section", "source_sha256"],
+      "properties": {
+        "status": {"const": "OWNER_ACCEPTED"}, "date": {"const": "2026-11-04"},
+        "record_path": {"type": "string", "pattern": "^docs/planning/"},
+        "record_sha256": {"$ref": "#/$defs/sha256"}, "section": {"type": "string"},
+        "source_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "preparation_acceptance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "date", "record_path", "record_sha256", "pages_sha256", "manifest_sha256"],
+      "properties": {
+        "status": {"const": "OWNER_ACCEPTED"}, "date": {"const": "2026-11-05"},
+        "record_path": {"const": "docs/planning/m1.5b-document-preparation.md"},
+        "record_sha256": {"$ref": "#/$defs/sha256"}, "pages_sha256": {"$ref": "#/$defs/sha256"},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "chunk_status": {"const": "PREPARED_PENDING_OWNER_ACCEPTANCE"},
+    "page_numbers": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 1, "maximum": 3}},
+    "primary_text": {"type": "string", "minLength": 1},
+    "text": {"type": "string", "minLength": 1},
+    "segments": {
+      "type": "array", "minItems": 1, "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["role", "page_record_id", "page_number", "block_index", "start", "end", "text"],
+        "properties": {
+          "role": {"enum": ["primary", "required_context", "source_reference"]},
+          "page_record_id": {"type": "string", "minLength": 1},
+          "page_number": {"type": "integer", "minimum": 1, "maximum": 3},
+          "block_index": {"type": "integer", "minimum": 0},
+          "start": {"type": "integer", "minimum": 0}, "end": {"type": "integer", "minimum": 1},
+          "text": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "claim_ids": {"$ref": "#/$defs/id_list"}, "requirement_ids": {"$ref": "#/$defs/id_list"},
+    "related_claim_ids": {"$ref": "#/$defs/id_list"}, "related_chunk_ids": {"$ref": "#/$defs/id_list"},
+    "chunk_id": {"type": "string", "minLength": 1},
+    "source_references": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["source_id", "title", "url", "roles"],
+        "properties": {
+          "source_id": {"type": "string", "pattern": "^S[1-5]$"},
+          "title": {"type": "string"}, "url": {"type": "string", "pattern": "^https://"},
+          "roles": {"type": "array", "uniqueItems": true, "items": {"enum": ["claim_support", "shared_qualification", "document_reference"]}}
+        }
+      }
+    },
+    "claim_source_mappings": {"type": "array", "items": {"type": "object", "minProperties": 15, "maxProperties": 15, "additionalProperties": {"type": "string"}}},
+    "links": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false, "required": ["uri", "rect"],
+        "properties": {"uri": {"type": "string", "pattern": "^https://"}, "rect": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "number"}}}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "id_list": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  }
+}

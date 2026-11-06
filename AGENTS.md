@@ -3,6 +3,27 @@
 ## Authority and milestone scope
 
 - The user is the product owner and final architectural decision-maker.
+- Latest scoped publication approval (2026-11-05): the owner approved the proposed
+  credential/confidentiality and diff review, commit and push of the existing
+  preparation code, schemas/tests, locked tooling, validation tools/reports,
+  north star and supporting status records to the existing private repository.
+  This supersedes historical no-commit/no-push boundaries only for this checkpoint.
+  Preserve accepted datasets, generated artifact bytes, audit history and approval
+  distinctions. M1.5b.1/B2/B3 are accepted; full M1.5b.4 remains owner-review pending.
+  Publication is not milestone acceptance, retrieval-strategy adoption, final model
+  selection or permission to implement the retrieval tool/agent/UI/Tavily. Exclude
+  credentials, generated data/cache, local environments, workspace and the reference
+  clone. Verify private visibility, exact staged file set and remote commit; then stop.
+- Owner-designated north star (2026-11-05):
+  [docs/planning/northstar.md](docs/planning/northstar.md) is authoritative for goal,
+  MVP scope and completion targets. Read it before substantial work and when
+  resuming context. The model chooses permitted next actions in an autonomous
+  loop; the harness enforces boundaries. Earlier fixed-pipeline descriptions are
+  historical and do not override this explicit owner clarification. Check proposed
+  work against the north star; report verified results and remaining gaps against
+  its completion criteria. Scope changes require owner direction. Saving this
+  direction does not accept unfinished milestones, authorize implementation,
+  provider calls, further uploads or Git publication.
 - Work one explicitly approved milestone at a time. M0 bootstrap is complete.
   On 2026-11-04 the owner formally accepted the owner-scoped M1.3 GTM/PMM
   milestone, including GTM Brief v0.2, its related PRD v0.3 competitive-context
@@ -31,6 +52,104 @@
   dependency changes or next milestone authorized. See the canonical milestone
   plan and docs/planning/m1.5-connectivity-validation.md. This scoped publication
   does not grant ongoing commit/push permission.
+- Prior checkpoint authority (2026-11-05): the owner approved M1.5b.1 Local
+  Document Preparation with the three architecture-review refinements. This
+  supersedes prior stop boundaries only for the two approved local PDFs: locked
+  pypdf, line-preserving extraction/normalization, page JSONL/schema, deterministic
+  manifest, complete statement/qualification/reference validation, tests and
+  canonical setup/verification documentation. No paragraph reconstruction, generic
+  parser platform, source changes or new downloads. On 2026-11-05 the owner
+  explicitly accepted M1.5b.1 ("approve - M1.5b.1"): OWNER ACCEPTED / CLOSED.
+  Acceptance covers the five prepared page records and verified local preparation;
+  it does not authorize M1.5b.2, publication or further implementation.
+  See docs/planning/m1.5b-document-preparation.md. Stop before M1.5b.2 chunking,
+  embeddings, BM25, Pinecone writes, agents, commit or push. No network or .env is
+  required by preparation. Existing ignored generated outputs must be reproducible
+  from canonical code, locked dependencies, approved inputs and documented setup.
+- Prior checkpoint authority (2026-11-05): after accepting M1.5b.1, the owner
+  explicitly instructed "go ahead with M1.5b.2". This supersedes prior stop
+  boundaries only for local chunking/evidence preparation of the two approved
+  documents, fidelity/authority/acceptance/lineage checks, and canonical setup/
+  verification/status records. M1.5b.2 is implemented with technical PASS and
+  awaits owner acceptance. See docs/planning/m1.5b-chunking-review.md. Preserve
+  all M1.5b.1 artifacts/implementation/review, original datasets/audits, dependencies
+  and credentials. No LangChain/Pydantic/tokenizer dependency is needed for this
+  bounded implementation. Source/preparation owner acceptance must remain distinct
+  from pending chunk acceptance. Stop before embeddings, BM25, Pinecone index
+  creation/upload, agents, external calls, commit or push. No subsequent milestone
+  or ongoing publication is authorized.
+- Prior checkpoint authority (2026-11-05): owner explicitly approved proposed
+  M1.5b.3 and requested a readable before/after audit. Authorize a deterministic
+  focused-text projection, embedding-model baseline selection, public tokenizer-only
+  provisioning/local token-fit validation, a proposed runtime evidence contract,
+  and readable audit/verification artifacts. M1.5b.3 is implemented with local
+  technical PASS and awaits owner acceptance; see docs/planning/m1.5b3-embedding-review.md.
+  Preserve the 45 original chunks and all prior artifacts/approvals. A supplied
+  independent recommendation is not silently promoted to formal M1.5b.2 acceptance;
+  the latest explicit instruction authorizes this local next scope regardless.
+  Use the isolated locked tools/embedding_preparation environment; do not modify
+  root dependencies or approved upstream hashes. Default projection is offline;
+  --provision-tokenizer fetches only the four pinned public files. No model weights,
+  paid inference, Pinecone index/upload, agent, commit or push. The runtime evidence
+  decoder is standard-library-only and must not read ignored local packet files.
+- Latest owner acceptance (2026-11-05): the owner explicitly approved all three
+  M1.5b.3 decisions and directed recording acceptance of both M1.5b.2 and M1.5b.3,
+  then stopping. Both checkpoints are OWNER ACCEPTED / CLOSED. Accepted decisions:
+  multilingual-e5-large baseline, focused embedding_text with complete evidence
+  retained, and co-located serialized runtime evidence contract. Dated canonical
+  closure records in the chunking and embedding reviews supersede prior pending
+  descriptions; preserve all original artifact/profile/HTML bytes and historical
+  verification. Preparation-time pending labels do not determine current approval.
+  This authorizes acceptance documentation only. No test/provider rerun, artifact
+  regeneration, model API/embedding, index/upload, agent, next milestone, commit
+  or push. Report both acceptances and stop.
+- Latest scoped execution (2026-11-05): owner explicitly authorized the three-record
+  Pinecone storage/fetch sample (PROD-008, PROD-011, REQ-007). This supersedes earlier
+  no-provider/index boundaries only for this test. Dedicated sample index/namespace,
+  E5 passage embeddings with truncate NONE, three upserts and exact-ID fetch passed;
+  complete unchanged evidence/metadata verified. See
+  docs/planning/m1.5b4-pinecone-sample-validation.md and tools/validate_pinecone_sample.py.
+  Existing execution receipt/index prevents rerunning writes or overwriting work.
+  No other 42-record upload, semantic search, general retrieval/agent implementation,
+  dependency change, commit or push authorized. This is a sample technical PASS,
+  not full M1.5b.4 acceptance. Stop for owner review.
+- Latest bounded corpus authorization (2026-11-05): owner approved populating and
+  verifying all45 approved records in a separate validation namespace while
+  preserving the three-record sample. Technical PASS: m15b4-corpus-validation-v1
+  on existing launchlens-e5-sample-v1;45 exact IDs/evidence/vectors verified and
+  sample unchanged. See docs/planning/m1.5b4-full-corpus-validation.md and
+  tools/validate_pinecone_corpus.py. This supersedes older upload prohibitions
+  only for the completed corpus-storage checkpoint. No semantic search ran;
+  storage fidelity does not establish relevance. Full M1.5b.4 remains incomplete,
+  with owner review pending. No next retrieval/agent/UI, chat-model selection,
+  commit or push inferred. Stop and report in plain English.
+- Latest scoped semantic validation (2026-11-05): owner explicitly authorized a few
+  predefined GTM-focused searches, ranked evidence/expectations/misses and a plain-
+  English report. Eight cases fixed before execution;7/8 passed top-three expected
+  unit coverage. Flavor/inspiration query found relevant overview/PROD-003 but
+  missed dedicated PROD-002 in top five; overview has its exact related_chunk_id.
+  All40 hit packets preserved integrity/authority;45-record corpus unchanged.
+  See docs/planning/m1.5b4-semantic-retrieval-validation.md. Do not retune cases,
+  erase the miss, claim universal relevance or infer agent readiness. Exact-ID
+  relation follow-up is proposed only. No corpus writes, chat model, agent/UI,
+  final model decision, milestone acceptance, commit or push. Stop for review.
+- Latest one-hop follow-up (2026-11-05): owner approved the existing overview's
+  exact reference fetch, explicitly keeping keyword/hybrid usefulness open. Two
+  GET calls passed; all three actual parent links (not expected-answer IDs) fetched
+  and verified, recovering missing PROD-002 with its evidence/citations. Original
+  ranking baseline remains7/8; no keyword comparison or agent implemented. See
+  docs/planning/m1.5b4-claim-link-validation.md. No broader traversal, searches,
+  corpus writes, model calls, milestone acceptance or publication authorized.
+  Stop for owner review; do not infer that hybrid retrieval is unnecessary.
+- Latest bounded comparison (2026-11-05): owner approved one keyword/semantic/
+  hybrid comparison on the same eight GTM cases. Fixed BM25/RRF settings before
+  execution; results semantic7/8,keyword6/8,hybrid7/8. Keyword improved flavor002
+  rank6->4,hybrid5, but neither fixed top3 coverage. Hybrid improved individual
+  ranks without increasing passing cases; do not claim keyword never helps.
+  See docs/planning/m1.5b4-search-comparison.md. Recommend semantic plus bounded
+  reference-following for this MVP, pending owner review; no application strategy
+  switch, agent integration or further tuning implemented/authorized. Corpus and
+  all prior results unchanged. No formal milestone acceptance, commit or push.
 - Require owner approval before expanding scope or advancing milestones.
 - Read [the canonical milestone plan](docs/planning/milestones.md) before planning
   or executing milestone work. A sequence update alone does not authorize execution.
@@ -135,3 +254,40 @@ inferred. Report the verified push and stop for the owner's next scoped instruct
 The latest explicit M1.5a owner authorization above supersedes earlier milestone
 execution boundaries only for the described documentation acceptance/sync.
 Preserve all prior acceptance and verification; no next milestone is inferred.
+
+For current work, the later M1.5b.1 execution authority above supersedes historical
+no-dependency/no-ingestion boundaries only within that local preparation scope.
+Preparation verification: `uv run --locked python -m unittest discover -s tests -v`,
+`uv run --locked python tools/prepare_documents.py`, and `uv lock --check --offline`.
+Use the documented Python 3.12 setup. Page records are not approved retrieval chunks;
+preserve claim-to-source and cross-page qualification obligations for later review.
+
+M1.5b.2 is the current authorized local implementation scope above. Its verification
+uses `uv run --locked python tools/prepare_chunks.py` and the existing full unittest
+command. Future embedding/model token limits and Pinecone field adaptation must be
+verified separately before indexing. Never truncate away required evidence.
+
+M1.5b.3 is the current scoped execution authority above. Tests for the isolated
+projection are under tools/embedding_preparation/tests; existing root tests retain
+their locked environment. Follow canonical reproduction instructions. Local token
+fit/metadata round trips do not establish hosted parity or retrieval relevance.
+
+The latest explicit dual-checkpoint acceptance above is the current stop boundary.
+Earlier execution/pending-review descriptions are historical; B2/B3 are now closed.
+No continuing implementation or publication authorization is inferred.
+
+The later three-record sample authority above is the current completion boundary.
+The hosted sample passed; historical no-index statements describe earlier stages.
+All other indexing/retrieval and publication work remains unauthorized.
+
+The later full-corpus storage checkpoint above is now complete with technical PASS;
+semantic retrieval and agent execution remain separately authorized future work.
+
+The later GTM semantic-check authority above supersedes older no-search boundaries
+only for the completed eight-case run; one direct-claim coverage miss remains.
+
+The latest one-hop reference test above is complete. Its coverage result does not
+override the original semantic-ranking miss or authorize keyword/hybrid execution.
+
+The latest one-pass comparison above is complete. Stop for review; retain the
+original ranking miss and do not start additional tuning or agent work implicitly.
