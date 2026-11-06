@@ -7,6 +7,58 @@ The [north star](northstar.md) defines the owner-designated autonomous-agent goa
 MVP boundaries and completion targets. This plan continues to govern execution
 authority and actual milestone acceptance; documenting the goal does not advance it.
 
+## Formal owner acceptance and scoped Git publication - 2026-11-06
+
+**M2.1 OWNER ACCEPTED / CLOSED.** After reproducing the offline demo, the owner
+explicitly stated “approved M2.1” and requested Git sync. Acceptance covers the
+bounded offline registry/harness, one-current-run lifecycle, replay/interrupt/reset
+behavior, isolated locked dependency profile, safe fixtures/demo and reported tests.
+The included M2 plan/north-star refinements preserve the agreed supported-task scope.
+
+The owner authorizes security/confidentiality and exact Git diff review, commit and
+push of this accepted checkpoint and supporting documentation to the existing
+private repository. Fresh pre-publication verification:77 root +23 projection/codec
++28 foundation tests = **128 PASS**. Prior test history, including the dependency
+hash failure and its isolation resolution, remains preserved. Source datasets,
+accepted tool behavior, root/embedding profiles and generated evidence remain intact.
+
+This does not accept full M1.5b.4 or authorize M2.2, live model/source calls, drafting,
+Reviewer/UI, LangSmith delivery, further dependency changes or ongoing publication.
+Next candidate: M2.2 live autonomous research, after provisional model and bounded
+live-call scope are approved. Stop after verified private sync and report next steps.
+
+## M2.1 foundation - implementation history, 2026-11-06
+
+Owner explicitly approved the bounded offline build and reiterated go-ahead after
+MEMORY checkpoint. Implemented registry, protected state, actual LangGraph decision/
+dispatch loop, scripted adapters, source/policy checks, replay protection, interrupt/
+resume, replacement/reset and bounded terminal states. One flavor_discovery objective;
+12 turns/four searches; no live services or generated copy. Fresh128 tests PASS:
+77 root,23 projection/codec,28 foundation. Three locks check offline; clean-copy tests/
+demo need no private/generated/workspace input. See [foundation review](m2.1-foundation-review.md).
+
+Root dependency edit initially broke accepted preparation hash checks; resolved by
+restoring original root metadata/lock/environment and using explicit isolated agent
+profile, preserving every accepted source/artifact/binding. No weakening/regeneration.
+Status TECHNICAL PASS / OWNER REVIEW PENDING. Stop before M2.2, live calls, generation/
+Reviewer/UI/tracing delivery, owner acceptance or Git sync. Earlier M2 planning-only
+statements below are historical and superseded only for this completed checkpoint.
+
+## M2 planning clarification - 2026-11-06
+
+Owner agreed to guided supported-use-case selection, distinct current-run state and
+an action registry, repeat-generation semantics and the reviewed five-checkpoint
+direction. Latest owner-approved refinement: one current package, Generate again
+replaces it, Reset demo clears local task state, no draft archive/run browser.
+M2.1 defines/tests replacement/reset and replay isolation; M2.4 adds UI controls.
+No accepted-source or hosted-trace deletion; prior retention proposal is superseded.
+The [M2 implementation plan](m2-agent-implementation-plan.md) is the canonical M2
+behavior/sequence record, including alignment examples and pending decisions.
+Registry discovery and request admission are deterministic; model autonomy is
+inside the selected supported task. This supersedes the earlier eight-step proposal
+for planning. Documentation update only: M2.1 execution, installs, provider calls
+and further Git publication are not authorized. Existing M1 results are preserved.
+
 ## Owner acceptance and authorized Git sync - 2026-11-06
 
 The owner approved “Review and consolidate — Accept or correct the completed tools,

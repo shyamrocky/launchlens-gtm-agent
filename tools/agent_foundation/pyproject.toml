@@ -1,0 +1,12 @@
+[project]
+name = "launchlens-agent-foundation"
+version = "0.0.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "langgraph==1.2.20",
+    # Imported to disable tracing explicitly; already required by langchain-core.
+    "langsmith==0.14.17",
+]
+
+[tool.uv]
+package = false

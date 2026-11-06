@@ -36,6 +36,17 @@ The sections below preserve results
 and stop boundaries from each checkpoint; later explicit records supersede earlier
 unimplemented/unverified descriptions. See the [milestone plan](docs/planning/milestones.md).
 
+## M2.1 offline harness foundation - 2026-11-06
+
+[Foundation review and setup](docs/planning/m2.1-foundation-review.md): **OWNER ACCEPTED / CLOSED**,
+2026-11-06, following the owner-reproduced offline demo. Supported Cherry Float task selection, protected state,
+validated actions, real LangGraph checkpoint/clarification loop, replay protection,
+one-current-run replacement/reset and readable scripted demo.128 tests pass across
+root, projection and foundation suites. No live model, content generation, Reviewer
+or UI yet. LangGraph dependencies use the explicit tools/agent_foundation profile;
+root preparation metadata/lock and accepted evidence remain unchanged. Owner authorized
+reviewed private Git sync of this checkpoint; M2.2 requires separate approval.
+
 ## Planned architecture
 
 The owner-provided future architecture is Streamlit for the interface, LangGraph

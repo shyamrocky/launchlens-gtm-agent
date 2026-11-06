@@ -19,7 +19,20 @@ or grant real-world business approval.
 
 ## Autonomous behavior and boundaries
 
-The user provides a market, evaluation date and campaign objective. The agent
+The user selects a supported GTM use case through guided controls, then provides a
+market, explicit evaluation date and supported campaign objective. A harness-owned
+registry determines available tasks and source scope; backend validation rejects
+unsupported products before model/research calls. Current-run state is distinct
+from supported use cases and from the agent's action/tool registry. Keep one current
+package: Generate again replaces it with a fresh unique run; Reset demo clears local
+session task state and returns to the initial form. No draft archive or run browser.
+Revise/resume continues the current task; changed drafts require fresh review and
+new runs inherit no prior acceptance. Reset leaves sources and hosted traces intact.
+See the [M2 implementation plan](m2-agent-implementation-plan.md)
+for the owner-agreed behavior, iterative sequence and acceptance examples. This is
+planning direction, not a claim that registry/UI/agent functionality is implemented.
+
+The agent
 determines what information it needs, chooses tools, gathers evidence, identifies
 audience hypotheses and tone, and decides whether to research further, request
 clarification, generate content, delegate critique, revise or stop.

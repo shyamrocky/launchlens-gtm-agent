@@ -3,6 +3,38 @@
 ## Authority and milestone scope
 
 - The user is the product owner and final architectural decision-maker.
+- Latest owner acceptance/publication (2026-11-06): owner explicitly accepted M2.1
+  and requested reviewed Git sync after reproducing the offline demo. M2.1 is OWNER
+  ACCEPTED / CLOSED. Commit/push only the accepted foundation code/tests/locked
+  profile, safe demo/fixtures, M2 plan/north-star refinements and supporting acceptance/
+  status records to the existing private repository after security/exact-diff review.
+  Preserve source/evidence/root/embedding profiles, credentials, workspace and history.
+  Verify private visibility and remote commit/files; stop before M2.2, live services,
+  draft/Reviewer/UI/tracing delivery or further publication. Full M1.5b.4 acceptance
+  remains separate. Canonical closure: docs/planning/m2.1-foundation-review.md.
+- Latest execution (2026-11-06): owner explicitly approved bounded M2.1 foundation,
+  then reiterated go-ahead after a MEMORY checkpoint. Implemented offline LangGraph
+  loop, supported-use-case/action registry, scoped ownership/validation, replay,
+  clarification interrupt/resume and one-current-run replace/reset. Technical PASS:
+  128 tests (77root/23projection/28foundation); owner acceptance pending. Foundation
+  environment is explicitly provisioned under tools/agent_foundation; original root
+  metadata/lock restored byte unchanged to preserve accepted preparation bindings.
+  See docs/planning/m2.1-foundation-review.md. No live model/source calls, drafting,
+  Reviewer/UI/LangSmith delivery, next checkpoint, formal acceptance or Git sync.
+  This supersedes earlier M2.1 planning-only boundaries solely for completed scope.
+- Latest planning direction (2026-11-06): read docs/planning/m2-agent-implementation-plan.md
+  before M2 work. Owner agreed to a harness-owned supported-use-case registry,
+  direct guided UI selection, a supported-use-case registry, current-run state and
+  an action/tool registry. Latest owner-approved refinement: one current package,
+  Generate again replaces it with a fresh unique run, Reset demo clears local task
+  state, no draft archive/run browser. Revise/resume continues the current run;
+  review/acceptance is not inherited across replacement. No source or hosted-trace
+  deletion. See M2-D004 and its reset/replay acceptance checks. One Cherry Float task;
+  reject unsupported products before model/research calls. The model chooses actions
+  within the selected task; it does not infer registry existence or own permissions.
+  The reviewed five-checkpoint M2 sequence is planning direction. Current task
+  authorizes canonical planning/status updates only; no M2.1 implementation,
+  dependency install, provider calls or additional Git sync. Preserve all M1 results.
 - Latest owner acceptance/publication authority (2026-11-06): owner accepted the
   completed product-evidence retrieval and Notion read/deterministic launch-check
   tools and explicitly approved Git sync after review. Record both acceptances;
