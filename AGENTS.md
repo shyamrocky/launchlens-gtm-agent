@@ -1,8 +1,106 @@
 # LaunchLens working instructions
 
+## Latest owner authority — 2026-11-06
+
+Owner explicitly accepted M2.2 research and harness repairs, including completed
+US, UK, India and controlled readiness-failure checks, and authorized Git sync.
+M2.2 and the already accepted M2.3a are OWNER ACCEPTED / CLOSED. Record acceptance;
+review the exact pending code/config/tests/docs for secrets and confidentiality;
+verify offline checks and remote private visibility; commit and push only this
+accepted scope to the existing private repository. Preserve datasets, historical
+receipts, dependencies, credentials and workspace privacy. Refresh current context
+and progress; do not append MEMORY unless requested. Stop after verified sync.
+M2.3b prompt/input review is next; no generation, live call, Reviewer/UI, optimization,
+full M1.5b.4 closure or ongoing publication permission inferred. Later explicit owner
+instructions supersede the historical pending/no-publication boundaries below.
+
 ## Authority and milestone scope
 
+- Latest owner acceptance (2026-11-06): owner explicitly approved the completed
+  M2.3a implementation after its report. M2.3a OWNER ACCEPTED / CLOSED; canonical
+  docs/planning/m2.3a-content-contracts-review.md records scope and prior results.
+  Update acceptance/status/continuity only. No generation, prompt changes, model
+  calls, M2.3b/Reviewer/UI execution, optimization, source edits, MEMORY append
+  or Git staging/commit/push inferred. Prior research/fullM1.5b.4 acceptance separate.
+  Next proposed bounded checkpoint is M2.3b:one US LinkedIn draft, with generation
+  prompt/inputs and actual enforcement plan presented before execution approval.
+- Latest scoped implementation approval (2026-11-06): owner approved M2.3a
+  Template Definition and Validation with three refinements. Create five canonical
+  data/templates/gtm JSON contracts, shared stdlib structure/evidence-reference
+  validation, advisory editorial guidance and focused offline tests. Model output
+  cannot own review/version/approval metadata. Explicitly prohibit unsupported
+  CTAs/promotional assertions; distinguish structural checks from future semantic
+  Reviewer and launch enforcement. No generation, Reviewer Agent, Streamlit,
+  provider call, optimization, dependency/source/prompt/dataset change, MEMORY
+  append or Git staging/commit/push. Refresh canonical status and continuity;
+  stop for owner review before M2.3b. Design approved; implementation acceptance
+  and prior research/fullM1.5b.4 acceptances remain distinct. Canonical review:
+  docs/planning/m2.3a-content-contracts-review.md.
+  Implemented technical PASS:five contracts,shared validator,12new tests;186total
+  tests PASS and clean-copy12PASS. Stop for implementation owner review; no
+  M2.3b execution or automatic milestone acceptance/publication inferred.
+- Latest owner direction (2026-11-06): document the consolidated current state
+  and prioritize completing the usable MVP before further optimization. Canonical
+  docs/planning/m2-agent-implementation-plan.md owns the snapshot and M2-D011.
+  Preserve technical-PASS versus owner-accepted distinctions, original audits and
+  existing implementation. M2.3 remains the next proposed bounded checkpoint.
+  This task is documentation only: no runtime changes, cache instrumentation,
+  provider calls, new dependency, dataset edits, MEMORY append, milestone acceptance
+  or Git staging/commit/push. Refresh BUILD_CONTEXT/progress; stop after documentation.
+  Subsequent milestones/publication require explicit scoped owner instructions.
+- Latest scoped approval (2026-11-06): owner approved M2.2b: ONE live UK case
+  (2027-01-04), ONE India case (2027-01-18) and ONE controlled source-failure case
+  (US,2026-12-14). Reuse repaired harness, approved prompt, provisional Qwen and
+  existing limits (12 turns/four searches per case). Simulate persistent readiness
+  query unavailability locally; other reads/model remain live. No source edits,
+  automatic retries/resume, US-success rerun, context tuning, new dependency,
+  drafting/Reviewer/UI, tracing, acceptance or Git staging/commit/push. Preserve
+  old receipts and stop on failed expectations. Maintain canonical validation
+  code/tests and readable results; refresh context/progress, leave MEMORY unchanged.
+  This latest instruction supersedes prior no-additional-case boundaries only for
+  these three checks. Stop for owner review before M2.3 or any additional execution.
+  Completed TECHNICAL PASS: UK Clarify, India harness Hold, controlled failure
+  Clarify;174tests PASS, five live model calls, no searches/drafts. Canonical
+  docs/planning/m2.2b-live-restrictions-review.md. Stop; no owner acceptance inferred.
 - The user is the product owner and final architectural decision-maker.
+- Latest repair approval (2026-11-06): owner said go ahead to the audit's bounded
+  H-01/H-02/H-03 repair: deterministic focused model context with reversible evidence,
+  objective-specific completion, and adapter/run lifecycle cleanup. Authorize focused
+  offline regressions and ONE new US comparison (same request/model;12turns/four
+  searches) in a separate guarded output directory. Preserve the original baseline,
+  approved prompt, datasets, source tools, dependencies, credentials and history.
+  Record actual results/readable context and refresh continuity;stop for owner
+  review. No additional live cases/reruns,corpus writes,copy/Reviewer/UI,tracing,
+  final model adoption,full milestone acceptance or Git staging/commit/push.
+  Completed technical PASS:166tests;all45 packets exactly reconstruct;one US run
+  passed with80,202input tokens versus188,689(57.5% fewer),five turns,two searches,
+  14intact packets,Proceed/publishing false. See docs/planning/m2.2a-harness-repair-review.md.
+  H-01/02/03 technically addressed;stop for owner review,no further live execution.
+- Latest execution approval (2026-11-06): owner explicitly approved M2.2a bounded
+  live US research after approving the prompt and provisional Qwen model. Authorize
+  minimal native-tool-call/live-source adapters, required harness mode/context
+  changes, offline verification and ONE US run (2026-12-14, flavor_discovery), at
+  most12 model turns/four product searches. Reuse accepted read-only Notion/Pinecone
+  tools and canonical prompt; preserve source/evidence/profile hashes and M2.1
+  offline behavior. Record actual actions/evidence/usage in a readable review and
+  refresh continuity. Stop for owner review; no additional live scenario/rerun,
+  source write, new dependency, drafting/Reviewer/UI, tracing delivery, full M2.2
+  acceptance, final model adoption or Git staging/commit/push. Existing execution
+  receipt must prevent accidental live reruns. See tools/validate_live_research.py.
+  Completed technical PASS:5 model-selected actions,two searches,28.732seconds;
+  14 unchanged packets,computed US Proceed,publishing false;147 offline tests PASS.
+  See docs/planning/m2.2a-live-research-review.md. Measured188,689 input tokens is
+  a context-efficiency limitation, not an approved projection/tuning task. Stop for
+  owner review; do not rerun or implement a new context design without authorization.
+- Latest scoped approval (2026-11-06): owner approved the LaunchLens research prompt
+  including registered applications and supported-GTM-registry boundaries, then
+  requested implementing the prompt first. Maintain its single canonical asset at
+  src/launchlens/prompts/research.txt; operating/approval record in
+  docs/planning/m2-agent-implementation-plan.md. Qwen/Qwen3-30B-A3B-Instruct-2507 is
+  owner-approved provisionally. This scope permits prompt/related status checks only:
+  no live wiring/calls, runtime loader, final model adoption, new dependency, source
+  changes, drafting/Reviewer/UI, full M2.2 acceptance or Git staging/commit/push.
+  Preserve the accepted M2.1 harness and frozen evidence; refresh continuity notes.
 - Latest owner acceptance/publication (2026-11-06): owner explicitly accepted M2.1
   and requested reviewed Git sync after reproducing the offline demo. M2.1 is OWNER
   ACCEPTED / CLOSED. Commit/push only the accepted foundation code/tests/locked

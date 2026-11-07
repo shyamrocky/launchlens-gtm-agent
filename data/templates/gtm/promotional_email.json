@@ -1,0 +1,84 @@
+{
+  "template_version": "1.0",
+  "format": "email",
+  "purpose": "Create a focused, educational promotional email draft with one clear next action.",
+  "shared_contract": "launchlens.content_contracts/v1",
+  "content_schema": {
+    "type": "object",
+    "properties": {
+      "subject": {
+        "type": "string",
+        "minLength": 1
+      },
+      "preview_text": {
+        "type": "string",
+        "minLength": 1
+      },
+      "headline": {
+        "type": "string",
+        "minLength": 1
+      },
+      "body": {
+        "type": "string",
+        "minLength": 1
+      },
+      "cta": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "subject",
+      "preview_text",
+      "headline",
+      "body",
+      "cta"
+    ],
+    "additionalProperties": false
+  },
+  "editorial_guidelines": {
+    "enforcement": "advisory_only",
+    "length_targets": [
+      {
+        "fields": [
+          "body"
+        ],
+        "metric": "words",
+        "min": 100,
+        "max": 160
+      },
+      {
+        "fields": [
+          "subject"
+        ],
+        "metric": "characters",
+        "max": 60
+      },
+      {
+        "fields": [
+          "subject"
+        ],
+        "metric": "words",
+        "max": 9
+      },
+      {
+        "fields": [
+          "preview_text"
+        ],
+        "metric": "characters",
+        "min": 40,
+        "max": 90
+      }
+    ],
+    "tone": "Use the retrieved PMM voice, adapted to this channel; no fixed writing script.",
+    "guidance": [
+      "Use a descriptive subject matching the message; preview text adds context instead of repeating it.",
+      "Lead with one flavor idea. Keep the body easy to scan and end with one clear CTA.",
+      "Do not invent recipient identity, merge-tag values, sender credentials, purchase links, offers or urgency."
+    ]
+  },
+  "review_criteria": [
+    "Subject, preview, headline and body are consistent and non-deceptive.",
+    "CTA destination and any promotional terms require explicit trusted evidence/authorization, not assumptions."
+  ]
+}

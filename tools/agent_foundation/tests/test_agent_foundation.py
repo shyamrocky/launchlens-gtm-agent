@@ -291,7 +291,7 @@ class FoundationTests(unittest.TestCase):
         state = self.execute(session)
         self.assertEqual(state['status'], 'research_complete')
         self.assertEqual(state['evidence'][0]['status'], 'incomplete')
-        self.assertFalse(state['evidence'][0]['records'][1]['usable_as_complete_evidence'])
+        self.assertFalse(next(r for r in state['evidence'][0]['records'] if r['unit_id']=='overview')['usable_as_complete_evidence'])
 
     def test_uncertain_pending_action_is_not_retried_on_resume(self):
         script = [action('read_pmm_brief', 'pmm'),

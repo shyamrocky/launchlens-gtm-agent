@@ -1,0 +1,71 @@
+{
+  "template_version": "1.0",
+  "format": "linkedin",
+  "purpose": "Create one concise, informative product-story draft for professional social awareness.",
+  "shared_contract": "launchlens.content_contracts/v1",
+  "content_schema": {
+    "type": "object",
+    "properties": {
+      "hook": {
+        "type": "string",
+        "minLength": 1
+      },
+      "body": {
+        "type": "string",
+        "minLength": 1
+      },
+      "cta": {
+        "type": "string",
+        "minLength": 1
+      },
+      "hashtags": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minItems": 0
+      }
+    },
+    "required": [
+      "hook",
+      "body",
+      "cta",
+      "hashtags"
+    ],
+    "additionalProperties": false
+  },
+  "editorial_guidelines": {
+    "enforcement": "advisory_only",
+    "length_targets": [
+      {
+        "fields": [
+          "hook",
+          "body",
+          "cta"
+        ],
+        "metric": "words",
+        "min": 100,
+        "max": 180
+      },
+      {
+        "fields": [
+          "hashtags"
+        ],
+        "metric": "items",
+        "min": 3,
+        "max": 3
+      }
+    ],
+    "tone": "Use the retrieved PMM voice, adapted to this channel; no fixed writing script.",
+    "guidance": [
+      "Use an engaging hook, short paragraphs, one central message and one CTA; avoid a corporate press-release style.",
+      "Adapt PMM tone to professional, accessible LinkedIn language; select relevant hashtags without stuffing.",
+      "No fabricated company quotes, testimonials, partnerships or consumer reactions."
+    ]
+  },
+  "review_criteria": [
+    "Hook earns attention without exaggeration; body develops a clear, supported product story.",
+    "CTA is coherent, supported and consistent with campaign direction; hashtags are relevant."
+  ]
+}

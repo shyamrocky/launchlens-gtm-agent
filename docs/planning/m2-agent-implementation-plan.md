@@ -1,12 +1,179 @@
 # M2 - Autonomous GTM agent implementation plan
 
+## Owner acceptance and Git sync authorization — 2026-11-06
+
+**M2.2 OWNER ACCEPTED / CLOSED.** The owner explicitly accepted the completed
+research and harness repairs and directed Git sync. This includes the original
+US research checkpoint, H-01/H-02/H-03 repair/comparison, and UK/India/controlled
+readiness-failure validation. The original technical report and its measurements
+below remain unchanged; earlier pending-review and no-publication statements are
+historical and superseded only for this acceptance and authorized private sync.
+
+M2.3a content contracts were already owner accepted and are included in this sync.
+No live rerun, source/dataset change, final model adoption, full M1.5b.4 acceptance,
+M2.3b implementation/generation, Reviewer or UI is authorized. Next: present the
+M2.3b generation prompt and exact inputs for owner review before execution.
+
 Date: 2026-11-06 (America/Los_Angeles).
-Status: M2.1 OWNER ACCEPTED / CLOSED (2026-11-06), following offline TECHNICAL PASS
-and the owner-reproduced demo. See [foundation review](m2.1-foundation-review.md).
-M2.2 and later checkpoints still require separate authorization. Historical planning
-restrictions below are superseded only for this completed bounded foundation.
-The [north star](northstar.md) governs the goal; [milestones](milestones.md) governs
-execution approval. Existing accepted tools and datasets remain unchanged.
+The [north star](northstar.md) governs the goal; [milestones](milestones.md) records
+execution authority and formal acceptance. This plan owns the consolidated current
+state, remaining risks and delivery priorities. Detailed checkpoint reviews below
+retain their original verification evidence and historical boundaries.
+
+## Current state and owner-selected delivery priority - 2026-11-06
+
+Latest increment: owner approved M2.3a five-template design with three refinements
+and authorized local definition/validation. [Content-contract review](m2.3a-content-contracts-review.md):
+five JSON configurations, shared structural/evidence-reference validator and12new
+tests implemented;186offline tests PASS. No generation/Reviewer/UI implemented.
+M2.3a OWNER ACCEPTED / CLOSED (2026-11-06). Earlier next-M2.3 wording below
+is refined to M2.3a definitions → M2.3b LinkedIn → M2.3c Reviewer/revision.
+
+**Research foundation working; GTM content generation, Reviewer and user experience
+remain to be built.** The model chooses permitted next actions; LangGraph retains
+state; the harness enforces supported-task admission, evidence authority, launch
+permissions and execution limits. One Cherry Float task, US/UK/India, explicit
+scenario date and flavor_discovery objective. Publishing always remains disabled.
+
+Owner direction: **complete the usable MVP first, then optimize measured cost and
+latency.** This supersedes the earlier recommendations to perform another context-
+selection change or cache-measurement checkpoint before drafting. Preserve the
+existing repair; do not weaken correctness, launch restrictions or required review
+for speed. Cache instrumentation, context pruning, search tuning, framework changes
+and extra hosted comparisons are not authorized by this documentation update.
+
+### Completed work and acceptance distinctions
+
+| Area | Current result | Acceptance / evidence |
+|---|---|---|
+| Source datasets | Product Brief v0.2, synthetic PRD v0.3, PMM Brief v0.2, nine calendar milestones and 12 readiness records | Owner accepted; source authority remains distinct from fictional operational permissions. See [dataset records](milestones.md). |
+| External connectivity | Anonymous Drive PDF download/integrity checks; read-only Notion PMM/calendar/readiness; Pinecone authentication and storage checks | M1.5a owner accepted; [connectivity evidence](m1.5-connectivity-validation.md). Drive distribution is not a registered agent action. |
+| Document/evidence preparation | Two PDFs, five extracted pages, 45 evidence chunks; focused embedding_text separate from full evidence_payload | M1.5b.1/B2/B3 owner accepted; full M1.5b.4 acceptance remains open. |
+| Product retrieval | Semantic top-five search plus at most five supporting-reference targets, one hop; full citations, qualifications and authority returned; incomplete evidence explicit | [Retrieval tool](product-evidence-retrieval-review.md) owner accepted; fixed direct ranking 7/8, expected combined evidence coverage 8/8, with one response still explicitly partial for extra references. |
+| Operational tools | Structured Notion reads and deterministic launch/date checks | [Notion tools](notion-launch-checks-review.md) owner accepted; frozen dates alone do not grant availability or approval. |
+| Harness foundation | Registry, protected state, action validation, budgets, replay protection, clarification, fresh-run replacement/reset | [M2.1](m2.1-foundation-review.md) owner accepted and published. |
+| Live autonomous research | Provisional Qwen/Qwen3-30B-A3B-Instruct-2507 selects tools/queries/order; actual actions observable | [M2.2a US](m2.2a-live-research-review.md) OWNER ACCEPTED / CLOSED (2026-11-06). |
+| Harness repair | Reversible deduplicated model context; objective-specific completion; adapter identity/budget cleanup | [Repair](m2.2a-harness-repair-review.md) OWNER ACCEPTED / CLOSED (2026-11-06). |
+| Live restrictions/failure | UK asks for availability clarification; India check triggers harness Hold; locally unavailable readiness triggers clarification | [M2.2b](m2.2b-live-restrictions-review.md) OWNER ACCEPTED / CLOSED (2026-11-06). Failure was simulated locally with a live model, not an observed provider outage. |
+| Content contracts | Five directly loaded JSON templates; shared model envelope, evidence reference validation and advisory targets | M2.3a [implementation](m2.3a-content-contracts-review.md) OWNER ACCEPTED / CLOSED (2026-11-06). No actual drafts/review yet. |
+
+Latest executed verification: **186 offline tests PASS** (89 root, 23 projection,
+74 agent/adapter), including12new content-contract tests. Earlier M2.2b clean-copy
+74 PASS without data, .env, workspace or inherited credentials remains historical;
+M2.3a configuration reproduction is recorded separately in its review. Approved datasets and historical audit
+artifacts remain unchanged. New required implementation/docs occupy canonical
+repository locations; ignored audit records/workspace are not product dependencies.
+
+### Context usage and caching: measured facts versus future options
+
+The repaired US run used **80,202 total input tokens across five calls**, versus
+188,689 in the original run (57.5% fewer). Its largest single input was **34,326**.
+Fourteen full evidence packets remained intact. Model-chosen queries differed;
+this is one observed comparison, not a controlled quality/cost benchmark. A separate
+same-action offline replay measured 59.63% fewer request bytes, not hosted tokens.
+
+| Turn / proposed action | Input tokens |
+|---|---:|
+| Check launch | 2,214 |
+| Read PMM Brief | 3,525 |
+| First product search | 13,628 |
+| Second product search | 26,509 |
+| Finish | 34,326 |
+
+Current model input pools duplicate objects and reconstructs complete evidence, but
+still carries the entire normalized 102-block PMM Brief and accumulated packets.
+It does not yet select only stage-relevant PMM sections/fields. Full evidence stays
+in harness state; embedding_text is a vectorization input, not automatically the
+complete model prompt. No target token budget or further savings are claimed.
+
+The read-only review found three distinct mechanisms:
+
+- **Provider prompt caching:** reuse computation for identical prompt prefixes;
+  potential latency/billing benefit, not durable memory or a larger context window.
+  Nebius documents automatic, best-effort caching and reports
+  usage.prompt_tokens_details.cached_tokens. Our adapter currently retains total
+  usage but discards this detail. Therefore 80,202 is not a demonstrated uncached-
+  token bill. Qwen-specific cache hits and applicable cached-input pricing have not
+  been verified. See [Nebius cached tokens](https://docs.tokenfactory.nebius.com/cached-tokens)
+  and [context-window distinction](https://platform.claude.com/docs/en/build-with-claude/context-windows).
+- **Context handoff / prompt chaining:** supply the evidence/guidance relevant to
+  a chosen action; a future Reviewer receives the draft, supporting evidence and
+  restrictions rather than needing every research-turn detail. This remains a
+  design option, not an implemented handoff contract or fixed action sequence.
+- **LangGraph state:** application-owned evidence, permissions, progress and run
+  lifecycle; preserving state does not automatically place all state in a model call.
+
+Hint-only review: the inspected reference commit
+0e2680c2bcefe92c968825c10205907098873fcd returns compact source-labeled passages,
+uses a main DeepAgent and Reviewer delegation, and does not explicitly configure a
+custom prompt cache or fixed chain. Its pinned DeepAgents 0.6.7 supplies automatic
+conversation summarization; explicit Anthropic cache middleware skips other
+providers. These are framework capabilities, not measured savings demonstrated by
+that project. No reference implementation or prompts were copied or executed.
+Sources: [reference agent](https://github.com/The-Gen-Academy/3D-GTM-Agent/blob/0e2680c2bcefe92c968825c10205907098873fcd/src/gtm_agent/agents/main_agent.py),
+[pinned framework](https://github.com/langchain-ai/deepagents/blob/deepagents%3D%3D0.6.7/libs/deepagents/deepagents/graph.py).
+
+### Remaining risks and planned verification
+
+| Risk / limitation | What must still be demonstrated |
+|---|---|
+| Search may miss supporting claims | Preserve the original 7/8 direct-ranking miss and explicit reference-cap limitations; do not treat search results as complete evidence. No new search tuning planned. |
+| Correct evidence may yield incorrect wording | Drafts must preserve scope, qualifications and factual support. Valid claim IDs and intact packets do not prove prose entailment. Verify during M2.3. |
+| Research permission checks do not prove generation enforcement | Draft/revise admission must enforce computed launch restrictions and prohibit unsupported availability claims. No draft action exists yet. |
+| Reviewer effectiveness unproven | A separate call must identify meaningful defects, produce actionable critique and require correction; changed drafts need fresh review. Verify during M2.3, not by counting calls. |
+| Limited live coverage | Existing bounded paths passed; live clarification continuation, human feedback/revision and broader service-failure behavior remain untested. One injected readiness failure is not every outage. |
+| Repeated demo operation | Generate again/Reset passed offline; integrated live UI must discard prior review/acceptance, reject stale IDs and remain within budgets. |
+| Context overhead and cache measurement gap | Repeated comprehensive context remains sizeable. After the usable build, measure total/cached tokens, latency and applicable prices before choosing changes. No claim of optimality or guaranteed cache hits. |
+
+Frozen corpus/version changes, production approval lifecycle, generic products,
+public research/Tavily and new infrastructure remain outside the current MVP.
+Qwen is provisional; final adoption has not been recorded. Existing test passes do
+not establish universal prompt-injection safety or production reliability.
+
+### Remaining work and stop boundaries
+
+| Step | Intended deliverable | Current authorization / status |
+|---|---|---|
+| Research closure / publication | Owner review of M2.2a, repair and M2.2b; scoped Git sync after credential/confidentiality/diff review | M2.2 OWNER ACCEPTED / CLOSED (2026-11-06); reviewed private Git sync authorized with accepted M2.3a. Full M1.5b.4 acceptance remains separate. |
+| M2.3a | Define all five content contracts and shared validation, separate hard/soft rules and protect review ownership | OWNER ACCEPTED / CLOSED (2026-11-06); no generation. |
+| M2.3b | Generate one US LinkedIn draft against the accepted contract with launch/evidence/CTA constraints | Next proposed build; not started or authorized. |
+| M2.3c | Independent Reviewer critique → bounded revision; preserve evidence and require fresh review after changes | Not started; separate authorization required. |
+| M2.4 | Campaign brief, LinkedIn, email, short blog, ad variations; Streamlit evidence/review display, human feedback, Generate again, Reset and export | Not implemented; separate milestone authorization required. |
+| M2.5 | End-to-end US/UK/India/failure/feedback demonstration, sanitized observability, submission document and <=5-minute video | Not implemented; separate authorization required. Private repository must be accessible to course reviewers. |
+| After usable MVP | Measure cache hits, total tokens, latency and billing; make only worthwhile focused optimizations | Deferred, not an extra mandatory platform milestone or permission to run calls now. |
+
+Owner accepted M2.2 and authorized reviewed private Git sync with the already
+accepted M2.3a on 2026-11-06. This acceptance commit checkpoints the research
+adapters, repairs, prompt, tests, five templates/shared validator and supporting
+documentation, based on published parent d1aa17cb00f8e959a83cf21bb7749668cd2a315b.
+No new generation, provider call, dataset/dependency change or MEMORY append is
+authorized. Publication does not authorize M2.3b execution.
+Saving owner-selected priorities is not formal milestone acceptance or a final
+model/architecture change. Proposed next action is review of the M2.3b prompt/inputs and bounded generation
+authorization, with publication handled by explicit scoped approval. Earlier
+no-template implementation descriptions are superseded only for completed M2.3a.
+
+## M2.2b authorized execution/result - 2026-11-06
+
+Owner explicitly approved one live UK, one India and one controlled tool-failure
+case with the repaired harness, unchanged prompt/provisional Qwen and existing
+limits. [Readable validation](m2.2b-live-restrictions-review.md): TECHNICAL PASS,
+owner acceptance pending. UK chose check_launch → clarification; India chose
+check_launch then harness Hold; locally unavailable readiness caused check_launch
+→ clarification. Permissions remained false; zero drafts/searches.174offline tests
+PASS; no runtime/dependency/source change required. Original US results preserved.
+M2.2 research acceptance and M2.3 execution require owner review/authorization;
+no more live runs, context tuning, drafting/Reviewer/UI or Git sync inferred.
+
+## Latest bounded repair result - 2026-11-06
+
+Owner approved the H-01/H-02/H-03 correction and one new US comparison.
+[Repair review](m2.2a-harness-repair-review.md): TECHNICAL PASS, owner review pending.
+State-derived focused model context, objective-specific completion and adapter/run
+cleanup implemented;166tests PASS. One observed US comparison passed with80,202
+input tokens versus188,689(57.5% reduction),same5turns/two searches,14 intact packets,
+computed Proceed,publishing false. Original baseline/audit preserved. No additional
+hosted cases,generation/Reviewer/UI or Git publication. Full M2.2 still incomplete.
 
 ## Product experience and shared vocabulary
 
@@ -39,6 +206,12 @@ Reuse existing source bindings and validation; do not maintain duplicate launch 
 | M2-D004 / 2026-11-06 | OWNER APPROVED: one current package, Generate again replaces it, Reset demo clears local session task state; no draft archive/run browser | Keep the demo simple while preserving fresh-run isolation and replay protection | Retaining previous results and selecting historical runs removed from MVP |
 | M2-D005 / 2026-11-06 | Implemented within owner-approved bounded M2.1 plan; acceptance pending: one flavor_discovery objective,12 decision turns/four searches, structural research completion and offline-only adapters | Concrete testable foundation before live variability | Broad objective catalog and live-model testing deferred |
 | M2-D006 / 2026-11-06 | Implemented pending review: isolated tools/agent_foundation environment; original root profile restored unchanged | Accepted preparation manifest pins root metadata/lock; preserve historical evidence bindings | Updating old hashes or weakening validators rejected; existing isolated-tooling convention reused |
+| M2-D007 / 2026-11-06 | OWNER APPROVED: adapt the owner-provided RAG prompt structure for LaunchLens research; implement prompt asset only. Qwen/Qwen3-30B-A3B-Instruct-2507 approved provisionally, not as final model selection | Reuse familiar grounding conventions while allowing model-selected actions under harness enforcement; prior tool smoke test supports a bounded trial | Unchanged RAG answering prompt rejected; live adapter/call budget, final model choice and generation/Reviewer prompts deferred |
+| M2-D008 / 2026-11-06 | OWNER APPROVED bounded M2.2a: native Qwen tool adapter, accepted read-only sources, one US flavor_discovery run;12-turn/four-search cap. Implemented TECHNICAL PASS, acceptance pending | Verify real model-selected research under existing harness, then stop for readable review | Scripted live sequence, unrestricted app access, additional live cases/reruns and drafting deferred; observed context cost requires review |
+| M2-D009 / 2026-11-06 | OWNER APPROVED H-01/H-02/H-03 bounded correction and one US comparison; implemented technical PASS, owner acceptance pending | Deduplicate model context without losing evidence; enforce selected-objective completion; clear adapter state/budgets on explicit run replacement/reset | Raw-history continuation, unrelated-claim completion and single-use adapter-only lifecycle rejected; no corpus/stack change or additional live run |
+| M2-D010 / 2026-11-06 | OWNER APPROVED M2.2b: one UK, one India and one locally injected readiness-failure live case; implemented technical PASS, acceptance pending | Verify model-selected clarification and harness launch restrictions before drafting | Real service disruption, extra runs/resume, context tuning, new infrastructure and drafting deferred |
+| M2-D011 / 2026-11-06 | OWNER-SELECTED DELIVERY PRIORITY: finish the usable MVP through bounded M2.3/M2.4/M2.5 checkpoints, then optimize measured overhead; current task documents state only | Preserve momentum toward the north star while retaining launch, evidence and review controls | Another pre-drafting context-selection/cache checkpoint deferred; no framework/provider switch, automatic milestone acceptance or implementation authorization |
+| M2-D012 / 2026-11-06 | OWNER APPROVED M2.3a design and local definition/validation: five JSON contracts plus shared model envelope, hard structure/evidence bindings, advisory targets and explicit CTA/claim review rules; implementation OWNER ACCEPTED / CLOSED (2026-11-06) | Establish consistent creative deliverables while protecting factual authority and application-owned review/approval | Five unrelated envelopes, hard editorial lengths, model-owned approval, template embeddings and premature generation rejected; M2.3b LinkedIn/M2.3c review remain separate |
 
 This supersedes the earlier instruction to preserve the previous result while a new
 run executes. Planning approval does not authorize implementation or Git publication.
@@ -206,3 +379,109 @@ This does not accept full M1.5b.4 or authorize M2.2, live model/source calls, dr
 Reviewer/UI, LangSmith delivery, further dependency changes or ongoing publication.
 Next candidate: M2.2 live autonomous research, after provisional model and bounded
 live-call scope are approved. Stop after verified private sync and report next steps.
+
+
+## Approved research prompt implemented - 2026-11-06
+
+Authority: owner approved the displayed LaunchLens research prompt and its registered
+application/GTM-registry additions, then instructed "lets first implement the prompt".
+This is a prompt-only increment within M2.2 preparation, not live-agent completion.
+The owner also approved Qwen/Qwen3-30B-A3B-Instruct-2507 as the provisional model;
+provider guidance and the prior smoke test do not establish GTM research quality.
+
+Canonical maintained asset: [research prompt](../../src/launchlens/prompts/research.txt).
+It adapts the owner-supplied grounded-generation-prompt-v2.2.txt section structure
+and grounding principles, with explicit authorization to adapt that template only.
+No Week 2 code, datasets, credentials or historical prompt files are modified.
+There is one authoritative prompt copy; this document provides its operating notes.
+
+The prompt describes Notion PMM/calendar/readiness, Pinecone product/PRD evidence,
+and Drive PDF distribution without granting generic external-application access.
+It distinguishes the supported-business-task registry from current work, uses exactly
+the five existing research actions and makes model action choice versus harness
+execution/permission/completion explicit. No fixed research sequence, unsupported
+registry-discovery action, new status schema or summary-bearing finish argument.
+
+Implementation boundary: a UTF-8 text asset only. It is not loaded by the accepted
+offline harness yet. Live wiring must load this canonical asset, supply the validated
+request, current evidence/outcomes, authoritative action contracts and remaining
+limits, and preserve lower-trust data boundaries. Provider tool-call translation,
+context-size handling and model behavior must be validated in separately approved
+M2.2 work; the prompt does not implement or prove these behaviors. No environment
+configuration, new dependency, integration, runtime loader or model call added.
+
+### Readable example - illustrative, not an executed run
+
+Input: Coca-Cola Cherry Float GTM Package Preparation; US; evaluation date
+2026-12-14; flavor_discovery objective. The harness validates this selection first.
+The model may choose any permitted research order, including checking launch early.
+
+One valid proposed action:
+
+```json
+{
+  "id": "research-flavor-01",
+  "name": "search_product_evidence",
+  "arguments": {
+    "query": "Coca-Cola Cherry Float flavor and classic soda-float inspiration",
+    "authority": "public_product_facts"
+  }
+}
+```
+
+Expected readable completion, conditional on actual successful source checks:
+US draft preparation permitted under the simulation; public flavor/inspiration
+claims traceable to PROD-002/PROD-003 with citations and qualifications; PMM audience
+hypotheses remain unvalidated; publishing disabled; no marketing copy generated.
+This would be a presentation of recorded research state, not an extra finish
+argument or an observed autonomous result. The action remains finish with {}.
+
+### Local verification and stop boundary
+
+Prompt-only checks: UTF-8 readability, approved section/content preservation,
+exact five-action names/argument fields and two search-authority values against
+maintained registry contracts; example request/action accepted by the existing
+validators; no obsolete Week 2 M7/M8 response contract or template placeholders.
+Relative links, whitespace, ignore eligibility and protected-file/Git hashes are
+checked at handoff. These are static/contract checks, not prompt efficacy tests.
+No application suite rerun is necessary for an unconnected text asset.
+
+Observed static/contract result: **PASS**. Ten prompt sections; all five action
+names and exact argument fields match the registry; both search-authority values
+match; example request/action pass existing validators; nine relative links resolve.
+All84 protected baseline hashes outside the four authorized status/continuity edits
+remain unchanged, including MEMORY, credentials, existing source/runtime profiles
+and Git index. HEAD unchanged; nothing staged. Prompt is eligible for source control;
+workspace notes remain ignored. Zero live calls, installs or behavioral test runs.
+
+Prompt SHA-256: 2df27019194b29953336ec2f5701d10e69d087ebc28f0c79ef33abe8bc44c43c.
+
+No live Nebius/Notion/Pinecone/Drive requests, dataset/profile changes, draft or
+Reviewer generation, UI, tracing delivery, Git staging/commit/push or MEMORY update.
+Next: separately approved M2.2 live adapter and bounded call budget, first one
+readable US research run, then later UK/India/failure checks after review.
+
+
+## M2.2a bounded execution - 2026-11-06
+
+Owner approved minimal wiring and one live US research run. The maintained
+[review](m2.2a-live-research-review.md) records actual actions, evidence, usage,
+147 offline tests, setup and limitations. Native tool calls selected launch check,
+PMM read, two different product queries and finish; code-computed Proceed with
+publishing false. No drafting/Reviewer/UI. All14 packets matched approved bytes.
+Measured188,689 input tokens exposes full-history context overhead; proposed
+context projection is not implemented or approved by this result. Stop for owner
+review before further live calls/cases or advancing. Full M2.2 acceptance pending;
+full M1.5b.4 remains separate. Approved prompt and frozen corpus stay unchanged.
+
+
+## Research harness audit - 2026-11-06, corrections proposed only
+
+Owner requested a thorough implemented-path review before context changes. Fresh147
+existing tests pass;10 additional offline composition probes made zero network
+attempts. [Canonical audit](m2.2a-harness-audit.md) identifies H-01 repeated full
+model context,H-02 missing objective-specific completion coverage,and H-03 missing
+live adapter/session lifecycle integration. Prior observed US PASS remains scoped;
+this is not full harness sign-off. No fixes or additional hosted execution performed.
+Proposed next bounded checkpoint closes these with offline regressions and a readable
+context example, then separately authorized one-US comparison. No approval inferred.

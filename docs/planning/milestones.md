@@ -1,11 +1,103 @@
 # LaunchLens milestone plan
 
+## Owner acceptance and Git sync authorization — 2026-11-06
+
+**M2.2 OWNER ACCEPTED / CLOSED.** The owner explicitly accepted the completed
+research and harness repairs and directed Git sync. This includes the original
+US research checkpoint, H-01/H-02/H-03 repair/comparison, and UK/India/controlled
+readiness-failure validation. The original technical report and its measurements
+below remain unchanged; earlier pending-review and no-publication statements are
+historical and superseded only for this acceptance and authorized private sync.
+
+M2.3a content contracts were already owner accepted and are included in this sync.
+No live rerun, source/dataset change, final model adoption, full M1.5b.4 acceptance,
+M2.3b implementation/generation, Reviewer or UI is authorized. Next: present the
+M2.3b generation prompt and exact inputs for owner review before execution.
+
 Authority: owner-provided revised M1 sequence, 2026-11-04
 (America/Los_Angeles). This document is the canonical milestone plan.
 
 The [north star](northstar.md) defines the owner-designated autonomous-agent goal,
 MVP boundaries and completion targets. This plan continues to govern execution
 authority and actual milestone acceptance; documenting the goal does not advance it.
+
+### Acceptance-sync verification — 2026-11-06
+
+Fresh offline checks before publication: **186 PASS** (89 root, 23 embedding
+projection, 74 agent/adapter). No live model/source calls or generation were run.
+Exact publication scope: 29 canonical code/config/test/prompt/documentation files;
+no datasets, dependency changes, generated evidence, credentials or workspace files.
+The remote main matched published parent d1aa17cb00f8e959a83cf21bb7749668cd2a315b;
+authenticated GitHub inspection confirmed PRIVATE before publication.
+
+Targeted configured-credential/pattern scan, Python syntax/JSON parsing, 99 local
+Markdown links, six ignore probes and Git whitespace checks passed. Preservation
+hashes confirmed 138 baseline files unchanged, including source/prepared evidence,
+implementation/configuration, dependencies, credentials and append-only MEMORY.
+Only four previously tracked status/acceptance documents changed during this sync;
+the remaining accepted implementation was already present locally. This is a
+scoped confidentiality review, not an exhaustive third-party security certification.
+Original audit reports and pending labels remain as historical records under the
+superseding acceptance blocks. No runtime/build/test dependency on workspace was
+introduced. Stop after verified private publication; M2.3b still requires approval.
+
+## M2.3a content contracts - 2026-11-06
+
+Owner approved the five-template design with hard/soft-rule, shared-evidence and
+CTA-safety refinements. [Implementation review](m2.3a-content-contracts-review.md):
+**OWNER ACCEPTED / CLOSED**, 2026-11-06. Five canonical JSON configurations and
+one shared stdlib validator implemented;186offline tests PASS. Required structure
+and evidence-reference bindings are hard; editorial targets advisory. Review and
+approval metadata remain application-owned. No generation/Reviewer/UI/live calls.
+Next proposed M2.3b:one US LinkedIn draft; M2.3c:Reviewer/bounded revision. Separate
+execution approvals required; prior research/fullM1.5b.4 acceptance remains open.
+
+## Current-state documentation and delivery priority - 2026-11-06
+
+Owner requested documenting the completed work, remaining risks and plan, with
+usable MVP delivery ahead of further optimization. The authoritative consolidated
+snapshot is in the [M2 implementation plan](m2-agent-implementation-plan.md#current-state-and-owner-selected-delivery-priority---2026-11-06),
+including decision M2-D011. M2.2a/repair/M2.2b remain technically passed, acceptance
+pending; full M1.5b.4 acceptance and scoped Git sync are separate open actions.
+M2.3 → M2.4 → M2.5 remains the proposed delivery sequence; optimize after the usable
+build. No implementation, cache instrumentation, live rerun, dependency change,
+formal acceptance or Git publication is authorized by this documentation request.
+Historical recommendations to tune before drafting are superseded as priorities;
+required launch/evidence/review protections remain mandatory.
+
+## M2.2b launch restrictions and controlled failure - 2026-11-06
+
+Owner-approved three-case run completed: **TECHNICAL PASS / OWNER REVIEW PENDING**.
+[Readable results](m2.2b-live-restrictions-review.md): UK asks for missing availability and pauses;
+India pending authorization triggers harness Hold; locally simulated readiness
+unavailability triggers clarification with permissions withheld. Five live model
+calls; no product searches or drafts.174offline tests PASS. Existing harness,
+prompt, datasets and dependencies unchanged. Original US results below preserved.
+Stop before more calls, M2.3 drafting/Reviewer/UI, acceptance or Git publication.
+
+## M2.2a repair/comparison - 2026-11-06
+
+Owner approved the audit's three bounded corrections and one new US comparison.
+[Review](m2.2a-harness-repair-review.md): TECHNICAL PASS / OWNER REVIEW PENDING.
+H-01 context projection preserves complete evidence;H-02 requires objective claims;
+H-03 resets adapter/run state and local budgets.166tests PASS;all45 packets reversible.
+Observed comparison:80,202 versus188,689 input tokens(57.5% fewer),five model turns,
+US Proceed,publishing false,no drafts. Original baseline/audit stay historical.
+No further live run,other hosted scenario,copy/Reviewer/UI,tracing,acceptance or Git
+sync. Full M2.2 and full M1.5b.4 acceptance remain separate. Stop for owner review.
+
+## M2.2a - One live US research run, 2026-11-06
+
+Owner approved bounded live wiring and one US case with provisional Qwen and the
+approved prompt. **TECHNICAL PASS / OWNER REVIEW PENDING**:5 native model-selected
+actions,two searches,28.732seconds;14 full evidence packets unchanged;US Proceed
+computed by harness,publishing false;147 offline tests pass. Existing offline demo
+preserved. [Actual review/setup/usage](m2.2a-live-research-review.md) records high
+full-history context usage(188,689 input tokens) as an efficiency limitation.
+No further live scenario/rerun, context projection, source change, draft/Reviewer/UI,
+tracing delivery, final model adoption, full M2.2 acceptance or Git sync authorized.
+Historical M2.1-only boundaries below are superseded solely for this completed
+bounded run. Stop for review; full M1.5b.4 acceptance remains separate.
 
 ## Formal owner acceptance and scoped Git publication - 2026-11-06
 

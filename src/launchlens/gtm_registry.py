@@ -10,6 +10,11 @@ USE_CASE = "cherry-float-gtm"
 OBJECTIVE = "flavor_discovery"
 MAX_TURNS = 12
 MAX_SEARCHES = 4
+# Fixed-corpus business prerequisites; never model-supplied search instructions.
+OBJECTIVE_CLAIMS = {OBJECTIVE: {
+    "PROD-002": "Supported Cherry Float flavor description",
+    "PROD-003": "Classic soda-float inspiration",
+}}
 
 
 class HarnessError(ValueError):
@@ -88,3 +93,9 @@ def validate_action(value):
         require(type(args["question"]) is str and args["question"].strip() and len(args["question"]) <= 500,
                 "Clarification requires 1–500 characters")
     return value
+
+
+def objective_claims(request):
+    """Fresh minimum-evidence configuration for the validated selected objective."""
+    request = validate_request(request)
+    return dict(OBJECTIVE_CLAIMS[request["objective_id"]])

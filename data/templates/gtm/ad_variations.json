@@ -1,0 +1,126 @@
+{
+  "template_version": "1.0",
+  "format": "ads",
+  "purpose": "Create exactly three platform-neutral text concepts for internal messaging comparison.",
+  "shared_contract": "launchlens.content_contracts/v1",
+  "content_schema": {
+    "type": "object",
+    "properties": {
+      "concepts": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 3,
+        "items": {
+          "type": "object",
+          "properties": {
+            "angle": {
+              "type": "string",
+              "minLength": 1
+            },
+            "headline": {
+              "type": "string",
+              "minLength": 1
+            },
+            "body": {
+              "type": "string",
+              "minLength": 1
+            },
+            "cta": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "angle",
+            "headline",
+            "body",
+            "cta"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "concepts"
+    ],
+    "additionalProperties": false
+  },
+  "editorial_guidelines": {
+    "enforcement": "advisory_only",
+    "length_targets": [
+      {
+        "fields": [
+          "concepts.0.headline"
+        ],
+        "metric": "characters",
+        "max": 60
+      },
+      {
+        "fields": [
+          "concepts.0.body"
+        ],
+        "metric": "characters",
+        "max": 125
+      },
+      {
+        "fields": [
+          "concepts.0.cta"
+        ],
+        "metric": "characters",
+        "max": 25
+      },
+      {
+        "fields": [
+          "concepts.1.headline"
+        ],
+        "metric": "characters",
+        "max": 60
+      },
+      {
+        "fields": [
+          "concepts.1.body"
+        ],
+        "metric": "characters",
+        "max": 125
+      },
+      {
+        "fields": [
+          "concepts.1.cta"
+        ],
+        "metric": "characters",
+        "max": 25
+      },
+      {
+        "fields": [
+          "concepts.2.headline"
+        ],
+        "metric": "characters",
+        "max": 60
+      },
+      {
+        "fields": [
+          "concepts.2.body"
+        ],
+        "metric": "characters",
+        "max": 125
+      },
+      {
+        "fields": [
+          "concepts.2.cta"
+        ],
+        "metric": "characters",
+        "max": 25
+      }
+    ],
+    "tone": "Use the retrieved PMM voice, adapted to this channel; no fixed writing script.",
+    "guidance": [
+      "Give each concept a distinct angle drawn from the same campaign direction, rather than minor synonym changes.",
+      "Keep headline/body complementary. These are platform-neutral copy concepts, not upload-ready ad assets.",
+      "No invented superiority, scarcity, ingredient, health, performance, discount or availability assertions."
+    ]
+  },
+  "review_criteria": [
+    "Exactly three concepts have meaningfully different creative angles while maintaining factual and campaign consistency.",
+    "Compact copy remains understandable; no claimed platform compliance or predicted ad performance."
+  ]
+}

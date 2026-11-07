@@ -1,0 +1,93 @@
+{
+  "template_version": "1.0",
+  "format": "campaign_brief",
+  "purpose": "Establish shared creative direction; never establish product truth or launch permission.",
+  "shared_contract": "launchlens.content_contracts/v1",
+  "content_schema": {
+    "type": "object",
+    "properties": {
+      "objective": {
+        "type": "string",
+        "minLength": 1
+      },
+      "audience_hypothesis": {
+        "type": "string",
+        "minLength": 1
+      },
+      "positioning": {
+        "type": "string",
+        "minLength": 1
+      },
+      "messaging_pillars": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minItems": 3,
+        "maxItems": 3
+      },
+      "tone": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minItems": 1
+      },
+      "primary_cta": {
+        "type": "string",
+        "minLength": 1
+      },
+      "restrictions_and_unknowns": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minItems": 0
+      }
+    },
+    "required": [
+      "objective",
+      "audience_hypothesis",
+      "positioning",
+      "messaging_pillars",
+      "tone",
+      "primary_cta",
+      "restrictions_and_unknowns"
+    ],
+    "additionalProperties": false
+  },
+  "editorial_guidelines": {
+    "enforcement": "advisory_only",
+    "length_targets": [
+      {
+        "fields": [
+          "objective",
+          "audience_hypothesis",
+          "positioning",
+          "messaging_pillars",
+          "tone",
+          "primary_cta",
+          "restrictions_and_unknowns"
+        ],
+        "metric": "words",
+        "min": 250,
+        "max": 400
+      }
+    ],
+    "tone": "Use the retrieved PMM voice, adapted to this channel; no fixed writing script.",
+    "guidance": [
+      "Keep objectives within the selected supported task; do not invent performance targets or measured outcomes.",
+      "Synthesize existing PMM guidance. Mark audience motivations as hypotheses, not demonstrated consumer research.",
+      "Give three coherent messaging pillars, supported by scoped product evidence; keep hypothetical positioning distinct.",
+      "Report operational restrictions and unknowns without changing or approving them. Source permissions remain application-owned."
+    ]
+  },
+  "review_criteria": [
+    "Campaign direction is usable across all four channels and consistent with PMM guidance.",
+    "Audience hypotheses and positioning proposals are distinguishable from factual product assertions.",
+    "Pillars, CTA and reported restrictions agree with the current authorized research context."
+  ]
+}

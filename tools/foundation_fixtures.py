@@ -103,10 +103,17 @@ class FixtureTools:
             "claim_ids": [unit] if authority == "public_product_facts" else [],
             "requirement_ids": [unit] if authority != "public_product_facts" else [],
             "page_numbers": [2, 3], "related_chunk_ids": [], "related_claim_ids": []}
-        metadata = storage_fields(packet)
+        packets = [packet]
+        if authority == "public_product_facts":
+            inspiration = deepcopy(packet)
+            inspiration.update(unit_id="PROD-003", chunk_id=chunk_id.replace(":PROD-002:", ":PROD-003:"),
+                               claim_ids=["PROD-003"],
+                               primary_text="SAFE FIXTURE: float inspiration, not actual evidence.")
+            packets.append(inspiration)
+        records = [{"chunk_id": p["chunk_id"], "unit_id": p["unit_id"], "authority": p["authority"],
+                    "evidence_sha256": storage_fields(p)["evidence_sha256"], "evidence_payload": p,
+                    "usable_as_complete_evidence": not self.partial,
+                    "reference_status": "incomplete" if self.partial else "resolved"} for p in packets]
         return {"status": "incomplete" if self.partial else "evidence_found",
-            "product_id": PRODUCT, "requested_authority": authority,
-            "records": [{"chunk_id": chunk_id, "unit_id": unit, "authority": authority,
-                "evidence_sha256": metadata["evidence_sha256"], "evidence_payload": packet,
-                "usable_as_complete_evidence": not self.partial,
-                "reference_status": "incomplete" if self.partial else "resolved"}], "issues": []}
+                "product_id": PRODUCT, "requested_authority": authority,
+                "records": records, "issues": []}

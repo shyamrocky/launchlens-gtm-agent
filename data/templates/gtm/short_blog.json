@@ -1,0 +1,92 @@
+{
+  "template_version": "1.0",
+  "format": "blog",
+  "purpose": "Explain the supported product story in a short, useful narrative.",
+  "shared_contract": "launchlens.content_contracts/v1",
+  "content_schema": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string",
+        "minLength": 1
+      },
+      "introduction": {
+        "type": "string",
+        "minLength": 1
+      },
+      "sections": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "heading": {
+              "type": "string",
+              "minLength": 1
+            },
+            "body": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "heading",
+            "body"
+          ],
+          "additionalProperties": false
+        },
+        "minItems": 1
+      },
+      "conclusion": {
+        "type": "string",
+        "minLength": 1
+      },
+      "cta": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "title",
+      "introduction",
+      "sections",
+      "conclusion",
+      "cta"
+    ],
+    "additionalProperties": false
+  },
+  "editorial_guidelines": {
+    "enforcement": "advisory_only",
+    "length_targets": [
+      {
+        "fields": [
+          "title",
+          "introduction",
+          "sections",
+          "conclusion",
+          "cta"
+        ],
+        "metric": "words",
+        "min": 300,
+        "max": 450
+      },
+      {
+        "fields": [
+          "sections"
+        ],
+        "metric": "items",
+        "min": 2,
+        "max": 3
+      }
+    ],
+    "tone": "Use the retrieved PMM voice, adapted to this channel; no fixed writing script.",
+    "guidance": [
+      "Use a descriptive title, a clear introduction, explanatory sections and a concise conclusion/CTA.",
+      "Prefer two or three useful sections; do not pad the draft to reach a word target or repeat unsupported details.",
+      "No invented interviews, taste-test experiences, product history, expert bylines or testimonials."
+    ]
+  },
+  "review_criteria": [
+    "The article explains the flavor/story clearly with logical headings and useful substance.",
+    "Qualifications and variant/market distinctions survive the narrative; no invented firsthand experience."
+  ]
+}

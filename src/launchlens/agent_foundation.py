@@ -1,4 +1,4 @@
-"""M2.1: offline, session-scoped LangGraph harness. No provider/model/file access.
+"""Session-scoped LangGraph harness; adapters own provider and source access.
 
 Adapters are trusted application code; model proposals and retrieved text are data.
 The full LangGraph object/checkpointer are private, never exposed as model tools.
@@ -18,7 +18,7 @@ from langsmith import tracing_context
 
 from launchlens.evidence_payload import storage_fields
 from launchlens.gtm_registry import (HarnessError, MAX_SEARCHES, MAX_TURNS,
-    action_registry, require, validate_action, validate_request)
+    action_registry, objective_claims, require, validate_action, validate_request)
 from launchlens.launch_checks import evaluate_launch
 from launchlens.notion_tools import PMM_PAGE, PRODUCT
 from launchlens.retrieval import checked_packet
@@ -42,13 +42,14 @@ class State(TypedDict):
     drafts: dict
     review: dict
     human_accepted: bool
+    research_gaps: list
 
 
-def initial_state(request):
-    return State(run_id=str(uuid4()), request=request, mode="offline_simulation",
+def initial_state(request, mode="offline_simulation"):
+    return State(run_id=str(uuid4()), request=request, mode=mode,
                  status="created", turns=0, searches=0, pmm=None, launch=None,
                  evidence=[], ledger={}, events=[], feedback="", clarification="",
-                 pending=None, drafts={}, review={}, human_accepted=False)
+                 pending=None, drafts={}, review={}, human_accepted=False, research_gaps=[])
 
 
 class FoundationSession:
@@ -58,13 +59,16 @@ class FoundationSession:
     read_launch(request), search(query, authority). M2.1 uses safe fixtures only.
     Public run/resume methods accept a run ID, not model-provided graph updates.
     """
-    def __init__(self, model, tools, *, max_turns=MAX_TURNS, max_searches=MAX_SEARCHES):
-        require(callable(model), "A scripted model adapter is required")
+    def __init__(self, model, tools, *, max_turns=MAX_TURNS, max_searches=MAX_SEARCHES,
+                 mode="offline_simulation"):
+        require(mode in {"offline_simulation", "live_research"}, "Invalid execution mode")
+        require(callable(model), "A model adapter is required")
         require(all(callable(getattr(tools, name, None)) for name in
-                    ("read_pmm", "read_launch", "search")), "Missing offline tool adapter")
+                    ("read_pmm", "read_launch", "search")), "Missing tool adapter")
         require(type(max_turns) is int and 1 <= max_turns <= MAX_TURNS, "Invalid turn limit")
         require(type(max_searches) is int and 1 <= max_searches <= MAX_SEARCHES, "Invalid search limit")
         self._model, self._tools = model, tools
+        self._mode = mode
         self._max_turns, self._max_searches = max_turns, max_searches
         self._lock = Lock()
         self._run_id = None
@@ -114,23 +118,35 @@ class FoundationSession:
         require(self._lock.acquire(blocking=False), "Execution is running")
         try:
             require(self._run_id is None, "Use generate_again to replace the current task")
-            self._initial = initial_state(request)
+            self._initial = initial_state(request, self._mode)
             self._run_id = self._initial["run_id"]
             return self._snapshot()
         finally:
             self._lock.release()
 
     def _discard(self):
-        if self._run_id is not None:
-            self._saver.delete_thread(self._run_id)
-        self._run_id, self._initial = None, None
+        # Trusted lifecycle hooks do local cleanup only; never registered model actions.
+        failed = False
+        try:
+            for adapter in (self._model, self._tools):
+                cleanup = getattr(adapter, "reset_run", None)
+                if callable(cleanup):
+                    try:
+                        cleanup()
+                    except Exception:
+                        failed = True
+        finally:
+            if self._run_id is not None:
+                self._saver.delete_thread(self._run_id)
+            self._run_id, self._initial = None, None
+        require(not failed, "Local adapter cleanup failed; no active task remains")
 
     def generate_again(self, request):
         request = validate_request(request)
         require(self._lock.acquire(blocking=False), "Execution is running; replacement disabled")
         try:
             self._discard()
-            self._initial = initial_state(request)
+            self._initial = initial_state(request, self._mode)
             self._run_id = self._initial["run_id"]
             return self._snapshot()
         finally:
@@ -189,6 +205,8 @@ class FoundationSession:
         view = deepcopy(state)
         view.pop("pending", None)
         view["allowed_actions"] = action_registry()
+        view["remaining_limits"] = {"model_turns": self._max_turns - state["turns"],
+                                    "product_searches": self._max_searches - state["searches"]}
         state["turns"] += 1
         state["pending"] = None
         started = time.monotonic()
@@ -219,6 +237,7 @@ class FoundationSession:
             payload = record["evidence_payload"]
             metadata = storage_fields(payload)
             require(record["chunk_id"] == payload["chunk_id"] and
+                    record.get("unit_id") == payload["unit_id"] and
                     record["authority"] == payload["authority"] and
                     record["evidence_sha256"] == metadata["evidence_sha256"], "Evidence identity/digest differs")
             checked_packet({"id": record["chunk_id"], "metadata": metadata}, record["authority"])
@@ -234,12 +253,15 @@ class FoundationSession:
         return value
 
     @staticmethod
-    def _has_product_evidence(state):
-        return any(row["authority"] == "public_product_facts" and
-                   row["usable_as_complete_evidence"] and
-                   row["evidence_payload"].get("chunk_kind") == "product_claim" and
-                   row["evidence_payload"].get("claim_source_mappings")
-                   for result in state["evidence"] for row in result["records"])
+    def _objective_gaps(state):
+        supported = {row["evidence_payload"]["unit_id"]
+                     for result in state["evidence"] for row in result["records"]
+                     if row["authority"] == "public_product_facts" and
+                     row["usable_as_complete_evidence"] and
+                     row["evidence_payload"].get("chunk_kind") == "product_claim" and
+                     row["evidence_payload"].get("claim_source_mappings")}
+        return [label for claim, label in objective_claims(state["request"]).items()
+                if claim not in supported]
 
     def _dispatch(self, state):
         state = deepcopy(state)
@@ -259,7 +281,8 @@ class FoundationSession:
             else:
                 self._event(state, name, "replayed", started, action_id=action_id)
             return state
-        state["ledger"][action_id] = {"fingerprint": fingerprint, "status": "pending", "result": None}
+        state["ledger"][action_id] = {"action": deepcopy(action), "fingerprint": fingerprint,
+                                      "status": "pending", "result": None}
         try:
             if name == "read_pmm_brief":
                 value = deepcopy(self._tools.read_pmm(deepcopy(state["request"])))
@@ -280,6 +303,7 @@ class FoundationSession:
                 state["searches"] += 1
                 value = self._validate_evidence(deepcopy(self._tools.search(**args)), args["authority"])
                 state["evidence"].append(value)
+                state["research_gaps"] = self._objective_gaps(state)
             elif name == "request_clarification":
                 value = {"question": args["question"]}
                 state["clarification"] = args["question"]
@@ -291,10 +315,14 @@ class FoundationSession:
                     state["status"] = "needs_clarification"
                     state["clarification"] = "; ".join(c["message"] for c in launch["conditions"])
                 else:
-                    require(launch["promotional_draft_allowed"] and state["pmm"] is not None and
-                            self._has_product_evidence(state), "Research prerequisites remain incomplete")
-                    state["status"] = "research_complete"
-                value = {"status": state["status"], "mode": state["mode"]}
+                    require(launch["promotional_draft_allowed"] and state["pmm"] is not None,
+                            "Research prerequisites remain incomplete")
+                    state["research_gaps"] = self._objective_gaps(state)
+                    if not state["research_gaps"]:
+                        state["status"] = "research_complete"
+                value = {"status": "research_incomplete" if state["research_gaps"] and
+                         state["status"] == "running" else state["status"],
+                         "mode": state["mode"], "missing_requirements": list(state["research_gaps"])}
             state["ledger"][action_id].update(status="completed", result=deepcopy(value))
             self._event(state, name, "completed", started, action_id=action_id,
                         decision=state["launch"]["decision"] if name == "check_launch" else None)

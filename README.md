@@ -1,5 +1,19 @@
 # LaunchLens — Launch-Aware GTM Agent
 
+## Owner acceptance and Git sync authorization — 2026-11-06
+
+**M2.2 OWNER ACCEPTED / CLOSED.** The owner explicitly accepted the completed
+research and harness repairs and directed Git sync. This includes the original
+US research checkpoint, H-01/H-02/H-03 repair/comparison, and UK/India/controlled
+readiness-failure validation. The original technical report and its measurements
+below remain unchanged; earlier pending-review and no-publication statements are
+historical and superseded only for this acceptance and authorized private sync.
+
+M2.3a content contracts were already owner accepted and are included in this sync.
+No live rerun, source/dataset change, final model adoption, full M1.5b.4 acceptance,
+M2.3b implementation/generation, Reviewer or UI is authorized. Next: present the
+M2.3b generation prompt and exact inputs for owner review before execution.
+
 LaunchLens is an educational GTM assistant for researching product information,
 generating marketing content and using a specialized Reviewer Agent to critique
 and improve outputs. It is the Gen Academy Week 3 **Project 3D: GTM Agent —
@@ -8,6 +22,55 @@ Ideation to Copy** project.
 The [LaunchLens north star](docs/planning/northstar.md) is the canonical goal,
 MVP scope and completion checklist. Read it alongside the authorized milestone;
 its targets are not claims of implemented functionality.
+
+## M2.3a content contracts - 2026-11-06
+
+Owner approved the five-template design with hard/soft-rule, shared-evidence and
+CTA-safety refinements. [Implementation review](docs/planning/m2.3a-content-contracts-review.md): **OWNER ACCEPTED / CLOSED**, 2026-11-06.
+Five canonical JSON templates and one shared stdlib validator are implemented;
+186offline tests pass. Required structure/reference bindings are hard checks;
+editorial targets are advisory. Review/version/approval state remains application-owned.
+No content generation, semantic Reviewer, UI or live calls. Next proposed M2.3b is
+one US LinkedIn draft; M2.3c adds Reviewer/revision, under separate approval.
+
+## Current state and delivery priority - 2026-11-06
+
+The [consolidated current state](docs/planning/m2-agent-implementation-plan.md#current-state-and-owner-selected-delivery-priority---2026-11-06)
+records completed work, acceptance gaps, known risks, token/cache findings and
+remaining milestones. Owner priority: complete the usable MVP, then optimize
+measured overhead. M2.3a template definitions are implemented above; M2.3b LinkedIn generation and
+M2.3c Reviewer/revision remain proposed and unstarted. Research/repair results are technical
+PASS awaiting acceptance. No additional tuning, live execution or Git sync authorized.
+Earlier checkpoint sections below preserve historical results and boundaries.
+
+## M2.2b launch restrictions and controlled failure - 2026-11-06
+
+Owner-approved three-case run completed: **TECHNICAL PASS / OWNER REVIEW PENDING**.
+[Readable results](docs/planning/m2.2b-live-restrictions-review.md): UK asks for missing availability and pauses;
+India pending authorization triggers harness Hold; locally simulated readiness
+unavailability triggers clarification with permissions withheld. Five live model
+calls; no product searches or drafts.174offline tests PASS. Existing harness,
+prompt, datasets and dependencies unchanged. Original US results below preserved.
+Stop before more calls, M2.3 drafting/Reviewer/UI, acceptance or Git publication.
+
+## M2.2a harness repair - 2026-11-06
+
+[Repair review](docs/planning/m2.2a-harness-repair-review.md): technical PASS,
+owner review pending. Focused context preserves full evidence;completion now requires
+objective-specific claims;Generate again/Reset clears live adapter state and budgets.
+166offline tests pass. One new live US comparison used80,202 input tokens versus
+188,689(57.5% fewer),with14 intact evidence packets and publishing disabled.
+No drafting/Reviewer/UI or further live cases. Original baseline below is historical.
+
+## M2.2a live US research - 2026-11-06
+
+[Bounded live research review](docs/planning/m2.2a-live-research-review.md): technical
+PASS, owner review pending. Provisional Qwen independently chose five native tool
+actions:launch check,PMM read,two product searches,finish. Harness computed Proceed
+and disabled publishing;14 evidence packets preserved.147 offline tests pass;
+one live case took28.732seconds. Full-history context used188,689 input tokens,
+a measured efficiency limitation for review before further live usage.
+No marketing copy, Reviewer or UI. Full M2.2 and final model adoption remain pending.
 
 ## Current checkpoint - 2026-11-06
 
@@ -20,14 +83,15 @@ one-hop reference test. The [application retrieval tool](docs/planning/product-e
 is now owner accepted (2026-11-06):81 tests passed at implementation; all eight fixed cases
 returned expected supporting evidence. One response explicitly reports unresolved
 extra positioning references at the five-target cap; direct ranking remains7/8.
-The autonomous agent, Reviewer and UI are not implemented. Final chat-model selection
-remains deferred. Full M1.5b.4 acceptance remains separate from these tool acceptances.
+The first bounded live autonomous research case is now verified above; Reviewer
+and UI are not implemented. Final chat-model selection remains deferred. Full M1.5b.4 acceptance remains separate from these tool acceptances.
 
 [Notion read tools and deterministic launch checks](docs/planning/notion-launch-checks-review.md)
 are now owner accepted (2026-11-06):100 local tests passed; all234 live
 operational values match accepted CSVs. Scenario dates return US Proceed, UK Clarify
-and India Hold. Nested PMM content is readable. These checks are not yet connected
-to an autonomous agent and do not grant actual publishing or inventory assurances.
+and India Hold. Nested PMM content is readable. Their later live-agent connection is recorded
+above; the original tool acceptance did not itself establish agent behavior.
+These checks do not grant actual publishing or inventory assurances.
 
 The owner accepted both completed tool checkpoints and approved their reviewed
 commit/push to the private repository on 2026-11-06. Fresh offline verification:
