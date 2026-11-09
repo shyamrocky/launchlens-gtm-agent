@@ -1,5 +1,44 @@
 # LaunchLens milestone plan
 
+## Owner acceptance and scoped Git sync — 2026-11-08
+
+Owner described the completed UI as a good milestone and explicitly requested Git
+sync. The real inventory/brief UI and its source-access/presentation refinements
+(UI-D002 through UI-D006) are **OWNER ACCEPTED / CLOSED** for this bounded slice.
+UI-D001 is preserved as design history. This accepts registry-driven discovery,
+read-only source checks, launch-aware brief selection and the reviewed layout;
+it does not accept M2.3b content or authorize agent/Writer/Reviewer integration.
+
+Publish only the canonical UI code/configuration, isolated locked Streamlit profile,
+UI/source tests and supporting design/setup/acceptance records after exact-diff,
+confidentiality, reproducibility and private-visibility review. Unfinished Writer
+experiments, credentials, workspace, generated receipts and environments remain
+local. No source writes, inference or next milestone is authorized. This latest
+owner instruction supersedes earlier UI-only pending-review/no-publication text;
+previous verification and audit history remain intact.
+
+
+## Homepage refinement — 2026-11-08
+
+Owner authorized the six presentation refinements and real per-source access checks.
+[UI-D003](ui-inventory-implementation.md) records local technical PASS:299offline
+checks, complete PMM read, matching PDFs and234unchanged operational values. No
+agent/generation/Reviewer integration, model adoption, new dependency, source write,
+M2.3b acceptance or Git sync. Stop for owner review; main roadmap remains unchanged.
+
+
+## Real launch inventory / brief slice — 2026-11-08
+
+Owner explicitly authorized the real UI checkpoint after the mockup. Implemented
+locally: existing registry/product facts + live read-only Notion operational data,
+source links and prefilled market briefs; no agent/model generation controls.
+Technical PASS292offline tests, clean-copy startup and14HTTP200 Notion reads with
+234matching field values; owner acceptance pending. [UI-D002](ui-inventory-implementation.md)
+owns setup/evidence. Advances discovery within integration, not full C/agent
+completion. M2.3b content/Reviewer/main roadmap remain pending; no Git publication.
+
+
+
 ## Owner acceptance and Git sync authorization — 2026-11-06
 
 **M2.2 OWNER ACCEPTED / CLOSED.** The owner explicitly accepted the completed

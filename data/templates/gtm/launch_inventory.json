@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "use_case_id": "cherry-float-gtm",
+  "product_id": "CC-CHERRY-FLOAT",
+  "product_name": "Coca-Cola Cherry Float",
+  "brand": "Coca-Cola",
+  "description": "Cherry-and-vanilla flavor notes, inspired by classic soda floats.",
+  "description_claim_ids": ["PROD-002", "PROD-003"],
+  "product_brief": {
+    "path": "data/public_sources/coca_cola_cherry_float_product_brief.md",
+    "sha256": "22444a67072f60a37d2a15359f17f8a5be6d53af1cd6e30dcebec99dbf05780f"
+  },
+  "drive_documents": [
+    {"name": "Product Brief", "role": "Product facts", "file_id": "1pJhRHdp5Oe6sk6aG5D_aP2MQY7gdHT3x"},
+    {"name": "Synthetic PRD", "role": "Product intent and requirements", "file_id": "1ThKUJxAmUn2Qf-rVmyVbDu2M5ZSqyCgS"}
+  ]
+}

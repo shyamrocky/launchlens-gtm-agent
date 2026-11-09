@@ -1,5 +1,58 @@
 # LaunchLens working instructions
 
+## Owner acceptance and scoped Git sync — 2026-11-08
+
+Owner described the completed UI as a good milestone and explicitly requested Git
+sync. The real inventory/brief UI and its source-access/presentation refinements
+(UI-D002 through UI-D006) are **OWNER ACCEPTED / CLOSED** for this bounded slice.
+UI-D001 is preserved as design history. This accepts registry-driven discovery,
+read-only source checks, launch-aware brief selection and the reviewed layout;
+it does not accept M2.3b content or authorize agent/Writer/Reviewer integration.
+
+Publish only the canonical UI code/configuration, isolated locked Streamlit profile,
+UI/source tests and supporting design/setup/acceptance records after exact-diff,
+confidentiality, reproducibility and private-visibility review. Unfinished Writer
+experiments, credentials, workspace, generated receipts and environments remain
+local. No source writes, inference or next milestone is authorized. This latest
+owner instruction supersedes earlier UI-only pending-review/no-publication text;
+previous verification and audit history remain intact.
+
+
+## Homepage refinement — scoped owner authorization, 2026-11-08
+
+Owner approved presentation polish plus genuine timestamped source-access checks.
+Implemented locally; UI-D003 in docs/planning/ui-inventory-implementation.md owns
+behavior/results.299offlinePASS; dedicated live26NotionHTTP200+2DriveHTTP200 reads,
+all five sources accessible, PDF hashes/234operational values match accepted data.
+No source/policy/prompt/model/dependency changes. First load/explicit Refresh checks;
+navigation reuses snapshot, failures never retain old permissions. No paid calls,
+agent/Reviewer work, MEMORY append or Git publication. Stop for owner review.
+Earlier link-only source-access descriptions below are historical and superseded.
+Owner then approved compact Sources layout (UI-D004): two responsive groups and
+hover/keyboard-focus timestamps; fresh6UItestsPASS. Presentation only; source
+checks/policy unchanged. UI-D005 then rebalances the outer grid to approximately
+2:1/24px, tightens product hierarchy and stacks below1100px. Six UI tests and
+Chrome1440/1280/1024/768/390px checks PASS. UI-D006 then tightens the header and
+groups navigation in one rectangle;6UItests and desktop/390px checksPASS. Source
+behavior unchanged. Review the current report before UI work.
+
+
+## Real inventory UI — scoped owner authorization, 2026-11-08
+
+Owner explicitly approved real Streamlit inventory/brief selection using the
+existing registry, approved product metadata and read-only Notion dates/readiness.
+Implemented locally; technical PASS292offline tests and live234matching operational
+values. Canonical scope/setup/results: [UI-D002](docs/planning/ui-inventory-implementation.md).
+Streamlit1.67.0 in isolated tools/ui profile; root/agent/embedding profiles preserved.
+Real UI127.0.0.1:8520; old mockup8765 remains optional design reference. Readiness is
+at the displayed evaluation date. Navigation makes no model/source calls; explicit
+Refresh replaces the snapshot and cannot keep stale permission on failure. No paid
+inference, agent/Reviewer integration, source writes, model adoption, MEMORY append
+or Git publication. Stop for owner review; earlier planning-only UI prohibitions
+are superseded solely for this completed discovery/brief slice. M2.3b stays open.
+
+
+
 ## Latest owner authority — 2026-11-06
 
 Owner explicitly accepted M2.2 research and harness repairs, including completed

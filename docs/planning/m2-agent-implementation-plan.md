@@ -1,5 +1,45 @@
 # M2 - Autonomous GTM agent implementation plan
 
+## Owner acceptance and scoped Git sync — 2026-11-08
+
+Owner described the completed UI as a good milestone and explicitly requested Git
+sync. The real inventory/brief UI and its source-access/presentation refinements
+(UI-D002 through UI-D006) are **OWNER ACCEPTED / CLOSED** for this bounded slice.
+UI-D001 is preserved as design history. This accepts registry-driven discovery,
+read-only source checks, launch-aware brief selection and the reviewed layout;
+it does not accept M2.3b content or authorize agent/Writer/Reviewer integration.
+
+Publish only the canonical UI code/configuration, isolated locked Streamlit profile,
+UI/source tests and supporting design/setup/acceptance records after exact-diff,
+confidentiality, reproducibility and private-visibility review. Unfinished Writer
+experiments, credentials, workspace, generated receipts and environments remain
+local. No source writes, inference or next milestone is authorized. This latest
+owner instruction supersedes earlier UI-only pending-review/no-publication text;
+previous verification and audit history remain intact.
+
+
+## Homepage refinement — 2026-11-08
+
+Owner authorized the six presentation refinements and real per-source access checks.
+[UI-D003](ui-inventory-implementation.md) records local technical PASS:299offline
+checks, complete PMM read, matching PDFs and234unchanged operational values. No
+agent/generation/Reviewer integration, model adoption, new dependency, source write,
+M2.3b acceptance or Git sync. Stop for owner review; main roadmap remains unchanged.
+
+
+## Scoped real inventory delivery — 2026-11-08
+
+Owner authorized building the real inventory/brief homepage ahead of the remaining
+Reviewer work. [UI-D002](ui-inventory-implementation.md) records canonical files,
+source authority, isolated Streamlit setup and actual technical-PASS verification.
+Registry discovery, live Notion dates/readiness, source links and brief selection
+now work locally; this is only the discovery/brief slice of integration. Full
+agent/Writer/Reviewer/revision/export integration is not implemented or authorized
+by this checkpoint. M2.3b generation/content acceptance remains pending. Stop for
+owner review; do not infer paid calls, model adoption, next milestone or Git sync.
+
+
+
 ## Owner acceptance and Git sync authorization — 2026-11-06
 
 **M2.2 OWNER ACCEPTED / CLOSED.** The owner explicitly accepted the completed

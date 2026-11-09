@@ -1,5 +1,46 @@
 # LaunchLens — Launch-Aware GTM Agent
 
+## Owner acceptance and scoped Git sync — 2026-11-08
+
+Owner described the completed UI as a good milestone and explicitly requested Git
+sync. The real inventory/brief UI and its source-access/presentation refinements
+(UI-D002 through UI-D006) are **OWNER ACCEPTED / CLOSED** for this bounded slice.
+UI-D001 is preserved as design history. This accepts registry-driven discovery,
+read-only source checks, launch-aware brief selection and the reviewed layout;
+it does not accept M2.3b content or authorize agent/Writer/Reviewer integration.
+
+Publish only the canonical UI code/configuration, isolated locked Streamlit profile,
+UI/source tests and supporting design/setup/acceptance records after exact-diff,
+confidentiality, reproducibility and private-visibility review. Unfinished Writer
+experiments, credentials, workspace, generated receipts and environments remain
+local. No source writes, inference or next milestone is authorized. This latest
+owner instruction supersedes earlier UI-only pending-review/no-publication text;
+previous verification and audit history remain intact.
+
+
+## Run the real launch inventory
+
+The local Streamlit page shows the registered Cherry Float case, live read-only
+Notion launch dates/readiness, document links and market brief selection. Dates
+and approvals remain an independent fictional educational scenario. Agent drafting
+and Reviewer integration are not connected in this checkpoint.
+
+```sh
+uv sync --project tools/ui --locked --no-python-downloads
+uv run --project tools/ui --locked --no-python-downloads streamlit run streamlit_app.py
+```
+
+Open **http://127.0.0.1:8520/**. Configure the existing read-only NOTION_API_KEY in
+a private0600.env or the process environment. Refresh data explicitly reloads the
+snapshot and checks all five sources; navigation reuses it without source/model calls.
+Timestamped checks mean successful reads, not content or launch approval. Drive
+checks anonymously download transient PDF bytes and verify approved hashes; Notion
+uses the existing scoped reader. No other provider credential is needed.
+[Setup, source authority, verification and current boundary](docs/planning/ui-inventory-implementation.md).
+Earlier sections below preserve historical checkpoint reports.
+
+
+
 ## Owner acceptance and Git sync authorization — 2026-11-06
 
 **M2.2 OWNER ACCEPTED / CLOSED.** The owner explicitly accepted the completed
