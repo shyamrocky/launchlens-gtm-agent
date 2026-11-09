@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "policy_id": "simulated_brand_v1",
+  "version": 1,
+  "active_scope": "Offline LinkedIn only; other format entries record approved direction, not implementation",
+  "format_voices": {
+    "linkedin": "simulated_brand",
+    "campaign_brief": "neutral",
+    "research": "neutral",
+    "readiness_report": "neutral",
+    "email": "simulated_brand",
+    "blog": "simulated_brand",
+    "ad_variations": "simulated_brand"
+  },
+  "meaning": "Creative simulated brand voice; not factual evidence, affiliation, operational approval or publishing permission",
+  "prompts": {
+    "linkedin_writer": {
+      "file": "linkedin_writer_brand_v1.txt",
+      "sha256": "5fbec3d9b8d2f7d194dfdc85b2cdd0048808826760131fe69537eb98f4ddef91"
+    },
+    "linkedin_reviewer": {
+      "file": "linkedin_reviewer_brand_v1.txt",
+      "sha256": "094839e50a46ccc6d07faa2f5419e34589fbf80cb86439b5de33db02df503ba2"
+    },
+    "linkedin_revision": {
+      "file": "linkedin_revision_brand_v1.txt",
+      "sha256": "5efa6e01a69714e36bc0f2fde8865a4490cecbed569955da3cbb86f317673ba4"
+    }
+  }
+}

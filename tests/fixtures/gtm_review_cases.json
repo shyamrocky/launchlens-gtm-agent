@@ -1,0 +1,366 @@
+{
+  "fixture_notice": "Independently authored OFFLINE MOCK expectations. Not model observations or replacement product/operational datasets. Hermes candidate is an exact safe copy; original protected receipt remains unchanged.",
+  "hermes_candidate": {
+    "format": "linkedin",
+    "content": {
+      "hook": "Remember the classic soda float? We’re bringing that nostalgic inspiration to a new Coca-Cola flavor.",
+      "body": "Introducing Cherry Float, a fresh take on cherry soda with a hint of vanilla. This flavor combination draws from the beloved soda-float experience, offering a taste that’s both familiar and new. It’s a playful twist for those who enjoy exploring unique flavor profiles while savoring a touch of nostalgia.",
+      "cta": "What would you like to know about Cherry Float's flavor inspiration?",
+      "hashtags": [
+        "#CocaCola",
+        "#CherryFloat",
+        "#FlavorInnovation"
+      ]
+    },
+    "claim_references": [
+      {
+        "content_field": "hook",
+        "claim_ids": [
+          "PROD-003"
+        ]
+      },
+      {
+        "content_field": "body",
+        "claim_ids": [
+          "PROD-002",
+          "PROD-003"
+        ]
+      }
+    ]
+  },
+  "hermes_review": {
+    "assessments": [
+      {
+        "dimension": "grounding",
+        "status": "pass"
+      },
+      {
+        "dimension": "qualifications",
+        "status": "needs_changes"
+      },
+      {
+        "dimension": "voice",
+        "status": "needs_changes"
+      },
+      {
+        "dimension": "tone",
+        "status": "pass"
+      },
+      {
+        "dimension": "consistency",
+        "status": "pass"
+      },
+      {
+        "dimension": "completeness",
+        "status": "pass"
+      }
+    ],
+    "findings": [
+      {
+        "dimension": "voice",
+        "content_field": "hook",
+        "quote": "We’re bringing",
+        "severity": "blocking",
+        "rationale": "This speaks as the manufacturer, contrary to the supplied Writer role.",
+        "suggested_change": "Use neutral third-person wording.",
+        "claim_ids": []
+      },
+      {
+        "dimension": "qualifications",
+        "content_field": "body",
+        "quote": "a hint of vanilla",
+        "severity": "blocking",
+        "rationale": "PROD-002 establishes vanilla notes, not a measured intensity.",
+        "suggested_change": "Use the source-faithful phrase cherry with vanilla notes.",
+        "claim_ids": [
+          "PROD-002"
+        ]
+      },
+      {
+        "dimension": "completeness",
+        "content_field": "body",
+        "quote": "Introducing Cherry Float",
+        "severity": "advisory",
+        "rationale": "The post is shorter than the advisory target; do not pad with unsupported claims.",
+        "suggested_change": "Optionally develop the creative story while preserving factual restraint.",
+        "claim_ids": []
+      }
+    ]
+  },
+  "supported_candidate": {
+    "format": "linkedin",
+    "content": {
+      "hook": "A classic soda-float idea, reimagined as a flavor story.",
+      "body": "Coca-Cola Cherry Float combines cherry with vanilla notes. Its concept is inspired by classic soda floats.",
+      "cta": "What would you like to know about Cherry Float's flavor inspiration?",
+      "hashtags": [
+        "#CocaCola",
+        "#CherryFloat",
+        "#FlavorDiscovery"
+      ]
+    },
+    "claim_references": [
+      {
+        "content_field": "hook",
+        "claim_ids": [
+          "PROD-003"
+        ]
+      },
+      {
+        "content_field": "body",
+        "claim_ids": [
+          "PROD-002",
+          "PROD-003"
+        ]
+      }
+    ]
+  },
+  "supported_review": {
+    "assessments": [
+      {
+        "dimension": "grounding",
+        "status": "pass"
+      },
+      {
+        "dimension": "qualifications",
+        "status": "pass"
+      },
+      {
+        "dimension": "voice",
+        "status": "pass"
+      },
+      {
+        "dimension": "tone",
+        "status": "pass"
+      },
+      {
+        "dimension": "consistency",
+        "status": "pass"
+      },
+      {
+        "dimension": "completeness",
+        "status": "pass"
+      }
+    ],
+    "findings": []
+  },
+  "unsupported_candidate": {
+    "format": "linkedin",
+    "content": {
+      "hook": "Made with real vanilla ice cream.",
+      "body": "Coca-Cola Cherry Float combines cherry with vanilla notes. Its concept is inspired by classic soda floats.",
+      "cta": "What would you like to know about Cherry Float's flavor inspiration?",
+      "hashtags": [
+        "#CocaCola",
+        "#CherryFloat",
+        "#FlavorDiscovery"
+      ]
+    },
+    "claim_references": [
+      {
+        "content_field": "body",
+        "claim_ids": [
+          "PROD-002",
+          "PROD-003"
+        ]
+      }
+    ]
+  },
+  "unsupported_review": {
+    "assessments": [
+      {
+        "dimension": "grounding",
+        "status": "needs_changes"
+      },
+      {
+        "dimension": "qualifications",
+        "status": "pass"
+      },
+      {
+        "dimension": "voice",
+        "status": "pass"
+      },
+      {
+        "dimension": "tone",
+        "status": "pass"
+      },
+      {
+        "dimension": "consistency",
+        "status": "pass"
+      },
+      {
+        "dimension": "completeness",
+        "status": "pass"
+      }
+    ],
+    "findings": [
+      {
+        "dimension": "grounding",
+        "content_field": "hook",
+        "quote": "real vanilla ice cream",
+        "severity": "blocking",
+        "rationale": "The eligible packets establish flavor notes and float inspiration, not an ice-cream ingredient.",
+        "suggested_change": "Remove the ingredient assertion and retain the supported inspiration.",
+        "claim_ids": [
+          "PROD-003"
+        ]
+      }
+    ]
+  },
+  "misleading_candidate": {
+    "format": "linkedin",
+    "content": {
+      "hook": "Made with real vanilla ice cream.",
+      "body": "Coca-Cola Cherry Float combines cherry with vanilla notes. Its concept is inspired by classic soda floats.",
+      "cta": "What would you like to know about Cherry Float's flavor inspiration?",
+      "hashtags": [
+        "#CocaCola",
+        "#CherryFloat",
+        "#FlavorDiscovery"
+      ]
+    },
+    "claim_references": [
+      {
+        "content_field": "hook",
+        "claim_ids": [
+          "PROD-003"
+        ]
+      },
+      {
+        "content_field": "body",
+        "claim_ids": [
+          "PROD-002",
+          "PROD-003"
+        ]
+      }
+    ]
+  },
+  "misleading_review": {
+    "assessments": [
+      {
+        "dimension": "grounding",
+        "status": "needs_changes"
+      },
+      {
+        "dimension": "qualifications",
+        "status": "pass"
+      },
+      {
+        "dimension": "voice",
+        "status": "pass"
+      },
+      {
+        "dimension": "tone",
+        "status": "pass"
+      },
+      {
+        "dimension": "consistency",
+        "status": "pass"
+      },
+      {
+        "dimension": "completeness",
+        "status": "pass"
+      }
+    ],
+    "findings": [
+      {
+        "dimension": "grounding",
+        "content_field": "hook",
+        "quote": "real vanilla ice cream",
+        "severity": "blocking",
+        "rationale": "PROD-003 is a real eligible ID, but soda-float inspiration does not entail an ice-cream ingredient. A citation is not proof of the assertion.",
+        "suggested_change": "Remove the ingredient assertion and retain the supported inspiration.",
+        "claim_ids": [
+          "PROD-003"
+        ]
+      }
+    ]
+  },
+  "revision_candidate": {
+    "format": "linkedin",
+    "content": {
+      "hook": "Remember the classic soda float? Discover the inspiration behind Coca-Cola Cherry Float.",
+      "body": "The documented flavor combines cherry with vanilla notes, and its concept is inspired by classic soda floats. Nostalgia offers a creative starting point for this flavor story.",
+      "cta": "What would you like to know about Cherry Float's flavor inspiration?",
+      "hashtags": [
+        "#CocaCola",
+        "#CherryFloat",
+        "#FlavorDiscovery"
+      ]
+    },
+    "claim_references": [
+      {
+        "content_field": "hook",
+        "claim_ids": [
+          "PROD-003"
+        ]
+      },
+      {
+        "content_field": "body",
+        "claim_ids": [
+          "PROD-002",
+          "PROD-003"
+        ]
+      }
+    ]
+  },
+  "revision_review": {
+    "assessments": [
+      {
+        "dimension": "grounding",
+        "status": "pass"
+      },
+      {
+        "dimension": "qualifications",
+        "status": "pass"
+      },
+      {
+        "dimension": "voice",
+        "status": "pass"
+      },
+      {
+        "dimension": "tone",
+        "status": "pass"
+      },
+      {
+        "dimension": "consistency",
+        "status": "pass"
+      },
+      {
+        "dimension": "completeness",
+        "status": "pass"
+      }
+    ],
+    "findings": []
+  },
+  "evidence": {
+    "PROD-002": {
+      "primary_text": "The documented flavor combines cherry with vanilla notes.",
+      "sources": [
+        "S2",
+        "S3"
+      ]
+    },
+    "PROD-003": {
+      "primary_text": "Its concept is inspired by classic soda floats.",
+      "sources": [
+        "S1",
+        "S3"
+      ]
+    }
+  },
+  "source_urls": {
+    "S1": "https://www.coca-colacompany.com/media-center/coca-cola-cherry-float-and-diet-coke-cherry-launch-nationwide.html",
+    "S2": "https://www.coca-cola.com/us/en/brands/coca-cola/products/coca-cola-flavors",
+    "S3": "https://www.coca-cola.com/gb/en/media-center/coca-cola-introduces-cherry-float-flavour"
+  },
+  "qualifications": [
+    "Publisher-supported descriptions, not independent taste testing. Flavor notes do not establish ingredients or flavor intensity. Float inspiration does not establish dairy or real ice cream. Actual stock and approvals are not established by these product claims."
+  ],
+  "material_boundaries": [
+    "Public 2026 product announcements and fictional December 2026 planning are different temporal domains.",
+    "Historical Draft labels do not override owner-accepted artifact metadata.",
+    "Synthetic PMM availability TBD does not override deterministic readiness.",
+    "Even when synthetic availability permission is true, this Writer contract forbids availability and launch-date wording."
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "version": "2.0",
+  "default_mode": "single",
+  "single_selected_model": "hermes",
+  "max_requests": 1,
+  "output_tokens": 2048,
+  "aggregate_cost_ceiling_usd": "0.05",
+  "models": [
+    {
+      "key": "hermes",
+      "name": "Hermes 4 405B — separately approved diagnostic only",
+      "provider": "nebius",
+      "model_id": "NousResearch/Hermes-4-405B",
+      "enabled": true,
+      "public_status": "catalog_listed_no_retirement_in_checked_notice",
+      "access_status": "unverified",
+      "pricing": {
+        "input_per_million_usd": "1.00",
+        "output_per_million_usd": "3.00",
+        "status": "published",
+        "checked_date": "2026-11-07"
+      },
+      "per_model_cost_ceiling_usd": "0.05",
+      "input_token_ceiling": 32768,
+      "settings_differences": [
+        "Only provider-body difference from the approved projected Qwen request is the exact model ID. Prompt, context, schema and original-authority validation unchanged.",
+        "Publisher pinned chat template defaults thinking=false. Hosted template/mode and reasoning accounting are unverified; no reasoning flag is added or assumed effective.",
+        "Local publisher-template input count is 6850; proposed input reservation 32768 is conservative planning evidence, not an observed hosted count or guarantee of hosted wrapping.",
+        "Existing max_tokens=2048, temperature=0, stream=false, store=false and 45-second timeout are unchanged. Hosted hidden-output cap equivalence is unverified.",
+        "This profile is offline-prepared only. Enabled means selectable, not spending authorization; old GPT/Sonnet approval cannot transfer."
+      ],
+      "sources": [
+        "https://tokenfactory.nebius.com/api/public/models_info",
+        "https://docs.tokenfactory.nebius.com/api-reference/inference/create-chat-completion",
+        "https://huggingface.co/NousResearch/Hermes-4-405B",
+        "https://huggingface.co/NousResearch/Hermes-4-405B/blob/88e3dce03c4a5535e2f4a2bcc08e939a2b302f82/chat_template.jinja"
+      ]
+    }
+  ]
+}

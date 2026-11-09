@@ -33,13 +33,43 @@ _SCHEMA_KEYS = {"type", "properties", "required", "additionalProperties", "items
                 "minItems", "maxItems", "minLength", "enum", "uniqueItems"}
 
 
+# Bounded metadata vocabulary. Never copy model keys, values, claim IDs or exception
+# text into diagnostics. Names mirror maintained schemas, not retrieved source data.
+_DIAGNOSTIC_NAMES = frozenset(['angle', 'audience_hypothesis', 'body', 'claim_ids', 'claim_references', 'concepts', 'conclusion', 'content', 'content_field', 'cta', 'evidence_records', 'format', 'hashtags', 'heading', 'headline', 'hook', 'introduction', 'messaging_pillars', 'objective', 'positioning', 'preview_text', 'primary_cta', 'restrictions_and_unknowns', 'sections', 'subject', 'title', 'tone'])
+DIAGNOSTIC_RULES = frozenset({
+    "required_field_missing", "invalid_type", "unexpected_field", "array_length_invalid",
+    "duplicate_array_item", "nonempty_text_required", "invalid_enum_value",
+    "invalid_content_field_reference", "duplicate_field_reference", "invalid_claim_reference",
+    "evidence_validation_failed", "objective_claim_coverage", "cta_mismatch",
+    "prohibited_link", "prohibited_wording", "unknown_validation_failure",
+})
+
+
+def validation_detail(field_path=None, rule="unknown_validation_failure"):
+    """Accept only bounded, known path tokens/rules; no parsing of exception text."""
+    if type(field_path) is str and field_path.startswith("draft."):
+        field_path = field_path[6:]
+    elif field_path == "draft":
+        field_path = "$"
+    safe = (type(field_path) is str and len(field_path) <= 160 and
+        (field_path == "$" or (len(field_path.split(".")) <= 12 and all(
+            part in _DIAGNOSTIC_NAMES or re.fullmatch(r"0|[1-9][0-9]{0,5}", part)
+            for part in field_path.split(".")))))
+    if not safe or type(rule) is not str or rule not in DIAGNOSTIC_RULES:
+        return {"field_path":None, "rule":"unknown_validation_failure"}
+    return {"field_path":field_path, "rule":rule}
+
+
 class ContractError(ValueError):
-    """Invalid local contract, model output or evidence reference; no approval inferred."""
+    """Existing exception behavior plus safe, validator-authored diagnostic fields."""
+    def __init__(self, message, *, field_path=None, rule="unknown_validation_failure"):
+        super().__init__(message)
+        self.diagnostic = validation_detail(field_path, rule)
 
 
-def require(condition, message):
+def require(condition, message, *, field_path=None, rule="unknown_validation_failure"):
     if not condition:
-        raise ContractError(message)
+        raise ContractError(message, field_path=field_path, rule=rule)
 
 
 def _check_schema(schema):
@@ -66,23 +96,31 @@ def _check_schema(schema):
 
 def _shape(value, schema, path):
     kind = schema["type"]
+    expected = {"object":dict, "array":list, "string":str}[kind]
+    require(type(value) is expected, path + ": invalid type", field_path=path, rule="invalid_type")
     if kind == "object":
-        require(type(value) is dict and set(schema["required"]) <= set(value) <= set(schema["properties"]),
-                path + ": missing or unexpected fields")
+        for key in schema["required"]:
+            require(key in value, path + ": missing required field",
+                    field_path=path + "." + key, rule="required_field_missing")
+        # Report the known parent, never an arbitrary unexpected key (which may be sensitive).
+        require(set(value) <= set(schema["properties"]), path + ": unexpected fields",
+                field_path=path, rule="unexpected_field")
         for key, item in value.items():
             _shape(item, schema["properties"][key], path + "." + key)
     elif kind == "array":
-        require(type(value) is list and schema.get("minItems", 0) <= len(value) <= schema.get("maxItems", float("inf")),
-                path + ": invalid array length/type")
+        require(schema.get("minItems", 0) <= len(value) <= schema.get("maxItems", float("inf")),
+                path + ": invalid array length", field_path=path, rule="array_length_invalid")
         if schema.get("uniqueItems"):
-            require(len(value) == len({json.dumps(v, sort_keys=True) for v in value}), path + ": duplicate values")
+            require(len(value) == len({json.dumps(v, sort_keys=True) for v in value}),
+                    path + ": duplicate values", field_path=path, rule="duplicate_array_item")
         for index, item in enumerate(value):
             _shape(item, schema["items"], path + "." + str(index))
     else:
-        require(type(value) is str and len(value.strip()) >= schema.get("minLength", 1),
-                path + ": nonempty text required")
+        require(len(value.strip()) >= schema.get("minLength", 1), path + ": nonempty text required",
+                field_path=path, rule="nonempty_text_required")
     if "enum" in schema:
-        require(value in schema["enum"], path + ": unregistered value")
+        require(value in schema["enum"], path + ": unregistered value",
+                field_path=path, rule="invalid_enum_value")
 
 
 def _object(properties):
@@ -159,10 +197,12 @@ def _texts(value):
 
 
 def _eligible_claims(records):
-    require(type(records) is list, "Caller must supply retrieved evidence records")
+    require(type(records) is list, "Caller must supply retrieved evidence records",
+            field_path="evidence_records", rule="invalid_type")
     claims = {}
-    for row in records:
-        require(type(row) is dict, "Malformed retrieved evidence")
+    for index, row in enumerate(records):
+        require(type(row) is dict, "Malformed retrieved evidence",
+                field_path="evidence_records." + str(index), rule="invalid_type")
         if row.get("authority") != "public_product_facts" or row.get("usable_as_complete_evidence") is not True:
             continue
         try:
@@ -179,7 +219,8 @@ def _eligible_claims(records):
                     "Conflicting claim evidence")
             claims[p["unit_id"]] = fields["evidence_sha256"]
         except (KeyError, TypeError, ValueError):
-            raise ContractError("Retrieved public evidence failed validation") from None
+            raise ContractError("Retrieved public evidence failed validation",
+                field_path="evidence_records." + str(index), rule="evidence_validation_failed") from None
     return claims
 
 
@@ -195,13 +236,22 @@ def validate_draft(draft, *, format_name, evidence_records):
     _shape(draft, model_output_schema(format_name), "draft")
     claims = _eligible_claims(evidence_records)
     seen = set()
-    for reference in draft["claim_references"]:
+    for index, reference in enumerate(draft["claim_references"]):
         path = reference["content_field"]
-        require(path not in seen and type(_field(draft["content"], path)) is str,
-                "Reference must identify one unique text field")
+        slot = "claim_references." + str(index)
+        require(path not in seen, "Reference must identify one unique text field",
+                field_path=slot + ".content_field", rule="duplicate_field_reference")
+        try:
+            target = _field(draft["content"], path)
+        except ContractError:
+            raise ContractError("Invalid referenced content field", field_path=slot + ".content_field",
+                                rule="invalid_content_field_reference") from None
+        require(type(target) is str, "Reference must identify a text field",
+                field_path=slot + ".content_field", rule="invalid_content_field_reference")
         seen.add(path)
-        require(all(claim in claims for claim in reference["claim_ids"]),
-                "Claim reference lacks complete retrieved public evidence")
+        for claim_index, claim in enumerate(reference["claim_ids"]):
+            require(claim in claims, "Claim reference lacks complete retrieved public evidence",
+                    field_path=slot + ".claim_ids." + str(claim_index), rule="invalid_claim_reference")
     warnings = []
     for target in template["editorial_guidelines"]["length_targets"]:
         values = [_field(draft["content"], field) for field in target["fields"]]

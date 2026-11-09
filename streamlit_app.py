@@ -1,4 +1,4 @@
-"""Real, read-only launch inventory and brief selection. No generation actions."""
+"""Launch inventory and explicitly selected offline harness demonstration."""
 from pathlib import Path
 import sys
 

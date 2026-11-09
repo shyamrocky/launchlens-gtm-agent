@@ -16,16 +16,21 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
 from langsmith import tracing_context
 
+from launchlens.content_review import (ReviewError, authoritative_binding, validate_review, prepare_revision)
 from launchlens.evidence_payload import storage_fields
 from launchlens.gtm_registry import (HarnessError, MAX_SEARCHES, MAX_TURNS,
     action_registry, objective_claims, require, validate_action, validate_request)
 from launchlens.launch_checks import evaluate_launch
+from launchlens.linkedin_drafting import DraftValidationError, prepare_input, admit_output, digest
 from launchlens.notion_tools import PMM_PAGE, PRODUCT
 from launchlens.retrieval import checked_packet
+from launchlens.voice_policy import BRAND_POLICY_ID, voice_brief
 
 
 class State(TypedDict):
     run_id: str
+    user_notes: str
+    voice_policy_id: str | None
     request: dict
     mode: str
     status: str
@@ -43,13 +48,24 @@ class State(TypedDict):
     review: dict
     human_accepted: bool
     research_gaps: list
+    writing_attempts: int
+    draft_failure: dict | None
+    draft_history: list
+    reviews: list
+    review_attempts: int
+    revision_attempts: int
+    revision_request: dict | None
+    revision_feedback: str
+    review_failure: dict | None
 
 
-def initial_state(request, mode="offline_simulation"):
-    return State(run_id=str(uuid4()), request=request, mode=mode,
+def initial_state(request, mode="offline_simulation", user_notes="", voice_policy_id=None):
+    return State(run_id=str(uuid4()), request=request, mode=mode, user_notes=user_notes, voice_policy_id=voice_policy_id,
                  status="created", turns=0, searches=0, pmm=None, launch=None,
                  evidence=[], ledger={}, events=[], feedback="", clarification="",
-                 pending=None, drafts={}, review={}, human_accepted=False, research_gaps=[])
+                 pending=None, drafts={}, review={}, human_accepted=False, research_gaps=[], writing_attempts=0, draft_failure=None,
+                 draft_history=[], reviews=[], review_attempts=0, revision_attempts=0,
+                 revision_request=None, revision_feedback="", review_failure=None)
 
 
 class FoundationSession:
@@ -60,13 +76,25 @@ class FoundationSession:
     Public run/resume methods accept a run ID, not model-provided graph updates.
     """
     def __init__(self, model, tools, *, max_turns=MAX_TURNS, max_searches=MAX_SEARCHES,
-                 mode="offline_simulation"):
-        require(mode in {"offline_simulation", "live_research"}, "Invalid execution mode")
+                 mode="offline_simulation", writer=None, reviewer=None, revision_writer=None, voice_policy_id=None):
+        require(mode in {"offline_simulation", "live_research", "live_linkedin", "offline_review"}, "Invalid execution mode")
         require(callable(model), "A model adapter is required")
         require(all(callable(getattr(tools, name, None)) for name in
                     ("read_pmm", "read_launch", "search")), "Missing tool adapter")
         require(type(max_turns) is int and 1 <= max_turns <= MAX_TURNS, "Invalid turn limit")
         require(type(max_searches) is int and 1 <= max_searches <= MAX_SEARCHES, "Invalid search limit")
+        require(mode not in {"live_linkedin", "offline_review"} or callable(writer), "Drafting mode requires a writer")
+        require(mode in {"live_linkedin", "offline_review"} or writer is None, "Writer unavailable in research-only mode")
+        require((mode == "offline_review" and callable(reviewer) and callable(revision_writer)) or
+                (mode != "offline_review" and reviewer is None and revision_writer is None),
+                "Review adapters are available only in the explicit offline review profile")
+        require(voice_policy_id is None or (mode == "offline_review" and voice_policy_id == BRAND_POLICY_ID),
+                "New writing policy is offline-only and application-selected")
+        if voice_policy_id is not None:
+            voice_brief(voice_policy_id)  # Verify configured bytes before constructing the graph.
+        self._voice_policy_id = voice_policy_id
+        self._reviewer, self._revision_writer = reviewer, revision_writer
+        self._writer = writer
         self._model, self._tools = model, tools
         self._mode = mode
         self._max_turns, self._max_searches = max_turns, max_searches
@@ -113,12 +141,13 @@ class FoundationSession:
         finally:
             self._lock.release()
 
-    def start(self, request):
+    def start(self, request, *, user_notes=""):
         request = validate_request(request)  # Reject before model/tool invocation or old-state deletion.
+        require(type(user_notes) is str and len(user_notes) <= 1000, "Notes must be at most 1000 characters")
         require(self._lock.acquire(blocking=False), "Execution is running")
         try:
             require(self._run_id is None, "Use generate_again to replace the current task")
-            self._initial = initial_state(request, self._mode)
+            self._initial = initial_state(request, self._mode, user_notes, self._voice_policy_id)
             self._run_id = self._initial["run_id"]
             return self._snapshot()
         finally:
@@ -128,7 +157,7 @@ class FoundationSession:
         # Trusted lifecycle hooks do local cleanup only; never registered model actions.
         failed = False
         try:
-            for adapter in (self._model, self._tools):
+            for adapter in (self._model, self._tools, self._writer, self._reviewer, self._revision_writer):
                 cleanup = getattr(adapter, "reset_run", None)
                 if callable(cleanup):
                     try:
@@ -141,12 +170,13 @@ class FoundationSession:
             self._run_id, self._initial = None, None
         require(not failed, "Local adapter cleanup failed; no active task remains")
 
-    def generate_again(self, request):
+    def generate_again(self, request, *, user_notes=""):
+        require(type(user_notes) is str and len(user_notes) <= 1000, "Notes must be at most 1000 characters")
         request = validate_request(request)
         require(self._lock.acquire(blocking=False), "Execution is running; replacement disabled")
         try:
             self._discard()
-            self._initial = initial_state(request, self._mode)
+            self._initial = initial_state(request, self._mode, user_notes, self._voice_policy_id)
             self._run_id = self._initial["run_id"]
             return self._snapshot()
         finally:
@@ -166,6 +196,29 @@ class FoundationSession:
         require(type(reply) is str and reply.strip() and len(reply) <= 2000,
                 "Clarification reply must contain 1–2000 characters")
         return self._execute(run_id, reply=reply)
+
+    def request_revision(self, run_id, feedback, *, draft_version, draft_sha256):
+        """Explicit owner command, never a registered model action or automatic loop."""
+        require(self._lock.acquire(blocking=False), "Execution is running")
+        try:
+            self._check_id(run_id)
+            state = self._snapshot()
+            require(self._mode == "offline_review" and state["status"] == "awaiting_human_review",
+                    "Current reviewed draft required before revision")
+            _, _, binding = authoritative_binding(state)
+            require(type(draft_version) is int and draft_version == binding["draft_version"] and
+                    draft_sha256 == binding["draft_sha256"], "Feedback targets an outdated draft")
+            require(type(feedback) is str and feedback.strip() and len(feedback) <= 2000,
+                    "Feedback must contain 1–2000 characters")
+            require(state["revision_attempts"] == 0 and state["revision_request"] is None and
+                    state["review"].get("binding") == binding, "Revision is unavailable or already requested")
+            permission = {"binding":binding, "review_sha256":digest(state["review"]), "feedback":feedback}
+            with tracing_context(enabled=False):
+                self._graph.update_state(self._config(), {"revision_request":permission,
+                    "human_accepted":False, "revision_feedback":feedback, "status":"created"})
+            return self._snapshot()  # Does not execute or call any model.
+        finally:
+            self._lock.release()
 
     def _execute(self, run_id, reply=None):
         require(self._lock.acquire(blocking=False), "Execution is already running")
@@ -204,7 +257,7 @@ class FoundationSession:
             return state
         view = deepcopy(state)
         view.pop("pending", None)
-        view["allowed_actions"] = action_registry()
+        view["allowed_actions"] = action_registry(self._mode)
         view["remaining_limits"] = {"model_turns": self._max_turns - state["turns"],
                                     "product_searches": self._max_searches - state["searches"]}
         state["turns"] += 1
@@ -214,7 +267,7 @@ class FoundationSession:
             proposal = deepcopy(self._model(view))
             # Bounded, JSON-only action boundary. Never merge a model state patch.
             require(len(json.dumps(proposal, allow_nan=False)) <= 8000, "Action exceeds size bound")
-            state["pending"] = deepcopy(validate_action(proposal))
+            state["pending"] = deepcopy(validate_action(proposal, self._mode))
         except (HarnessError, TypeError, ValueError, OverflowError):
             self._event(state, "model_proposal", "rejected", started)
         except Exception:
@@ -283,6 +336,8 @@ class FoundationSession:
             return state
         state["ledger"][action_id] = {"action": deepcopy(action), "fingerprint": fingerprint,
                                       "status": "pending", "result": None}
+        outcome = "completed"
+        failure_stage = "tool"
         try:
             if name == "read_pmm_brief":
                 value = deepcopy(self._tools.read_pmm(deepcopy(state["request"])))
@@ -304,6 +359,65 @@ class FoundationSession:
                 value = self._validate_evidence(deepcopy(self._tools.search(**args)), args["authority"])
                 state["evidence"].append(value)
                 state["research_gaps"] = self._objective_gaps(state)
+            elif name == "generate_linkedin":
+                require(self._mode in {"live_linkedin", "offline_review"}, "Drafting unavailable in this mode")
+                failure_stage = "draft_eligibility"
+                inputs = prepare_input(state)  # No inference until all admission checks pass.
+                if state["writing_attempts"]:
+                    require(state["writing_attempts"] == 1 and state["drafts"].get("linkedin"),
+                            "Writing already attempted; no retry")
+                    outcome = "duplicate_suppressed"
+                else:
+                    require(state["turns"] < self._max_turns, "No model-call budget for writing")
+                    state["writing_attempts"] = 1  # Count failures as attempts, before side effects.
+                    state["turns"] += 1
+                    failure_stage = "draft_writing"
+                    result = self._writer(deepcopy(inputs))
+                    failure_stage = "draft_validation"
+                    state["drafts"]["linkedin"] = admit_output(result, inputs)
+                    if self._mode == "offline_review":
+                        state["draft_history"].append(deepcopy(state["drafts"]["linkedin"]))
+                value = {"status":"unreviewed", "draft_version":state["drafts"]["linkedin"]["version"],
+                         "input_sha256":state["drafts"]["linkedin"]["input_sha256"]}
+            elif name == "review_linkedin":
+                failure_stage = "review_eligibility"
+                require(self._mode == "offline_review", "Review unavailable in this mode")
+                _, _, binding = authoritative_binding(state)
+                if state["review"].get("binding") == binding:
+                    outcome = "duplicate_suppressed"
+                else:
+                    require(state["review_attempts"] < 2 and state["turns"] < self._max_turns,
+                            "No model-call budget for review")
+                    state["review_attempts"] += 1; state["turns"] += 1
+                    failure_stage = "review_model"
+                    candidate = self._reviewer(deepcopy(state))
+                    failure_stage = "review_validation"
+                    review = validate_review(candidate, state)
+                    state["review"] = review; state["reviews"].append(deepcopy(review))
+                    state["drafts"]["linkedin"]["review_status"] = review["review_status"]
+                state["status"] = "awaiting_human_review"  # Required human boundary, never automatic revision.
+                value = {"status":state["review"]["review_status"], "binding":binding}
+            elif name == "revise_linkedin":
+                failure_stage = "revision_eligibility"
+                require(self._mode == "offline_review", "Revision unavailable in this mode")
+                if state["revision_attempts"]:
+                    require(state["revision_attempts"] == 1 and state["drafts"]["linkedin"]["version"] == 2,
+                            "Revision already attempted; no retry")
+                    outcome = "duplicate_suppressed"
+                else:
+                    prepare_revision(state)  # Original authority, exact review/version and owner permission.
+                    require(state["turns"] < self._max_turns, "No model-call budget for revision")
+                    state["revision_attempts"] = 1; state["turns"] += 1
+                    failure_stage = "revision_model"
+                    candidate = self._revision_writer(deepcopy(state))
+                    failure_stage = "revision_validation"
+                    revised = admit_output(candidate, prepare_input(state))
+                    revised["version"] = 2
+                    state["drafts"]["linkedin"] = revised
+                    state["draft_history"].append(deepcopy(revised))
+                    state["review"] = {}; state["revision_request"] = None
+                    state["human_accepted"] = False
+                value = {"status":"unreviewed", "draft_version":2}
             elif name == "request_clarification":
                 value = {"question": args["question"]}
                 state["clarification"] = args["question"]
@@ -319,16 +433,32 @@ class FoundationSession:
                             "Research prerequisites remain incomplete")
                     state["research_gaps"] = self._objective_gaps(state)
                     if not state["research_gaps"]:
-                        state["status"] = "research_complete"
-                value = {"status": "research_incomplete" if state["research_gaps"] and
-                         state["status"] == "running" else state["status"],
+                        if self._mode not in {"live_linkedin", "offline_review"}:
+                            state["status"] = "research_complete"
+                        elif self._mode == "live_linkedin" and state["drafts"].get("linkedin"):
+                            state["status"] = "draft_complete"
+                incomplete = "draft_incomplete" if self._mode in {"live_linkedin", "offline_review"} else "research_incomplete"
+                value = {"status": incomplete if state["status"] == "running" else state["status"],
                          "mode": state["mode"], "missing_requirements": list(state["research_gaps"])}
             state["ledger"][action_id].update(status="completed", result=deepcopy(value))
-            self._event(state, name, "completed", started, action_id=action_id,
+            self._event(state, name, outcome, started, action_id=action_id,
                         decision=state["launch"]["decision"] if name == "check_launch" else None)
-        except Exception:
+        except Exception as error:
             state["ledger"][action_id]["status"] = "failed"
             state["status"] = "failed"
+            if name == "generate_linkedin":
+                detail = error.diagnostic if isinstance(error, DraftValidationError) else {
+                    "field_path":None, "rule":"unknown_validation_failure"}
+                state["draft_failure"] = {"stage":failure_stage,
+                    "code":error.code if isinstance(error, DraftValidationError) else "operation_failed", **detail}
+            if name in {"review_linkedin", "revise_linkedin"}:
+                if isinstance(error, ReviewError):
+                    detail = error.diagnostic
+                elif isinstance(error, DraftValidationError):
+                    detail = {"code":error.code, **error.diagnostic}
+                else:
+                    detail = {"code":"operation_failed", "field_path":"$"}
+                state["review_failure"] = {"stage":failure_stage, **detail}
             self._event(state, name, "failed_safely", started, action_id=action_id)
         return state
 

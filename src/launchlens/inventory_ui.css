@@ -56,17 +56,14 @@
 @media(max-width: 360px) { .source-grid { grid-template-columns: 1fr; } }
 
 /* One aligned desktop grid; stack cards before either column becomes cramped. */
-.st-key-inventory-layout > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"],
-.st-key-brief-layout > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { gap: 24px; align-items: flex-start; }
+.st-key-inventory-layout > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { gap: 24px; align-items: flex-start; }
 .launch-section-divider { border-top: 1px solid #364356; margin: 8px 0 16px; }
 .campaign-objective p { margin: 0; }
 .campaign-objective .objective-label { color: #b8c4d4; font-size: 14px; line-height: 1.4; }
 .campaign-objective .objective-value { color: #f0f4fa; font-size: 19px; font-weight: 500; line-height: 1.4; margin-top: 4px; }
 @media(max-width: 1100px) {
-    .st-key-inventory-layout > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"],
-    .st-key-brief-layout > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { flex-direction: column; }
-    .st-key-inventory-layout > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"],
-    .st-key-brief-layout > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { width: 100%; flex: 1 1 100%; min-width: 0; }
+    .st-key-inventory-layout > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { flex-direction: column; }
+    .st-key-inventory-layout > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { width: 100%; flex: 1 1 100%; min-width: 0; }
 }
 
 /* Compact header: one grouped navigation rectangle and closely attached status. */
@@ -76,3 +73,33 @@
 .st-key-header-navigation > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { gap: 4px; flex-wrap: nowrap; }
 .st-key-header-navigation > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { min-width: 0; width: auto; flex: 1 1 0; }
 @media(max-width: 640px) { .st-key-header-navigation button { font-size: 13px; } }
+
+/* Existing market route, replaced with one centered preparation screen. */
+.st-key-prepare-package { max-width: 720px; width: 100%; margin: 0 auto; gap: 18px; }
+.st-key-prepare-back button { color: #9bbaff; padding-left: 0; }
+.st-key-prepare-package h1 { font-size: 32px; font-weight: 600; line-height: 1.2; padding: 0; }
+.st-key-prepare-summary, .st-key-prepare-gate { background: #1b2430; border-radius: 18px; padding: 20px 24px; }
+.prepare-summary { margin: 0; }
+.prepare-summary > div { display: grid; grid-template-columns: 90px 1fr; gap: 18px; padding: 12px 0; }
+.prepare-summary > div + div { border-top: 1px solid #364356; }
+.prepare-summary dt { color: #b8c4d4; font-size: 15px; }
+.prepare-summary dd { color: #f0f4fa; margin: 0; font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; }
+.gate-heading { display: flex; gap: 8px; align-items: baseline; }
+.gate-heading h3 { margin: 0; padding: 0; font-size: 20px; line-height: 1.4; }
+.gate-explanation { color: #b8c4d4; margin: 6px 0 0; font-size: 15px; line-height: 1.5; }
+.st-key-prepare-start button { border-radius: 999px; padding: 10px 28px; font-weight: 600; }
+.st-key-prepare-start button:disabled { background: #34445d; color: #b8c4d4; opacity: 1; border: 0; }
+@media(max-width: 640px) {
+    .st-key-prepare-summary, .st-key-prepare-gate { padding: 16px; }
+    .prepare-summary > div { grid-template-columns: 1fr; gap: 4px; }
+    .st-key-prepare-package h1 { font-size: 28px; }
+}
+
+/* Existing harness run: one readable column, no fixed heights or inner scrolling. */
+.st-key-agent-run { max-width: 860px; width: 100%; margin: 0 auto; }
+.draft-copy { border: 1px solid #364356; background: #1b2430; border-radius: 16px; padding: 20px 24px; }
+.draft-copy p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.st-key-agent-run [data-testid="stJson"] { max-width: 100%; }
+/* Dark text retains contrast on the existing periwinkle primary accent. */
+.st-key-agent-run [data-testid="stFormSubmitButton"] button,
+.st-key-prepare-start button:not(:disabled) { background: #9bbaff; color: #111720; border-color: #9bbaff; }

@@ -1,3 +1,87 @@
+## UI-D009 — Existing harness connected in explicit offline mode, 2026-11-09
+
+Owner approved checkpoint 2. [M2-D020](ui-agent-integration-review.md) is the
+canonical integration record and supersedes UI-D008's disabled-Start statement
+only for the explicit offline simulation. Real inventory remains read-only and
+live Start disabled. Same app/preparation route; fixture data is separately labeled,
+with no live-source fallback or green access badges. Existing dark presentation,
+real source-read behavior and accepted UI-D007 scope remain preserved. New run view
+shows the actual harness ledger, draft/evidence, mock findings, explicit feedback,
+one revision/re-review and current-run lifecycle. Technical PASS320offline tests;
+owner review pending. No inference, source writes, export, tracing or Git sync.
+
+# Market preparation — replaces the existing brief screen
+
+Decision ID: UI-D008. Date: 2026-11-08 (America/Los_Angeles).
+Authority: owner approved the reviewed preparation-screen refinement and explicitly
+requested replacing the existing screen rather than stacking pages.
+Status: implemented locally; technical verification PASS; owner review pending.
+
+## Behavior and source ownership
+
+The existing `brief_page` function / `screen="brief"` route is replaced in place.
+Dark theme retained, centered max-width720px, one column. Back returns to the same
+fully expanded inventory. Header's Current brief becomes Current setup. Product,
+registry objective and source-derived planned launch date appear once. Two-row
+summary shows objective and the current LinkedIn scope; UK is paused and India
+shows Promotional package blocked. No new standalone page or source dataset.
+
+Gate display comes only from the existing `evaluate_launch`, recomputed against
+cached authoritative Notion records for the selected evaluation date. US: Drafting
+permitted; UK: Availability not confirmed; India: Promotional drafts blocked.
+Other date/conflict conditions get Readiness needs clarification. Missing/incomplete
+sources get Unable to verify readiness. Known blocking policy remains dominant.
+No permission is accepted from UI text, notes or a model. Details defaults collapsed:
+four checks, only actual blockers (no literal None), unresolved conditions, material
+pre-launch restrictions and source/evaluation-date explanation. Optional date editor
+recalculates in place; never changes the calendar or triggers a source/model read.
+
+Notes are bounded1000characters, kept separately per market in session state and
+preserved through navigation. They are guidance only: no registry/request/policy
+changes and no fabricated run initial state. Explicit Refresh clears notes/date
+widgets and the old selection/snapshot before the existing read process. All Start
+agent buttons are visibly disabled with an honest not-connected caption. No fake
+toast run, thread ID, generation, Reviewer promise or new India research-only path.
+The source panel remains on the homepage only; Save brief, Launch brief, Launch
+decision, duplicate objective, old banners and raw record dump are removed from
+this screen. The development-stage explanation is documented in README instead.
+
+Rationale: a PMM should understand what is being prepared, why drafting is permitted
+or paused, and how to start once integrated. Alternatives: retain the ambiguous
+brief editor, add a second screen, adopt light theme, or wire unapproved agent/
+research-only behavior. Those alternatives were not adopted. Current policy,
+source readers, prompts, evidence, models, dependencies and historical receipts
+remain unchanged. Earlier UI-D007 acceptance/publication remains historical; it
+does not automatically accept this additional refinement or close M2.3b content.
+
+## Actual verification
+
+- **122 offline tests PASS:111existing root +11Streamlit UI.** Network is blocked
+  in UI tests. US/UK/India state copy, disabled start, collapsed details, no source
+  panel/old controls/literal None, date recalculation, missing source/check/calendar,
+  pre-launch available-now restriction, back/current navigation and explicit refresh
+  are verified. Instruction-like notes cannot alter the admitted request or Hold;
+  notes do not become executable HTML, and no run is created. Existing root tests
+  cover source/launch-policy regressions. Initial new assertions looked for caption
+  blocker text in markdown-only results; corrected the test to inspect both.
+- Actual Chrome desktop screenshots inspected for US, UK and India with the real
+  existing source reader. US Details shows four approvals.390px responsive India
+  view inspected from title through footer: summary stacks cleanly, gate explanation,
+  Details, notes and disabled button remain readable. Device mode/DevTools restored
+  to normal desktop; US preparation left open. Not cross-browser/device certification.
+- The normal UI first load checked existing read-only sources. Navigation reused
+  the same snapshot timestamp (Nov08,2026,11:56:29PM PST); all five access badges
+  were accessible on the homepage. No separate source validation campaign, paid
+  inference, external write, corpus change, dependency install or Git publication.
+- Scope/hash, syntax, whitespace, privacy and workspace-boundary review completed.
+  No application/build/test/deployment requirement added inside workspace. MEMORY
+  and unrelated Writer experiments/history remain unchanged.
+
+Review at http://127.0.0.1:8520/ → Open brief. Next agent/Reviewer integration and
+any live call require a separately approved checkpoint. Stop for owner review.
+
+---
+
 # UI milestone acceptance
 
 Decision ID: UI-D007. Date: 2026-11-08 (America/Los_Angeles).

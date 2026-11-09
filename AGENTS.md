@@ -1,4 +1,67 @@
+## Repository sync authorization — 2026-11-09
+
+Owner authorized Git sync of the completed canonical work; earlier no-publication
+notes below describe historical checkpoint boundaries. [Scope and fresh verification](docs/planning/repository-sync-2026-11-09.md).
+This does not accept M2.3b content or authorize live execution or a next milestone.
+
+## Versioned writing voice — offline update, 2026-11-09
+
+Owner approved optional simulated brand voice for LinkedIn and neutral internal
+analysis, keeping factual/launch checks independent. M2-D021:
+[voice policy review](docs/planning/writing-voice-policy-review.md).
+New SHA-bound policy and three separate prompts; historical prompt/fixture/receipt
+bytes retained. New offline UI starts select simulated_brand_v1; old runs retain
+neutral policy. Existing six review dimensions, two severities, evidence/CTA/
+launch rules and one explicit revision remain.334offline testsPASS(197agent/
+111root/26UI). Authored mocks demonstrate policy wiring, not live semantic quality.
+No live adoption, inference, dependencies, source changes, export, hosted traces,
+MEMORY append or Git publication. Stop for owner review before live preparation.
+
+## Offline UI-to-harness connection — 2026-11-09
+
+Owner explicitly approved checkpoint 2. M2-D020 in
+[the integration review](docs/planning/ui-agent-integration-review.md) records the
+existing FoundationSession/LangGraph connected to an explicit offline Streamlit
+simulation: actual ledger/results, safe fixture draft/evidence/mock findings,
+explicit one revision and fresh exact-version review, Generate again/Reset.
+Real inventory remains the default with live Start disabled; simulation never
+uses source/model credentials or a fallback from real reads.320offline testsPASS
+(185agent/111root/24UI); clean24UItestsPASS without workspace/private/generated/
+credentials/PDFs. Optional UI group reuses existing pinned harness dependencies;
+no new framework/provider/prompt/policy/source dataset or protected receipt change.
+Scripted decisions and authored outputs prove wiring, not live autonomy/quality.
+No human acceptance/publishing/export, hosted LangSmith, paid calls or Git sync.
+Stop for owner review; prior M2.3b/content acceptance remains pending. Earlier UI
+not-connected statements below are historical for the now-connected offline mode.
+
 # LaunchLens working instructions
+
+## Reviewer and one revision — scoped offline implementation, 2026-11-09
+
+Owner approved checkpoint1 and reiterated reuse of the existing harness: model
+chooses permitted actions; harness enforces policy and executes. M2-D019 records
+TECHNICAL PASS / OWNER REVIEW PENDING in
+[the Reviewer review](docs/planning/m2.3c-reviewer-revision-review.md).
+Same FoundationSession/LangGraph, offline_review profile only; independent review,
+exact-version binding, explicit owner feedback and at most one revision/re-review.
+307offline testsPASS(185agent/111root/11UI); clean185agent+demoPASS without ignored
+inputs. No new pipeline/framework/database/dependencies. Original Writer prompt,
+existing live profiles, UI, sources, protected Hermes history and MEMORY preserved.
+Mocks validate integration, not live autonomy or semantic-review accuracy. Human
+acceptance/publishing remain false. No paid calls, hosted LangSmith, UI wiring,
+model adoption or Git publication. LangSmith is a separate proposed observability
+checkpoint. Stop for owner review; M2.3b content remains pending.
+
+## Market preparation screen — 2026-11-08
+
+Owner approved replacing the existing brief screen in place (UI-D008). One dark,
+centered preparation screen now shows registry objective/package scope, deterministic
+readiness, collapsed Details/date editing, optional session-only notes and a disabled
+Start agent. No new route or execution path; UK clarification and India Hold remain.
+Agent/Reviewer integration is not connected; no research-only promise, live inference
+or Git publication authorized. Canonical results/boundary:
+[UI-D008](docs/planning/ui-inventory-implementation.md). Earlier UI-D007 acceptance
+still covers the prior published slice; this refinement awaits owner review.
 
 ## Owner acceptance and scoped Git sync — 2026-11-08
 
@@ -51,6 +114,139 @@ inference, agent/Reviewer integration, source writes, model adoption, MEMORY app
 or Git publication. Stop for owner review; earlier planning-only UI prohibitions
 are superseded solely for this completed discovery/brief slice. M2.3b stays open.
 
+
+## Current planning direction — LinkedIn-first experience, 2026-11-07
+
+Owner requested updating the plan after reviewing the supplied proposal. The
+[current roadmap](docs/planning/m2-agent-implementation-plan.md#current-delivery-roadmap--linkedin-first-2026-11-07)
+is canonical: A reuse map/contracts → B offline Reviewer/one explicit revision →
+C offline Streamlit LinkedIn journey → D separately authorized bounded live test;
+then remaining formats and final certification validation. Preserve autonomy,
+one-current-run/reset rules, canonical safe fixtures and exact-version review.
+Planning update only: no implementation, model adoption, paid call, new dependency,
+MEMORY append or Git publication authorized. Hermes diagnostic is completed only
+for one-attempt structural/citation behavior; content/overall M2.3b remain pending.
+Historical checkpoint descriptions below retain their original scopes/results.
+
+## Hermes live diagnostic — 2026-11-07
+
+Owner explicitly approved one Hermes test. Executed exactly once: HTTP200,
+accepted_unreviewed, no empty/duplicate/ineligible citations.6,850input/164output,
+5.706s per-model elapsed,$0.007342 uncached estimate. No retry/repair. Full result:
+[Hermes validation](docs/planning/m2.3b-hermes-live-validation.md). “We’re bringing…” violates the Writer's no-manufacturer-
+voice instruction; structural acceptance is not semantic acceptance. Reasoning
+telemetry null; no claim that thinking is disabled. Default Qwen and all runtime/
+evidence/validation unchanged. Single guard consumed; no more calls/model adoption,
+Reviewer/UI, MEMORY append or Git publication. Stop for owner review; M2.3b stays open.
+
+
+## Latest: Hermes one-call preparation — 2026-11-07
+
+Owner authorized offline preparation only, preserving context/prompt/validation.
+Separate explicit Hermes profile/CLI selection prepared; default Qwen unchanged.
+279offline tests PASS, clean-copy159PASS; exact request differs only in model ID.
+Local publisher-template count6,850; hosted mode/accounting/token equivalence not
+verified. Proposed$0.05 ceiling is conditional, not spending permission. Canonical
+[review](docs/planning/m2.3b-hermes-call-preparation.md) owns exact identities,
+remaining gates and future command. No live authorization file or execution guard
+created; no inference, MEMORY append or Git publication. STOP for owner review.
+Earlier baseline-only allowlist statements are historical for this scoped profile;
+no default model adoption or prior-approval transfer. M2.3b generation stays open.
+
+## Nebius-only route — direct providers removed, 2026-11-07
+
+Latest owner direction: remove direct-provider execution from the code repository
+and use Nebius Token Factory. Direct GPT/Sonnet route is INACTIVE, not waiting for
+credentials. Removed direct OpenAI/Anthropic/Groq execution/configuration; retained
+Nebius-only comparison controls and the unchanged existing Qwen baseline. No new
+model registered or enabled. Previous direct-provider approval/0.40USD ceiling
+cannot authorize any replacement or further baseline test. New profiles, qualification
+and paid calls require new explicit approval. [Removal and verification](docs/planning/nebius-writer-route-review.md).
+268offline tests PASS; clean-copy148PASS. No API calls, dependencies, MEMORY append
+or Git publication. Earlier pending-credential/provider instructions are historical
+and superseded. M2.3b remains open.
+
+
+## Two-model comparison authorized; prerequisites pending — 2026-11-07
+
+Owner authorized1GPT/Sonnet comparison,0.20USD each/0.40total,0retries/repairs,
+unchangedprompt/context/validation,Llamaexcluded. Missing direct-provider keys
+block execution. Nebius read-only catalogHTTP200 lists31models but neither exact
+candidate; GPT-OSS is distinct and not substituted.145offlineagenttestsPASS;
+0generationrequests. [Current verification/boundary](docs/planning/m2.3b-writer-comparison-review.md).
+Approval persists; next needs credentials/token qualification or explicit owner
+agreement to a Nebius-only model set. No registry/code changes,Git orMEMORYappend.
+
+
+## M2.3b controlled Writer comparison — offline only, 2026-11-07
+
+Owner authorized the reviewed multi-model comparison implementation and mocked
+verification only. Added a small versioned registry, three provider adapters,
+explicit single/comparison dispatch, atomic cost reservation, protected raw capture
+and independent unchanged admission. Existing Qwen Writer/default paths remain
+unchanged. Candidate IDs/settings/access and limitations are documented in the
+[comparison review](docs/planning/m2.3b-writer-comparison-review.md). Groq Llama is enterprise/
+Contact Sales: prices remain unresolved and three-model execution is blocked.
+265offline tests PASS (22new); clean-copy145PASS. No live/provider authentication,
+source calls, prompt/context/schema/validator changes, dependencies, MEMORY append
+or Git publication. M2.3b generation stays open. STOP for owner review before any
+paid comparison; enabled flags and proposed ceilings do not authorize spending.
+
+
+## Owner acceptance and single projected-context call — 2026-11-07
+
+Owner accepted the offline Writer-context assembly, keeping M2.3b generation open,
+then explicitly authorized one projected-context Writer call with everything else
+unchanged. **Executed once: WRITER_REJECTED.** 7,052 input/322 output tokens,
+4.702seconds HTTP (4.734 total),versus historical20,134 input/331 output and6.489
+seconds HTTP. Four empty citation entries recurred; first failure
+claim_references.2.claim_ids / array_length_invalid. No duplicate or ineligible
+IDs. Complete response/candidate preserved; no repairs/retries. Core facts present,
+but manufacturer voice and ice-cream elaboration need semantic review. Fresh123
+agent/adapter tests PASS. [Complete result and returned post](docs/planning/m2.3b-projected-writer-validation.md).
+No default context rollout, generation acceptance, Reviewer/UI or Git publication.
+STOP for owner review. Earlier pending/offline-only sections are historical.
+
+
+## Latest M2.3b checkpoint — Writer context assembly, 2026-11-07
+
+Owner authorized bounded offline projection,precise hash scope and independent
+backend authority. Implemented opt-in model view with reviewed field/source spans;
+full original evidence still drives unchanged admission. Material caveats/conflicts
+remain visible. Reconstructed provider body matches recorded SHA/73,119bytes;
+original wirebytes were not saved. Projected body35,665bytes,51.2%smaller;no token
+or quality improvement claimed.239offline tests PASS,clean-copy119PASS,deterministic
+5file regenerationPASS. [Complete review and exact brief](docs/planning/m2.3b-writer-context-review.md).
+Default Writer behavior remains baseline; no inference/automatic adoption/output
+enforcement/Reviewer/UI/Git publication. MEMORY appended at owner's mid-task request
+before implementation; not changed again. Stop for owner review; M2.3b still open.
+
+
+## M2.3b diagnostic precision — 2026-11-06
+
+Owner approved diagnostic-only refinement; explicitly NO live run. Validator now
+emits safe bounded field_path/rule metadata, forwarded through the harness/report.
+Missing body reports content.body / required_field_missing; invalid types/references
+and unknown failures tested without raw exception/source/credential leakage.
+Offline gate PASS:220tests;386before/after decisions/results identical;clean-copy
+100agent+8diagnosticPASS. Prompts/contracts/model/policy/limits/evidence unchanged.
+Canonical [review](docs/planning/m2.3b-linkedin-generation-review.md) records actual
+fixtures and limits. Stop for owner review; M2.3b remains open and a new live US
+attempt is separate. No Git sync, MEMORY append, Reviewer/UI or optimization.
+
+
+## M2.3b execution boundary and result — 2026-11-06
+
+Owner approved completing structured controller/Writer prompts, guarded one-US
+LinkedIn drafting and one live experiment after offline verification. Implemented
+locally;209offline tests PASS and clean-copy97PASS. Live model chose drafting,
+but the parsed candidate failed admission and no draft was stored. Diagnostic gap
+(candidate/reason discarded) fixed OFFLINE ONLY; original failed run preserved.
+M2.3b remains REVIEW REQUIRED, not complete/accepted. See the canonical
+[review](docs/planning/m2.3b-linkedin-generation-review.md).
+No automatic paid retry, source/dependency changes, MEMORY append, Reviewer/UI,
+next milestone or Git sync. Latest owner instruction supersedes historical design-
+only boundaries solely for this completed scope. Stop for owner review.
 
 
 ## Latest owner authority — 2026-11-06

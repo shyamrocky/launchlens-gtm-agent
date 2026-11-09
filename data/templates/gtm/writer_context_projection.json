@@ -1,0 +1,497 @@
+{
+  "version": "cherry-float-writer-context-v1",
+  "pmm_sha256": "718310c58b974155b424bba3a055efdf25047a015d1a79a3c02239d9576bac1f",
+  "launch_sha256": "f73c8b6e0a2a6557b238564cfaf4e221297519c9463b29b4ee88968aa2b9d955",
+  "pmm_selection": [
+    {
+      "source": "research_context.pmm.blocks.4.content.rich_text",
+      "purpose": "Fictional educational authority",
+      "spans": [
+        [
+          0,
+          217,
+          "Fictional educational authority"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.14.content.rich_text",
+      "purpose": "Positioning and objective with audience-demand qualification",
+      "spans": [
+        [
+          0,
+          327,
+          "Positioning and objective with audience-demand qualification"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.16.content.rich_text",
+      "purpose": "Historical timing and unresolved readiness caveat",
+      "spans": [
+        [
+          0,
+          338,
+          "Historical timing and unresolved readiness caveat"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.26.content.rich_text",
+      "purpose": "LinkedIn tone and channel restrictions",
+      "spans": [
+        [
+          0,
+          346,
+          "LinkedIn tone and channel restrictions"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.30.content.rich_text",
+      "purpose": "Publication dependency; strategy is not permission",
+      "spans": [
+        [
+          0,
+          255,
+          "Publication dependency; strategy is not permission"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.32.content.rich_text",
+      "purpose": "No measured business or consumer results",
+      "spans": [
+        [
+          0,
+          99,
+          "No measured business or consumer results"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.37.content.rich_text",
+      "purpose": "Brand voice and tone with prohibitions",
+      "spans": [
+        [
+          0,
+          345,
+          "Brand voice and tone with prohibitions"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.40.content.rich_text",
+      "purpose": "Central inspiration pillar with dairy/preference caveats",
+      "spans": [
+        [
+          0,
+          194,
+          "Central inspiration pillar with dairy/preference caveats"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.49.content.rich_text",
+      "purpose": "Audience hypothesis, no health/performance benefit",
+      "spans": [
+        [
+          0,
+          153,
+          "Audience hypothesis, no health/performance benefit"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.55.content.rich_text",
+      "purpose": "Evidence interpretation and product limitations",
+      "spans": [
+        [
+          0,
+          340,
+          "Evidence interpretation and product limitations"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.56.content.rich_text",
+      "purpose": "Regional restrictions and availability withholding",
+      "spans": [
+        [
+          0,
+          401,
+          "Regional restrictions and availability withholding"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.57.content.rich_text",
+      "purpose": "Execution dependencies and historical TBD",
+      "spans": [
+        [
+          0,
+          323,
+          "Execution dependencies and historical TBD"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.58.content.rich_text",
+      "purpose": "Research and measurement gaps",
+      "spans": [
+        [
+          0,
+          315,
+          "Research and measurement gaps"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.6.children.2.content.cells.1",
+      "purpose": "Historical PMM date remains unresolved, distinct from scoped launch decision",
+      "spans": [
+        [
+          0,
+          49,
+          "Historical PMM date remains unresolved, distinct from scoped launch decision"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.6.children.3.content.cells.1",
+      "purpose": "Audience hypotheses; unvalidated",
+      "spans": [
+        [
+          0,
+          217,
+          "Audience hypotheses; unvalidated"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.36.children.4.content.cells.1",
+      "purpose": "Consumer understanding hypotheses and variant/ingredient confusion risk",
+      "spans": [
+        [
+          0,
+          350,
+          "Consumer understanding hypotheses and variant/ingredient confusion risk"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.39.content.rich_text",
+      "purpose": "Flavor pillar and ingredient qualification",
+      "spans": [
+        [
+          0,
+          29,
+          "Flavor pillar and ingredient qualification"
+        ],
+        [
+          130,
+          200,
+          "Flavor pillar and ingredient qualification"
+        ]
+      ],
+      "excluded_reason": "Reviewed duplicate/out-of-scope citation or variant catalog; retain exact selected strategy and all adjacent limits"
+    },
+    {
+      "source": "research_context.pmm.blocks.41.content.rich_text",
+      "purpose": "Variant pillar preserved as restriction; no variant fact is eligible",
+      "spans": [
+        [
+          0,
+          21,
+          "Variant pillar preserved as restriction; no variant fact is eligible"
+        ],
+        [
+          164,
+          315,
+          "Variant pillar preserved as restriction; no variant fact is eligible"
+        ]
+      ],
+      "excluded_reason": "Reviewed duplicate/out-of-scope citation or variant catalog; retain exact selected strategy and all adjacent limits"
+    },
+    {
+      "source": "research_context.pmm.blocks.43.content.rich_text",
+      "purpose": "Detailed unvalidated audience/motivation and release-language caveat",
+      "spans": [
+        [
+          0,
+          358,
+          "Detailed unvalidated audience/motivation and release-language caveat"
+        ],
+        [
+          449,
+          592,
+          "Detailed unvalidated audience/motivation and release-language caveat"
+        ]
+      ],
+      "excluded_reason": "Reviewed duplicate/out-of-scope citation or variant catalog; retain exact selected strategy and all adjacent limits"
+    },
+    {
+      "source": "research_context.pmm.blocks.47.content.rich_text",
+      "purpose": "Competitive overlap and retrospective-research caveat",
+      "spans": [
+        [
+          0,
+          335,
+          "Competitive overlap and retrospective-research caveat"
+        ],
+        [
+          494,
+          619,
+          "Competitive overlap and retrospective-research caveat"
+        ]
+      ],
+      "excluded_reason": "Reviewed duplicate/out-of-scope citation or variant catalog; retain exact selected strategy and all adjacent limits"
+    },
+    {
+      "source": "research_context.pmm.blocks.54.content.rich_text",
+      "purpose": "Accepted public facts are not marketing approvals",
+      "spans": [
+        [
+          420,
+          581,
+          "Accepted public facts are not marketing approvals"
+        ]
+      ]
+    },
+    {
+      "source": "research_context.pmm.blocks.45.content.rich_text",
+      "purpose": "Intended communication outcome, no reach/purchase estimates, and unresolved exposure",
+      "spans": [
+        [
+          0,
+          378,
+          "Preserve outcome limits and eligibility caveat"
+        ]
+      ]
+    }
+  ],
+  "evidence_sha256": {
+    "PROD-002": "29f0a39c5bd154aceab2a1b9f61ad85d28232382f7af17f5e2bec9b7d86d8570",
+    "PROD-003": "cee676f6120ee4017751cd0b0610f47e36227552a7e4e21412bcd7fdb0bdcbad"
+  },
+  "segment_selection": {
+    "PROD-002": {
+      "3": [
+        [
+          0,
+          262,
+          "Retain complete historical temporal caveat; unrelated 2025 notice claim excluded"
+        ]
+      ]
+    },
+    "PROD-003": {
+      "3": [
+        [
+          0,
+          262,
+          "Retain complete historical temporal caveat; unrelated 2025 notice claim excluded"
+        ]
+      ]
+    }
+  },
+  "launch_fields": [
+    "authority",
+    "decision",
+    "product_id",
+    "market_id",
+    "evaluation_date",
+    "planned_launch_date",
+    "promotional_draft_allowed",
+    "availability_now_claim_allowed",
+    "internal_research_allowed",
+    "publishing_allowed",
+    "conditions",
+    "notice"
+  ],
+  "readiness_fields": [
+    "Readiness Area",
+    "Requirement",
+    "Status",
+    "Blocker / Missing Information",
+    "Last Updated"
+  ],
+  "readiness_selection": {
+    "3": [
+      [
+        0,
+        86,
+        "Preserve scoped generic information approval"
+      ],
+      [
+        246,
+        344,
+        "Preserve no SKU/nutrition/ingredient/regulatory permission"
+      ]
+    ]
+  },
+  "material_boundaries": [
+    "PMM contains historical TBD/future-dataset wording while the scoped fictional US snapshot is Proceed. Preserve the distinction: PMM is strategy, not operational permission; publishing remains false.",
+    "The product brief describes a historical pre-February-2026 simulation, whereas this request evaluates the owner-approved fictional December-2026 scenario. Product research is retrospective; no actual availability follows.",
+    "Operational availability permission is true for this fictional snapshot, but draft_constraints prohibits all availability wording for this checkpoint. Keep the stricter output restriction.",
+    "Historical pending labels inside evidence do not override accepted corpus bindings. Product claims remain public facts; PMM/readiness are fictional, not real company approval."
+  ],
+  "pmm_exclusion_reasons": {
+    "research_context.pmm.blocks.0.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.1.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.2.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.3.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.4.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.5.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.6.children.0.content.cells.0": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.6.children.0.content.cells.1": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.6.children.1.content.cells.0": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.6.children.1.content.cells.1": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.6.children.2.content.cells.0": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.6.children.2.content.cells.1": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.6.children.3.content.cells.0": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.6.children.3.content.cells.1": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.6.children.4.content.cells.0": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.6.children.4.content.cells.1": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.6.children.5.content.cells.0": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.6.children.5.content.cells.1": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.7.children.0.children.0.content.rich_text": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.0.content.cells.0": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.0.content.cells.1": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.0.content.cells.2": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.0.content.cells.3": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.0.content.cells.4": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.1.content.cells.0": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.1.content.cells.1": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.1.content.cells.2": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.1.content.cells.3": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.1.content.cells.4": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.2.content.cells.0": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.2.content.cells.1": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.2.content.cells.2": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.2.content.cells.3": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.2.content.cells.4": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.3.content.cells.0": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.3.content.cells.1": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.3.content.cells.2": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.3.content.cells.3": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.3.content.cells.4": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.4.content.cells.0": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.4.content.cells.1": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.4.content.cells.2": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.4.content.cells.3": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.0.children.1.children.4.content.cells.4": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.1.children.0.content.rich_text": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.7.children.1.children.1.content.rich_text": "Fictional staffing/empty role table; no drafting permission comes from people assignments",
+    "research_context.pmm.blocks.8.content.rich_text": "Document-navigation catalog; actual eligible claim-source mappings remain in projected claims",
+    "research_context.pmm.blocks.9.content.rich_text": "Document-navigation catalog; actual eligible claim-source mappings remain in projected claims",
+    "research_context.pmm.blocks.10.content.rich_text": "Document-navigation catalog; actual eligible claim-source mappings remain in projected claims",
+    "research_context.pmm.blocks.11.content.rich_text": "Document-navigation catalog; actual eligible claim-source mappings remain in projected claims",
+    "research_context.pmm.blocks.12.content.rich_text": "Document-navigation catalog; actual eligible claim-source mappings remain in projected claims",
+    "research_context.pmm.blocks.13.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.14.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.15.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.16.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.17.content.rich_text": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.18.content.rich_text": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.19.children.0.content.cells.0": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.19.children.0.content.cells.1": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.19.children.0.content.cells.2": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.19.children.0.content.cells.3": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.19.children.1.content.cells.0": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.19.children.1.content.cells.1": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.19.children.1.content.cells.2": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.19.children.1.content.cells.3": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.19.children.2.content.cells.0": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.19.children.2.content.cells.1": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.19.children.2.content.cells.2": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.19.children.2.content.cells.3": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.19.children.3.content.cells.0": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.19.children.3.content.cells.1": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.19.children.3.content.cells.2": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.19.children.3.content.cells.3": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.20.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.21.content.rich_text": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.22.content.rich_text": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.23.content.rich_text": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.24.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.25.content.rich_text": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.26.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.27.content.rich_text": "Other channel/software-template/image guidance; current task is text-only LinkedIn; common restrictions retained in selected risk/tone fields",
+    "research_context.pmm.blocks.28.content.rich_text": "Other channel/software-template/image guidance; current task is text-only LinkedIn; common restrictions retained in selected risk/tone fields",
+    "research_context.pmm.blocks.29.content.rich_text": "Other channel/software-template/image guidance; current task is text-only LinkedIn; common restrictions retained in selected risk/tone fields",
+    "research_context.pmm.blocks.30.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.31.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.32.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.33.children.0.content.cells.0": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.33.children.0.content.cells.1": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.33.children.1.content.cells.0": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.33.children.1.content.cells.1": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.33.children.2.content.cells.0": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.33.children.2.content.cells.1": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.34.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.35.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.36.children.0.content.cells.0": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.36.children.0.content.cells.1": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.36.children.1.content.cells.0": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.36.children.1.content.cells.1": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.36.children.2.content.cells.0": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.36.children.2.content.cells.1": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.36.children.3.content.cells.0": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.36.children.3.content.cells.1": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.36.children.4.content.cells.0": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.36.children.4.content.cells.1": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.37.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.38.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.39.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.40.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.41.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.42.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.43.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.44.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.45.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.46.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.47.content.rich_text": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.48.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.49.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.50.content.rich_text": "Other channel/software-template/image guidance; current task is text-only LinkedIn; common restrictions retained in selected risk/tone fields",
+    "research_context.pmm.blocks.51.content.rich_text": "Other channel/software-template/image guidance; current task is text-only LinkedIn; common restrictions retained in selected risk/tone fields",
+    "research_context.pmm.blocks.52.content.rich_text": "Other channel/software-template/image guidance; current task is text-only LinkedIn; common restrictions retained in selected risk/tone fields",
+    "research_context.pmm.blocks.53.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.54.content.rich_text": "Overlapping product/variant/objective catalog; allowed facts supplied by claims, strategy/caveats retained in selected overview/pillars/risk fields",
+    "research_context.pmm.blocks.55.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.56.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.57.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.58.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted",
+    "research_context.pmm.blocks.59.content.rich_text": "Detailed competitor products/comparison not eligible for copy; overlap/non-uniqueness/research caveats retained from market context",
+    "research_context.pmm.blocks.60.content.rich_text": "Detailed competitor products/comparison not eligible for copy; overlap/non-uniqueness/research caveats retained from market context",
+    "research_context.pmm.blocks.61.children.0.content.cells.0": "Detailed competitor products/comparison not eligible for copy; overlap/non-uniqueness/research caveats retained from market context",
+    "research_context.pmm.blocks.61.children.0.content.cells.1": "Detailed competitor products/comparison not eligible for copy; overlap/non-uniqueness/research caveats retained from market context",
+    "research_context.pmm.blocks.61.children.0.content.cells.2": "Detailed competitor products/comparison not eligible for copy; overlap/non-uniqueness/research caveats retained from market context",
+    "research_context.pmm.blocks.61.children.0.content.cells.3": "Detailed competitor products/comparison not eligible for copy; overlap/non-uniqueness/research caveats retained from market context",
+    "research_context.pmm.blocks.61.children.1.content.cells.0": "Detailed competitor products/comparison not eligible for copy; overlap/non-uniqueness/research caveats retained from market context",
+    "research_context.pmm.blocks.61.children.1.content.cells.1": "Detailed competitor products/comparison not eligible for copy; overlap/non-uniqueness/research caveats retained from market context",
+    "research_context.pmm.blocks.61.children.1.content.cells.2": "Detailed competitor products/comparison not eligible for copy; overlap/non-uniqueness/research caveats retained from market context",
+    "research_context.pmm.blocks.61.children.1.content.cells.3": "Detailed competitor products/comparison not eligible for copy; overlap/non-uniqueness/research caveats retained from market context",
+    "research_context.pmm.blocks.61.children.2.content.cells.0": "Detailed competitor products/comparison not eligible for copy; overlap/non-uniqueness/research caveats retained from market context",
+    "research_context.pmm.blocks.61.children.2.content.cells.1": "Detailed competitor products/comparison not eligible for copy; overlap/non-uniqueness/research caveats retained from market context",
+    "research_context.pmm.blocks.61.children.2.content.cells.2": "Detailed competitor products/comparison not eligible for copy; overlap/non-uniqueness/research caveats retained from market context",
+    "research_context.pmm.blocks.61.children.2.content.cells.3": "Detailed competitor products/comparison not eligible for copy; overlap/non-uniqueness/research caveats retained from market context",
+    "research_context.pmm.blocks.62.content.rich_text": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.63.content.rich_text": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.64.content.rich_text": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.65.children.0.content.cells.0": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.65.children.0.content.cells.1": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.65.children.0.content.cells.2": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.65.children.0.content.cells.3": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.65.children.1.content.cells.0": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.65.children.1.content.cells.1": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.65.children.1.content.cells.2": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.65.children.1.content.cells.3": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.65.children.2.content.cells.0": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.65.children.2.content.cells.1": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.65.children.2.content.cells.2": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.65.children.2.content.cells.3": "Other-market or launch-run-of-show scheduling; scoped US date and all operational restrictions are retained separately",
+    "research_context.pmm.blocks.66.content.rich_text": "Title, heading, empty/presentation field or duplicate navigation; no unique task qualification omitted"
+  },
+  "segment_exclusion_reason": "Only unrelated 2025 notice sentence/citation omitted; historical temporal boundary retained verbatim"
+}

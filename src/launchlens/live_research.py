@@ -23,6 +23,10 @@ ENDPOINT = "https://api.tokenfactory.nebius.com/v1/chat/completions"
 PROMPT_SHA256 = "2df27019194b29953336ec2f5701d10e69d087ebc28f0c79ef33abe8bc44c43c"
 MAX_REQUEST_BYTES = 180_000
 MAX_OUTPUT_TOKENS = 512
+MAX_WRITER_OUTPUT_TOKENS = 2048
+PROMPTS = {"research": PROMPT_SHA256,
+    "linkedin_controller": "e7aee35f1c6f8643ea70a5da8cf7990a35cf8a33d0f3115f5aa58b51775defc0",
+    "linkedin_writer": "8caa3f29d7f570b2ded6adc0744e00631b3b88e834beb25aa5e6804feffe8bcd"}
 
 
 class ResearchError(RuntimeError):
@@ -53,15 +57,16 @@ def strict_json(text):
         raise ResearchError("Invalid JSON response") from None
 
 
-def load_prompt():
-    raw = Path(__file__).with_name("prompts").joinpath("research.txt").read_bytes()
-    require(hashlib.sha256(raw).hexdigest() == PROMPT_SHA256, "Approved prompt hash differs")
+def load_prompt(name="research"):
+    require(name in PROMPTS, "Unregistered prompt")
+    raw = Path(__file__).with_name("prompts").joinpath(name + ".txt").read_bytes()
+    require(hashlib.sha256(raw).hexdigest() == PROMPTS[name], "Approved prompt hash differs")
     return raw.decode("utf-8")
 
 
-def tool_schemas():
+def tool_schemas(mode="live_research"):
     definitions = []
-    for name, specification in action_registry().items():
+    for name, specification in action_registry(mode).items():
         properties = {key: {"type": "string"} for key in specification["arguments"]}
         if "query" in properties:
             properties["query"].update(minLength=1, maxLength=2000)
@@ -82,9 +87,11 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 class NebiusHTTP:
     """One pinned inference endpoint, 12 attempts total, TLS, no proxy/retry/redirect."""
-    def __init__(self, api_key, *, on_event=None):
+    def __init__(self, api_key, *, on_event=None, allow_linkedin=False):
         require(type(api_key) is str and api_key and not any(c.isspace() for c in api_key),
                 "Missing or invalid Nebius credential")
+        require(type(allow_linkedin) is bool, "Invalid drafting profile")
+        self._allow_linkedin = allow_linkedin
         self._key = api_key
         self.events = []
         self._on_event = on_event or (lambda: None)
@@ -97,15 +104,27 @@ class NebiusHTTP:
 
     def __call__(self, payload):
         require(len(self.events) < MAX_TURNS, "Hosted model-call budget exhausted")
-        require(payload.get("model") == MODEL and payload.get("max_tokens") == MAX_OUTPUT_TOKENS
-                and payload.get("tool_choice") == "auto" and payload.get("store") is False
-                and payload.get("stream") is False and payload.get("temperature") == 0
-                and payload.get("parallel_tool_calls") is False
-                and payload.get("tools") == tool_schemas(), "Unapproved inference configuration")
+        common = (payload.get("model") == MODEL and payload.get("store") is False
+                  and payload.get("stream") is False and payload.get("temperature") == 0)
+        mode = "live_linkedin" if self._allow_linkedin else "live_research"
+        writing = payload.get("max_tokens") == MAX_WRITER_OUTPUT_TOKENS
+        if writing:
+            require(self._allow_linkedin and common and set(payload) ==
+                    {"model", "messages", "temperature", "max_tokens", "stream", "store"}
+                    and type(payload.get("messages")) is list and len(payload["messages"]) == 2
+                    and payload["messages"][0] == {"role": "system", "content": load_prompt("linkedin_writer")}
+                    and payload["messages"][1].get("role") == "user",
+                    "Unapproved writing configuration")
+        else:
+            require(common and payload.get("max_tokens") == MAX_OUTPUT_TOKENS
+                    and payload.get("tool_choice") == "auto"
+                    and payload.get("parallel_tool_calls") is False
+                    and payload.get("tools") == tool_schemas(mode), "Unapproved inference configuration")
         raw = dumps(payload).encode("utf-8")
         require(len(raw) <= MAX_REQUEST_BYTES, "Context exceeds byte bound; no trimming")
         event = {"attempt": len(self.events) + 1, "request_bytes": len(raw),
-                 "request_sha256": hashlib.sha256(raw).hexdigest()}
+                 "request_sha256": hashlib.sha256(raw).hexdigest(),
+                 "kind": "writing" if writing else "action_selection"}
         self.events.append(event)
         self._on_event()  # Preserve attempted request before any network side effect.
         started = time.monotonic()
@@ -143,9 +162,11 @@ class NebiusHTTP:
 
 class ResearchModel:
     """Model chooses actions; evidence/history is rebuilt solely from current run state."""
-    def __init__(self, transport):
+    def __init__(self, transport, *, mode="live_research"):
+        require(mode in {"live_research", "live_linkedin"}, "Invalid controller mode")
+        self._mode = mode
         self._transport = transport
-        self._prompt = load_prompt()
+        self._prompt = load_prompt("linkedin_controller" if mode == "live_linkedin" else "research")
         self._run_id = None
         self.calls = []
 
@@ -158,7 +179,7 @@ class ResearchModel:
 
     def __call__(self, state):
         request = validate_request(state["request"])
-        require(state.get("mode") == "live_research", "Live model requires explicit live mode")
+        require(state.get("mode") == self._mode, "Live model requires explicit live mode")
         require(len(self.calls) < MAX_TURNS, "Model adapter budget exhausted")
         if self._run_id is None:
             self._run_id = state["run_id"]
@@ -168,6 +189,9 @@ class ResearchModel:
         progress = {"remaining_limits": state["remaining_limits"], "status": state["status"],
             "missing_requirements": state["research_gaps"],
             "human_reply_data_only": state["feedback"]}
+        if self._mode == "live_linkedin":
+            progress["draft_status"] = "unreviewed" if state["drafts"].get("linkedin") else "absent"
+            progress["writing_attempts"] = state["writing_attempts"]
         messages = [{"role": "system", "content": self._prompt},
             {"role": "system", "content": "Use native function tool calls. Their envelope supplies "
              "the action id and name; function arguments follow the supplied schema. Select one "
@@ -181,12 +205,12 @@ class ResearchModel:
              "supported_task_label": selected["label"], "objective": selected["objectives"][0]["label"]})},
             *native_history(state), {"role": "user", "content": dumps({
                 "harness_state": progress, "research_context": context})}]
-        payload = {"model": MODEL, "messages": messages, "tools": tool_schemas(),
+        payload = {"model": MODEL, "messages": messages, "tools": tool_schemas(self._mode),
             "tool_choice": "auto", "parallel_tool_calls": False, "temperature": 0,
             "max_tokens": MAX_OUTPUT_TOKENS, "stream": False, "store": False}
         require(len(dumps(payload).encode("utf-8")) <= MAX_REQUEST_BYTES,
                 "Context exceeds byte bound; no trimming")
-        event = {"turn": len(self.calls) + 1, "outcome": "attempted",
+        event = {"turn": state["turns"] + 1, "outcome": "attempted",
                  "context_bytes": len(dumps(context).encode("utf-8")),
                  "context_packets": len(context["packets"]), "shared_items": len(context["shared"])}
         self.calls.append(event)
@@ -207,7 +231,7 @@ class ResearchModel:
             require(type(function.get("arguments")) is str, "Tool arguments must be JSON text")
             action = {"id": native.get("id"), "name": function.get("name"),
                       "arguments": strict_json(function["arguments"])}
-            validate_action(action)
+            validate_action(action, self._mode)
             event.update(outcome="proposed", action=deepcopy(action))
             return action
         except Exception:

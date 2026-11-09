@@ -64,9 +64,9 @@ def validate_request(value):
     return asdict(Request(**value))
 
 
-def action_registry():
+def action_registry(mode="live_research"):
     """Allowed model actions; internal run lifecycle operations are deliberately absent."""
-    return {
+    actions = {
         "read_pmm_brief": {"arguments": {}, "purpose": "Read approved PMM guidance"},
         "check_launch": {"arguments": {}, "purpose": "Compute scoped launch eligibility from source records"},
         "search_product_evidence": {"arguments": {"query": "text", "authority": "approved category"},
@@ -74,16 +74,27 @@ def action_registry():
         "request_clarification": {"arguments": {"question": "text"}, "purpose": "Pause the current task"},
         "finish": {"arguments": {}, "purpose": "Request research-stage completion; code verifies prerequisites"},
     }
+    if mode in {"live_linkedin", "offline_review"}:
+        actions["generate_linkedin"] = {"arguments": {}, "purpose":
+            "Request one internal LinkedIn draft; harness checks eligibility and owns review state"}
+        actions["finish"]["purpose"] = "Request completion with a validated, unreviewed LinkedIn draft"
+    if mode == "offline_review":
+        actions["review_linkedin"] = {"arguments": {}, "purpose":
+            "Delegate independent review of the exact current draft; harness binds evidence and version"}
+        actions["revise_linkedin"] = {"arguments": {}, "purpose":
+            "Request one revision only after explicit owner feedback; harness owns permission"}
+        actions["finish"]["purpose"] = "Completion requires current-version independent review; never grants human approval"
+    return actions
 
 
-def validate_action(value):
+def validate_action(value, mode="live_research"):
     require(type(value) is dict and set(value) == {"id", "name", "arguments"},
             "Action must contain only id, name and arguments")
     require(type(value["id"]) is str and re.fullmatch(r"[A-Za-z0-9_-]{1,64}", value["id"]),
             "Invalid action identifier")
-    require(type(value["name"]) is str and value["name"] in action_registry(), "Unregistered action")
+    require(type(value["name"]) is str and value["name"] in action_registry(mode), "Unregistered action")
     args = value["arguments"]
-    require(type(args) is dict and set(args) == set(action_registry()[value["name"]]["arguments"]),
+    require(type(args) is dict and set(args) == set(action_registry(mode)[value["name"]]["arguments"]),
             "Unexpected or missing action arguments")
     if value["name"] == "search_product_evidence":
         require(type(args["query"]) is str and args["query"].strip() and len(args["query"]) <= 2000,
