@@ -121,10 +121,11 @@ class AgentRunUITests(unittest.TestCase):
         self.assertIsNone(old.snapshot())
         with self.assertRaises(HarnessError): old.execute(before['run_id'])
         with self.assertRaises(HarnessError): fresh.execute(before['run_id'])
-        next(b for b in app.button if b.label == 'Reset demo').click().run()
+        app.button(key='run-archive').click().run()
+        app.button(key='archive-confirm').click().run()
         self.assertEqual(len(app.exception), 0)
-        self.assertEqual(app.title[0].value, 'GTM Launches')
-        self.assertNotIn('offline_run', app.session_state); self.assertIsNone(fresh.snapshot())
+        self.assertEqual(app.title[0].value, 'Prepare US package')
+        self.assertNotIn('offline_run', app.session_state); self.assertEqual(fresh.snapshot(),after)
 
     def test_offline_inventory_refresh_preserves_run_and_does_not_check_sources(self):
         app = self.start(); run = app.session_state['offline_run']

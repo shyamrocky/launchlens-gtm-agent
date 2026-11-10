@@ -36,8 +36,9 @@ class RefreshTests(unittest.TestCase):
  def test_waiting_clarification_blocks_refresh_and_mode_switch_without_losing_run(self):
   a=self.app('UK');run=a.session_state['offline_run'];before=run.snapshot()
   self.assertEqual(before['status'],'needs_clarification')
+  a.button(key='home').click().run()
   self.assertTrue(a.button(key='refresh').disabled);self.assertEqual(a.button(key='refresh').proto.help,REFRESH_BLOCKED_MESSAGE)
-  a.button(key='home').click().run();self.assertTrue(a.selectbox(key='ui-mode').disabled)
+  self.assertTrue(a.selectbox(key='ui-mode').disabled)
   self.assertTrue(a.button(key='refresh').disabled);self.assertEqual(run.snapshot(),before)
  def test_created_running_pending_revision_queued_command_and_locked_harness_block_handler(self):
   for state,command,locked in [({'status':'created'},None,False),({'status':'running'},None,False),
@@ -68,23 +69,15 @@ class RefreshTests(unittest.TestCase):
   self.assertIn('Product brief changed — evidence not re-indexed',html)
   self.assertIn('Synthetic PRD changed — evidence not re-indexed',html)
   self.assertNotIn('source-access good',html)
-  a.button(key='rebuild').click().run();self.assertFalse(a.exception)
-  button=a.button(key='rebuild-evidence-placeholder');self.assertTrue(button.disabled)
-  text=' '.join(x.value for x in a.markdown)+' '.join(x.value for x in a.caption)
-  for expected in ['Not implemented','Approve changed content','Build and verify first','Export before replacing runs','Download first']:
-   self.assertIn(expected,text)
+  self.assertFalse(any(b.key=='rebuild' for b in a.button))
+  self.assertTrue(any('Rebuild evidence · Not built yet' in n.value for n in a.info))
   self.assertNotIn('offline_run',a.session_state)
- def test_rebuild_nav_opens_single_placeholder_and_preserves_current_run_without_fetch(self):
+ def test_two_page_nav_preserves_run_and_does_not_fetch(self):
   a=self.app();run=a.session_state['offline_run'];before=run.snapshot();capture=deepcopy(run.capture())
   a.button(key='home').click().run()
-  self.assertFalse(any(b.key=='rebuild-evidence-placeholder' for b in a.button))
-  self.assertEqual([b.label for b in a.button[:4]],['GTM launches','Current run','Refresh data','Rebuild evidence'])
+  self.assertEqual([b.label for b in a.button[:2]],['GTM launches','Current run'])
+  self.assertFalse(any(b.key=='rebuild' for b in a.button))
   with patch('launchlens.inventory_ui.fetch_inventory',side_effect=AssertionError('Navigation only')):
-   a.button(key='rebuild').click().run();self.assertFalse(a.exception)
-   self.assertEqual(a.title[0].value,'Rebuild evidence')
-   self.assertEqual(sum(b.key=='rebuild-evidence-placeholder' for b in a.button),1)
-   self.assertTrue(a.button(key='rebuild-evidence-placeholder').disabled)
-   self.assertNotIn('Source documents',[x.value for x in a.subheader])
    a.button(key='current').click().run();self.assertFalse(a.exception)
   self.assertIs(a.session_state['offline_run'],run);self.assertEqual(run.snapshot(),before);self.assertEqual(run.capture(),capture)
 
@@ -140,7 +133,7 @@ class RefreshResultTests(unittest.TestCase):
     a.button(key='refresh').click().run();self.assertFalse(a.exception)
     self.assertIn('India · Marketing authorization: Pending → Approved',a.success[0].value)
     self.assertTrue(any('Last checked 10:27 AM' in c.value for c in a.caption))
-    a.button(key='rebuild').click().run();a.button(key='home').click().run();self.assertEqual(fetch.call_count,1)
+    a.button(key='archives').click().run();a.button(key='home').click().run();self.assertEqual(fetch.call_count,1)
    same=deepcopy(new);same['fetched_at']='2026-11-10T18:28:00+00:00'
    with patch('launchlens.inventory_ui.fetch_inventory',return_value=same):a.button(key='refresh').click().run()
    self.assertEqual(a.info[0].value,'Updated · No changes');self.assertFalse(a.success)

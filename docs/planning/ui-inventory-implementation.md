@@ -1,3 +1,103 @@
+## M2-D049 publication checkpoint — November 10, 2026
+
+Owner requested Git sync. A clean canonical copy passed422 harness,99 UI and112
+root tests (633 total), without credentials, saved runs or workspace. Publication
+review found one pre-existing test relying on the local standing ledger; it now
+provisions its own private temporary fixture ledger. Runtime code and production
+budget rules are unchanged by that test correction. Prior failed clean-copy checks
+also used the minimal environment without jsonschema / omitted PYTHONPATH; corrected
+commands reuse the existing UI environment with PYTHONPATH=src, without installs.
+[Publication record](repository-sync-2026-11-09.md#archive-and-demo-reset-sync--m2-d049).
+Earlier no-publication labels describe the implementation handoff, not this sync.
+
+## M2-D049 — Archive, fresh demo allocation and navigation
+
+**Date:** November 10, 2026. **Decision/status:** owner-authorized design implemented;
+engineering verification complete, owner UI review pending. Archive moves active
+run descriptors/pointers into a read-only archive and leaves protected originals in
+place. Rationale: PMMs can start clean without losing drafts, approvals or accounting.
+Alternatives rejected: deleting receipts, copying generated stores, resetting the
+old budget or rebuilding evidence as part of a fresh run. No restore in this MVP.
+
+**Delivered:** right-panel **Archive & start fresh**, Home per-market **Start fresh ›**
+when a saved run exists, confirmation with Download first/Cancel, active-run block,
+and **Archived packages (N) ›** with individual downloads. Confirmation opens that
+market's Prepare screen; the agent starts only on Start agent. Nav now contains only
+GTM launches and Current run. Refresh is in Source documents with Last checked and
+the existing change summary. Rebuild is a checksum-mismatch notice only, remains
+unimplemented and never runs from Refresh or archive.
+
+**Actual reset:** ten existing US run records archived: six contained drafts and
+four stopped before a draft. Both V2 records remain, including the earlier owner's
+approved V2. There were no saved UK/India package runs; no placeholder archives were
+created. No active records remain. All ten ZIP downloads passed integrity checks.
+Home shows US drafting permitted, UK availability missing and India approval pending.
+Current run is empty. A fresh US Prepare screen has an enabled Start agent; it was
+not clicked. Main app restarted on port8520. Browser source reads succeeded for all
+five documents; they made no model calls and changed no external records.
+
+**Budget:** the owner explicitly authorized a new, shared USD1.00 allocation for
+registered Cherry Float demo dry run and recording. It is provisioned in a separate
+private ledger: USD0 accounted, USD1.00 remaining. The prior ledger remains exactly
+USD0.3404722 accounted / USD0.6595278 remaining and is not reused or reset. Each
+archive records its prior ledger reference/hash and totals. All future demo runs,
+required reviews, retries and revisions share the new allocation; unknown-usage
+reservations and existing per-call/run limits still apply. Archive, Refresh, app
+rerender and Start never refill it. Standing spending approval does not trigger a
+call. Existing model/profile qualification and expiry checks still apply; this
+checkpoint did not requalify providers or alter the frozen profile.
+
+**Private storage/provisioning contract:**
+
+- `data/private/runs/active/<run-id>.json` owns the active descriptor. Archive uses
+  a catalog lock and renames it to `runs/archive/<run-id>/record.json`. Matching
+  current-live-run/current-review pointers also move into that archive directory.
+- Protected `data/generated/` bytes stay in place. Archive records bind all original
+  version checkpoints, decisions, reviews, approval/export receipts and captured
+  accounting by relative path and SHA-256. ZIPs are built in memory on demand,
+  including per-version Markdown and the simulation label. Nothing is copied into
+  archive storage; missing/tampered originals fail download explicitly. Keep both
+  ignored private catalog and original generated stores in a local backup.
+- The shared ledger can continue accumulating spending after archive, so its hash
+  is a historical reference, not a requirement that the mutable ledger never change.
+  Original per-run captures and recorded prior totals remain frozen. Archived IDs
+  cannot append checkpoints, reserve another call or become active through stale UI.
+- Explicit one-time operator reset uses `discover_legacy_runs()` / `archive_run()`;
+  normal Home reads do not scan experimental stores. Budget provisioning is
+  `launchlens.run_archive.provision_demo_budget()` and refuses an existing session.
+  Never invoke it merely to bypass an exhausted allocation. It creates0600 private
+  `demo-session.json` and a unique demo-budget ledger, bound to current profile and
+  package hashes. New run grants use this ledger; historical grants keep their own.
+- A clean checkout without these local artifacts shows an empty catalog and no
+  provisioned live demo allocation. Offline tests use safe temporary fixtures;
+  application/build/tests have no new dependency on `workspace/`.
+
+**Verification:** **633 offline tests PASS**:422 harness,99 UI,112 root. Includes
+actual descriptor moves, unchanged original bytes, active-run refusal, Download
+first, per-market preservation, approved-receipt binding, all-version ZIPs,
+mutable-ledger independence, stale-run rejection, fresh scoped grants and shared
+budget exhaustion before a provider call. UI tests cover confirmation/Cancel,
+archive list, empty Current run, two-link nav, Refresh relocation and mismatch-only
+rebuild notice. Existing single-run and source/approval preservation regressions
+pass. No packages installed. `git diff --check` PASS.
+
+Preservation audit:887 baseline protected files verified;885 unchanged in place,
+exactly two current-pointer files moved with identical hashes, zero unexpected
+changes. All generated receipts, source datasets, templates/configs/prompts,
+credentials, MEMORY and prior accounting unchanged. New local catalog/ledger
+files remain ignored. No model calls, Pinecone writes, source edits, Git staging,
+commit or push. Browser visual/interaction check completed in Chrome; Safari's
+local-page memory reload problem was bypassed without changing the application.
+
+Screenshots: [Home](screenshots/d049/home.jpg),
+[empty Current run](screenshots/d049/empty-current.jpg),
+[archive list](screenshots/d049/archives.jpg),
+[confirmation before reset](screenshots/d049/confirmation.jpg).
+Stop for owner review. Next user journey: GTM launches → market Open brief →
+Prepare → Start agent, within the same shared USD1.00 demo allocation.
+
+---
+
 ## M2-D046 — Read-only format tones
 
 Prepare now shows the core Tone row and expandable five-format tone lines from

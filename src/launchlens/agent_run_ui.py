@@ -366,6 +366,14 @@ def run_page(display):
                 st.caption('Optional next version')
                 notes=st.session_state.get(f'run-feedback-text-{run_id}-{state["package"]["version"]}','')
                 revision_action(state,run,book,notes)
+            if st.button('Archive & start fresh',key='run-archive',disabled=active,help='Stop the run first' if active else 'Archive this market package without changing its evidence.'):
+                from launchlens.inventory_ui import open_archive,simulation_record
+                if live:
+                    from launchlens.run_archive import market_run
+                    record=market_run(request['market_id'])
+                    if record is not None:open_archive(record)
+                    else:st.error('The saved run reference is unavailable. Nothing was archived.')
+                else:open_archive(simulation_record(run))
         with left:
             activity,review,package=st.tabs(['Activity','Review','Package'],key=tabkey,default=st.session_state[tabkey],on_change='rerun')
             with activity:
@@ -417,8 +425,7 @@ def run_page(display):
                 notes=state['user_notes'];scenario=run.scenario;policy=state.get('voice_policy_id')
                 clear_run();st.session_state['offline_run']=OfflineUIRun(request,notes,scenario,voice_policy_id=policy,package=True)
                 st.session_state['run-command']='execute';st.rerun()
-            if st.button('Reset current run' if live else 'Reset demo',key='run-reset-'+run_id):
-                clear_run();st.session_state['screen']='inventory';st.rerun()
+
 
 
 @st.dialog('Full draft',width='large',on_dismiss='rerun')

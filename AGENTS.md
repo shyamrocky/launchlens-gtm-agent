@@ -1,3 +1,14 @@
+## Owner-authorized archive and demo reset sync — November 10, 2026
+
+Owner requested Git sync of completed M2-D049: Archive & start fresh, read-only
+archive downloads, separate shared demo accounting and two-link navigation with
+Refresh in Source documents. Fresh clean-copy verification: **633 tests PASS**
+(422 harness +99 UI +112 root). Protected artifacts, approvals, sources and prior
+accounting remain local and unchanged. Current run is empty; the separately
+owner-authorized shared USD1.00 demo allocation remains unspent. Publication does
+not execute a demo, approve content or grant further scope.
+[Publication scope and verification](docs/planning/repository-sync-2026-11-09.md#archive-and-demo-reset-sync--m2-d049). Earlier status notes below are history.
+
 ## Owner-authorized refresh, tone and refinement sync — November 10, 2026
 
 Owner requested Git sync of completed M2-D043–D048: Refresh preserves current

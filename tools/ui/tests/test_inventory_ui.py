@@ -101,7 +101,7 @@ class InventoryUITests(unittest.TestCase):
             self.assertTrue(fetch.call_args.kwargs["verify_documents"])
             app.run(); app.button(key="home").click().run()
             self.assertEqual(fetch.call_count, 1)
-            app.button(key="refresh").click().run()
+            app.button(key="home").click().run(); app.button(key="refresh").click().run()
             self.assertEqual(fetch.call_count, 2)
             self.assertEqual(len(app.exception), 0)
 
@@ -111,7 +111,7 @@ class InventoryUITests(unittest.TestCase):
         from launchlens.inventory import unavailable_row
         failed["markets"] = {m: unavailable_row(m) for m in ("US", "UK", "IN")}
         with patch("launchlens.inventory_ui.fetch_inventory", return_value=failed) as fetch:
-            app.button(key="refresh").click().run()
+            app.button(key="home").click().run(); app.button(key="refresh").click().run()
             self.assertEqual(fetch.call_count, 1)
             self.assertEqual(app.session_state["inventory"]["status"], "unavailable")
             self.assertEqual(app.session_state["selected_request"]["market_id"], "US")
@@ -204,6 +204,7 @@ class InventoryUITests(unittest.TestCase):
             self.assertEqual(app.title[0].value, "GTM Launches")
             self.assertTrue(all(app.button(key=f"open-{m}") for m in ("US", "UK", "IN")))
             app.button(key="current").click().run()
+            app.button(key="home").click().run(); app.button(key="open-IN").click().run()
             self.assertEqual(app.text_area[0].value, note)
             self.assertNotIn("run_id", app.session_state)
 
@@ -225,10 +226,11 @@ class InventoryUITests(unittest.TestCase):
         app.checkbox[0].check().run()
         app.date_input[0].set_value(date(2026,11,8)).run()
         with patch("launchlens.inventory_ui.fetch_inventory", return_value=deepcopy(self.snapshot)) as fetch:
-            app.button(key="refresh").click().run()
+            app.button(key="home").click().run(); app.button(key="refresh").click().run()
             self.assertEqual(fetch.call_count, 1)
             self.assertEqual(app.session_state["selected_request"]["market_id"], "US")
             self.assertEqual(app.session_state["preparation_notes"]["US"], "Lean into nostalgia")
+            app.button(key="open-US").click().run()
             self.assertEqual(app.text_area[0].value, "Lean into nostalgia")
             self.assertEqual(app.session_state["selected_request"]["evaluation_date"], "2026-11-08")
             self.assertEqual(len(app.date_input), 1)

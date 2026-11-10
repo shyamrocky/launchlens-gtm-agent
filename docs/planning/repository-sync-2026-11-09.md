@@ -233,3 +233,60 @@ unverifiable findings are disclosed. The older approved run's receipt remains
 protected. v13's expanded refinement has offline wiring evidence, not a fresh
 live-generation result. Re-indexing, UK/India live completion, LangSmith evidence
 and final submission are not established by this sync. Publishing remains disabled.
+
+
+## Archive and demo reset sync — M2-D049
+
+**November 10, 2026 · Owner instruction: “git sync”.** Publish the completed
+D049 engineering checkpoint to the existing private repository. This supersedes
+the implementation task's no-publication boundary for this sync only. Earlier
+marketing-content acceptance, standing demo approval and run history remain
+separate; publication starts no agent and consumes no model budget.
+
+Included since parent `d32068db6aec447a34dbeb4272c71a1bceb41a34`:
+
+- Archive & start fresh in Current run and per-market Home, Download first/Cancel
+  confirmation, active-execution guard and read-only downloadable archive list.
+  Move catalog descriptors/pointers only; preserve hash-bound protected originals.
+- Separate explicitly provisioned shared demo ledger, unique registered-run grants,
+  exhausted-budget refusal and archived-run write/call denial. Archive and Refresh
+  never refill the allocation. Existing models, prompts, evidence and limits remain.
+- Two-link navigation, Source documents Refresh/time/change summary and mismatch-only
+  unimplemented Rebuild notice; current-run/source snapshots remain distinct.
+- Canonical implementation, safe temporary fixtures/tests, private-storage and
+  provisioning documentation, and four visually reviewed application screenshots.
+  Saved/archived runs, authorization/session records, responses, credentials,
+  ledgers, environments and workspace are deliberately excluded from publication.
+
+Fresh prepublication verification:
+
+- GitHub API confirms PRIVATE/private=true, default main. Remote main equals the
+  local parent above; no history rewrite, visibility change or force-push.
+- Clean canonical snapshot:307 files, no workspace/credentials/private/generated
+  runtime artifacts or local environments. **422 harness+99 UI+112 root=633 tests
+  PASS**. Approved page/chunk preparation regenerated only temporary test inputs;
+  no production generated output changed. No package installation or provider call.
+- Reproducibility correction: the existing standing-permission test now creates
+  its own temporary private ledger and patches its budget binding. It previously
+  depended on the developer's ledger after initial-state persistence was added.
+  This is a fixture correction, not relaxed runtime validation. Initial commands
+  also exposed missing jsonschema in the minimal harness environment and missing
+  PYTHONPATH in UI discovery; corrected runs used the already-provisioned UI
+  interpreter and PYTHONPATH=src. Final suites pass without skips.
+- Python AST / JSON parsing and credential-value/common secret-pattern checks PASS.
+  Four screenshots contain this project's UI/synthetic state only. New report
+  links resolve; workspace, secrets and private/generated ignore rules verified.
+- All900 protected baseline files unchanged during sync preparation: original
+  source/synthetic datasets, generated receipts, archived descriptors/references,
+  approvals/accounting, new demo ledger/session, credentials and MEMORY. Archive
+  reset was completed earlier; sync performs no additional archive or budget reset.
+- Exact staged paths/content and protected-path exclusion are checked before
+  commit. Verify remote/local commit equality, private visibility and clean tree
+  after push. Final SHA is recorded in ignored context/progress and owner report.
+
+Actual local state:10 historical US records archived, no saved UK/India runs,
+Current run empty and new demo allocation USD1.00 remaining. Old approved V2 is
+preserved in archive; newer V2 has no invented approval. Existing qualification
+expiry still applies. No new live quality/reliability result, UK/India completion,
+Pinecone rebuild, LangSmith evidence or submission completion is established here.
+[Implementation, storage contract and screenshots](ui-inventory-implementation.md#m2-d049--archive-fresh-demo-allocation-and-navigation).

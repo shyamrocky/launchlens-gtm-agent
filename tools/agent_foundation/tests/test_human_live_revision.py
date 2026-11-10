@@ -93,7 +93,9 @@ class HumanLiveRevisionTests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as tmp:
    root=Path(tmp);p=root/'authorization.json';v=permission();v['standing_budget']=True
    p.write_text(json.dumps(v));p.chmod(0o600)
-   with patch('launchlens.live_package.ROOT',root),patch('launchlens.live_package.read_selected_keys',return_value=KEYS):
+   ledger=root/'budget.json'
+   ledger.write_text(json.dumps({'ceiling_usd':'1.00','opening_accounted_usd':'0','claims':[],'accounted_usd':'0','remaining_usd':'1.00'}));ledger.chmod(0o600)
+   with patch('launchlens.live_package.ROOT',root),patch('launchlens.run_archive.ROOT',root),patch('launchlens.live_package.BUILD_LEDGER',ledger),patch('launchlens.live_package.read_selected_keys',return_value=KEYS):
     r=create_live_run(request(),authorization_path=p)
     self.assertFalse(r.guard.events)
     with self.assertRaises(HarnessError):create_live_run(request(),authorization_path=p)

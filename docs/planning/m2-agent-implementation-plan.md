@@ -1,3 +1,32 @@
+## Owner-authorized archive and demo reset sync — November 10, 2026
+
+Owner requested Git sync of completed M2-D049: Archive & start fresh, read-only
+archive downloads, separate shared demo accounting and two-link navigation with
+Refresh in Source documents. Fresh clean-copy verification: **633 tests PASS**
+(422 harness +99 UI +112 root). Protected artifacts, approvals, sources and prior
+accounting remain local and unchanged. Current run is empty; the separately
+owner-authorized shared USD1.00 demo allocation remains unspent. Publication does
+not execute a demo, approve content or grant further scope.
+[Publication scope and verification](repository-sync-2026-11-09.md#archive-and-demo-reset-sync--m2-d049). Earlier status notes below are history.
+
+## Current checkpoint — M2-D049, November 10, 2026
+
+Owner-approved Archive & start fresh is implemented: descriptor/pointer moves,
+protected-receipt references, downloadable read-only archive, per-market Home action,
+active-execution guard and clean Prepare handoff. Ten historical US records archived
+(including approved V2); UK/India had no saved runs. Current run empty; Home retains
+US green / UK amber / IN red. Two nav items only; Refresh moved into Sources;
+Rebuild remains mismatch notice, not implemented.
+
+New explicit owner authorization: shared USD1.00 demo dry-run/recording allocation,
+separate from the unchanged prior ledger. USD0 spent in this checkpoint, USD1.00
+remaining; no implicit refill and existing qualification/limits retained. No live
+model call or Git publication performed.633offlinePASS(422harness99UI112root),
+10/10 ZIP checks,887 baseline file preservation checks, Chrome visual verification.
+[Storage/provisioning contract, evidence and screenshots](ui-inventory-implementation.md#m2-d049--archive-fresh-demo-allocation-and-navigation).
+Implementation complete; stop for owner review. Do not infer a demo run from reset.
+Prior records below retain their historical state.
+
 ## Owner-authorized refresh, tone and refinement sync — November 10, 2026
 
 Owner requested Git sync of completed M2-D043–D048: Refresh preserves current

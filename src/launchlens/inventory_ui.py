@@ -41,6 +41,10 @@ def source_documents(display, snapshot):
             stamp=datetime.fromisoformat(snapshot['fetched_at']).astimezone(ZoneInfo('America/Los_Angeles'))
             st.caption('Fixture snapshot · No live source checks performed.' if snapshot.get('data_mode')=='offline' else
                 'Last checked '+stamp.strftime('%I:%M %p').lstrip('0')+' · '+stamp.strftime('%b %d, %Y %Z'))
+        blocked=refresh_blocked()
+        if st.button('↻ Refresh',key='refresh',type='tertiary',disabled=blocked,help=REFRESH_BLOCKED_MESSAGE if blocked else 'Re-read launch data and check Drive access; keep current runs.'):
+            refresh(display);st.rerun()
+        refresh_result(snapshot)
         groups = []
         for app in ("Google Drive", "Notion"):
             items = []
@@ -59,6 +63,8 @@ def source_documents(display, snapshot):
                         f'<span class="source-tooltip" id="{tooltip}" role="tooltip">{escape(detail)}</span></span></div>')
             groups.append(f'<section class="source-group" aria-label="{escape(app)}"><h4>{escape(app)}</h4>{"".join(items)}</section>')
         st.html(f'<div class="source-grid">{"".join(groups)}</div>')
+        if any(v.get('status')=='changed' for v in snapshot.get('source_access',{}).values()):
+            st.info('Rebuild evidence · Not built yet. Changed content needs approval; indexed evidence has not changed.')
 
 
 REFRESH_BLOCKED_MESSAGE = "Finish or stop the run to refresh"
@@ -154,25 +160,8 @@ def refresh(display):
     return True
 
 
-def rebuild_evidence_card(snapshot):
-    """Roadmap placeholder only: deliberately no confirmation or execution handler."""
-    with st.container(border=True, key="rebuild-evidence"):
-        st.subheader("Planned rebuild process")
-        st.caption("Not implemented · Preview of a future capability")
-        changed = [name for name, check in snapshot.get("source_access", {}).items()
-                   if check.get("status") == "changed"]
-        if changed:
-            st.warning("Changed source: " + ", ".join(changed) + ". The indexed evidence is unchanged.")
-        st.write("Re-download approved Drive PDFs, re-chunk, re-embed, verify claim IDs and activate replacement Pinecone evidence.")
-        st.markdown("**1. Approve changed content.** A changed checksum does not approve new claims. Preserve Product Brief facts, synthetic PRD intent and validated claim mappings.")
-        st.markdown("**2. Build and verify first.** Activate only after chunks, embeddings, claim IDs and Pinecone checks pass. A failed rebuild must leave current evidence and runs usable.")
-        st.markdown("**3. Export before replacing runs.** A future confirmation will list affected product runs and offer Download first. Remove them from active use only after successful activation; retain protected audit history.")
-        st.button("Rebuild evidence · Coming later", key="rebuild-evidence-placeholder", disabled=True,
-                  help="Not implemented. No files, embeddings, Pinecone records or runs will change.")
-        st.caption("Blocked during an active run. Requires separate approval and an embedding budget. Nothing runs from this card.")
-
-
 def inventory_page(display, snapshot):
+    saved=ui_saved_runs()
     left, right = st.container(key="inventory-layout").columns([2, 1], gap="small")
     with left, st.container(border=True, key="launch-card"):
         st.subheader(display["product_name"])
@@ -200,9 +189,17 @@ def inventory_page(display, snapshot):
                 symbol = {"good": "●", "warn": "●", "hold": "●", "unknown": "○"}[row["tone"]]
                 c.html(f'<span class="readiness {row["tone"]}">{symbol}</span> {escape(row["label"])}')
                 if d.button("Open brief ›", type="tertiary", key=f"open-{market}", width="stretch", disabled=row["planned_launch_date"] is None):
-                    st.session_state["selected_request"] = request_for_market(display, snapshot, market)
+                    prior=st.session_state.get('selected_request',{})
+                    when=prior.get('evaluation_date') if prior.get('market_id')==market else None
+                    st.session_state["selected_request"] = request_for_market(display, snapshot, market,when)
                     st.session_state["screen"] = "brief"
                     st.rerun()
+                record=next((x for x in saved if x['request']['market_id']==market),None)
+                if record and d.button('Start fresh ›',key='fresh-'+market,type='tertiary'):
+                    open_archive(record)
+        archives=ui_archived_runs()
+        if st.button('Archived packages ('+str(len(archives))+') ›',key='archives',type='tertiary'):
+            st.session_state['screen']='archives';st.rerun()
         st.caption("Product description: approved Product Brief, PROD-002 and PROD-003. Flavor notes and float inspiration do not establish ingredients or dairy content.")
     with right:
         source_documents(display, snapshot)
@@ -304,7 +301,9 @@ def brief_page(display, snapshot):
                 for restriction in result.get("restrictions", []):
                     st.write(restriction)
                 st.caption(f'From the readiness tracker and launch calendar, checked for {date_label(request["evaluation_date"])} using this source snapshot.')
-                if st.checkbox("Check a different date", key=f"prepare-edit-date-{market}"):
+                edits=st.session_state.setdefault('preparation_date_edit',{})
+                edits[market]=st.checkbox("Check a different date", key=f"prepare-edit-date-{market}",value=edits.get(market,False))
+                if edits[market]:
                     st.date_input("Evaluation date", date.fromisoformat(request["evaluation_date"]), key=date_key,
                         help="Checks readiness for this date. Does not change the planned launch date.")
         notes = st.session_state.setdefault("preparation_notes", {})
@@ -314,16 +313,17 @@ def brief_page(display, snapshot):
             help="Campaign guidance only. Notes cannot change supported tasks, evidence or launch permissions.")
         offline = st.session_state.get("ui-mode") == "Demo simulation"
         existing = st.session_state.get("offline_run")
+        saved=next((x for x in ui_saved_runs() if x['request']['market_id']==market),None)
         if offline:
             from launchlens.offline_ui_run import OfflineUIRun, SCENARIOS
             scenario = st.selectbox("Simulation case", SCENARIOS, key="prepare-scenario")
         else:
             scenario = None
         from launchlens.live_package import readiness
-        ready = readiness() if not offline else {'ready':False}
+        ready = readiness(request=request) if not offline else {'ready':False}
         live_allowed = ready['ready'] and ready.get('request') == request
         if st.button("Start simulation" if offline else "Start agent", key="prepare-start", type="primary",
-                     disabled=(not offline and not live_allowed) or existing is not None):
+                     disabled=(not offline and not live_allowed) or existing is not None or saved is not None):
             try:
                 from launchlens.voice_policy import BRAND_POLICY_ID
                 if offline:
@@ -336,15 +336,127 @@ def brief_page(display, snapshot):
                 st.session_state["screen"] = "run"
                 st.rerun()
             except HarnessError:
-                st.error("Run could not start. Check the registered task and reset any current run.")
+                st.error("Run could not start. Check the registered task, archive any existing package and verify the remaining budget.")
         if existing is not None and st.button("View current simulation" if offline else "View current run", key="prepare-view-run", type="tertiary"):
             st.session_state["screen"] = "run"; st.rerun()
-        st.caption("Scripted offline simulation only. No model or source calls; one current run. Reset it before changing tasks."
+        st.caption("Scripted offline simulation only. No model or source calls; one current run. Archive it before starting fresh."
                    if offline else ready['message'])
         if result["decision"] == "Hold":
             st.caption("Promotional drafting is blocked. Research-only runs are not connected.")
         elif result["decision"] != "Proceed":
             st.caption("Missing information must be resolved through authoritative evidence; notes cannot grant approval.")
+
+
+def ui_saved_runs():
+    if st.session_state.get('ui-mode')=='Demo simulation':
+        run=st.session_state.get('offline_run')
+        return [simulation_record(run)] if run is not None else []
+    from launchlens.run_archive import saved_runs
+    return saved_runs()
+
+
+def ui_archived_runs():
+    if st.session_state.get('ui-mode')=='Demo simulation':return st.session_state.get('simulation-archives',[])
+    from launchlens.run_archive import archived_runs
+    return archived_runs()
+
+
+def budget_caption():
+    if st.session_state.get('ui-mode')=='Demo simulation':return
+    from launchlens.run_archive import demo_budget
+    from decimal import Decimal
+    value=demo_budget()
+    if value:st.caption('Demo budget left: $'+format(Decimal(value['remaining_usd']),'.2f')+' · shared by dry run and recording')
+
+
+def simulation_record(run):
+    state=run.snapshot()
+    return {'run_id':state['run_id'],'request':state['request'],'version':(state.get('package') or {}).get('version',0),
+        'status':state['status'],'date':datetime.now().astimezone().isoformat(),'simulation_state':state}
+
+
+def archive_download(record):
+    if 'simulation_state' not in record:
+        from launchlens.run_archive import download_package
+        return download_package(record)
+    import io,json,zipfile
+    from launchlens.package_presentation import markdown_package,SIMULATION_LABEL
+    data=io.BytesIO();state=record['simulation_state']
+    with zipfile.ZipFile(data,'w',zipfile.ZIP_DEFLATED) as out:
+        out.writestr('README.txt',SIMULATION_LABEL+'\nOffline simulation archive; no live model result.')
+        out.writestr('checkpoint.json',json.dumps(state,ensure_ascii=False,indent=2))
+        if state.get('package'):out.writestr('Version-'+str(record['version'])+'.md',markdown_package(state))
+    return data.getvalue()
+
+
+def detach_archived_run():
+    # Drop UI ownership only. Never call reset/_save on archived protected receipts.
+    st.session_state.pop('offline_run',None)
+    for key in list(st.session_state):
+        if key.startswith('run-') or key.startswith('prepare-'):del st.session_state[key]
+    st.session_state.pop('preparation_notes',None)
+    st.session_state.pop('preparation_date_edit',None)
+
+
+def open_archive(record):
+    st.session_state['pending-archive-record']=record
+    st.rerun()
+
+
+@st.dialog('Archive & start fresh',width='large',on_dismiss='rerun')
+def archive_confirmation(record,run=None):
+    market=record['request']['market_id'];label='India' if market=='IN' else market
+    active=st.session_state.get('run-command') is not None
+    current=run or st.session_state.get('offline_run')
+    if current is not None:
+        try:
+            state=current.snapshot()
+            active=active or state['status'] in {'created','running'} or state.get('revision_request') is not None
+            active=active or bool(getattr(getattr(current,'guard',None),'active',False))
+        except HarnessError:active=True
+    status='approved' if record['status']=='approved' else 'awaiting review' if record['status']=='awaiting_human_review' else record['status'].replace('_',' ')
+    st.write('Archive '+label+' · Version '+str(record['version'])+' ('+status+') and start a new run? The archived package stays downloadable.')
+    st.caption('Sources, product evidence and original receipts stay unchanged. This does not refill the demo budget or call a model.')
+    if active:st.warning('Stop the run first')
+    try:data=archive_download(record)
+    except (HarnessError,ValueError,OSError,KeyError):
+        st.error('The package could not be verified for archive. No run was moved.');return
+    st.download_button('Download first',data,file_name='LaunchLens-'+market+'-V'+str(record['version'])+'.zip',mime='application/zip',key='archive-download-first')
+    a,b=st.columns(2)
+    if a.button('Archive & start fresh',key='archive-confirm',type='primary',disabled=active):
+        try:
+            if 'simulation_state' in record:
+                value=dict(record,archived_at=datetime.now().astimezone().isoformat())
+                st.session_state.setdefault('simulation-archives',[]).append(value)
+            else:
+                from launchlens.run_archive import archive_run
+                archive_run(record,active=active,session_notes={'agent_notes':st.session_state.get('preparation_notes',{}).get(market,'')})
+            detach_archived_run()
+            st.session_state.pop('pending-archive-record',None)
+            display=load_display();snapshot=st.session_state['inventory']
+            st.session_state['selected_request']=request_for_market(display,snapshot,market)
+            st.session_state['screen']='brief';st.rerun()
+        except (HarnessError,ValueError,OSError):st.error('Archive could not complete. The original receipts are preserved; reopen the current package.')
+    if b.button('Cancel',key='archive-cancel'):
+        st.session_state.pop('pending-archive-record',None);st.rerun()
+
+
+def archived_page():
+    st.title('Archived packages')
+    st.caption('Read-only packages · No restore in MVP · Nothing is published')
+    rows=ui_archived_runs()
+    if not rows:st.info('No archived packages yet.')
+    for record in rows:
+        market=record['request']['market_id'];name='India' if market=='IN' else market
+        with st.container(border=True,key='archived-'+record['run_id']):
+            a,b=st.columns([3,1])
+            a.write(name+' · Version '+str(record['version'])+' · '+record['status'].replace('_',' '))
+            stamp=datetime.fromisoformat(record['archived_at']).astimezone(ZoneInfo('America/Los_Angeles'))
+            a.caption(stamp.strftime('%b %d, %Y · %I:%M %p %Z'))
+            try:data=archive_download(record)
+            except (HarnessError,ValueError,OSError,KeyError):st.warning('Download unavailable: an original receipt could not be verified.')
+            else:b.download_button('Download',data,file_name='LaunchLens-'+market+'-'+record['run_id'][:8]+'.zip',mime='application/zip',key='archive-get-'+record['run_id'])
+    if st.button('‹ GTM launches',key='archive-home',type='tertiary'):st.session_state['screen']='inventory';st.rerun()
 
 
 def main():
@@ -363,34 +475,28 @@ def main():
         brand, nav = st.columns([2, 3], vertical_alignment="center")
         brand.html('<div class="launchlens-brand">LaunchLens</div><p class="launchlens-tagline">Your launch-aware GTM agent.</p>')
         with nav, st.container(border=True, key="header-navigation"):
-            back, current, reload, rebuild = st.columns(4)
+            back, current = st.columns(2)
             if back.button("GTM launches", key="home", type="tertiary"):
                 st.session_state["screen"] = "inventory"
             from launchlens.review_decisions import saved_review_available
-            has_saved=mode=="Live agent" and "selected_request" not in st.session_state and saved_review_available()
             from launchlens.live_package import current_resume_available,load_current_live_run
+            has_saved=mode=='Live agent' and saved_review_available()
             has_resume=mode=='Live agent' and 'offline_run' not in st.session_state and current_resume_available()
-            if current.button("Current run" if "offline_run" in st.session_state or has_resume else "Saved review" if has_saved else "Current setup", key="current", type="tertiary", disabled="selected_request" not in st.session_state and not has_saved and not has_resume):
+            if current.button("Current run", key="current", type="tertiary"):
                 if has_resume:
                     try:
                         restored=load_current_live_run();st.session_state['offline_run']=restored
                         st.session_state['selected_request']=restored.snapshot()['request']
                     except Exception:
                         st.error('The current package could not be resumed. No model calls were made.');st.stop()
-                st.session_state["screen"] = "run" if "offline_run" in st.session_state else "saved-review" if has_saved else "brief"
-            blocked = refresh_blocked()
-            if reload.button("Refresh data", key="refresh", type="tertiary", disabled=blocked,
-                             help=REFRESH_BLOCKED_MESSAGE if blocked else "Refresh Home/source data; keep the current run and approval."):
-                refresh(display)
-            if rebuild.button("Rebuild evidence", key="rebuild", type="tertiary",
-                              help="View the planned rebuild process. Execution is not implemented."):
-                st.session_state["screen"] = "rebuild"
-        active = "rebuild" if st.session_state["screen"] == "rebuild" else "current" if st.session_state["screen"] in {"brief","run","saved-review"} else "home"
+                st.session_state["screen"] = "run" if "offline_run" in st.session_state else "saved-review" if has_saved else "empty-run"
+        active = "current" if st.session_state["screen"] in {"brief","run","saved-review","empty-run"} else "home"
         st.html(f'<style>.st-key-{active} button:not(:disabled) {{ color: #f0f4fa; font-weight: 600; }}</style>')
     if st.session_state['screen']=='inventory':
         with st.container(key='launch-heading'):
             heading,control=st.columns([4,1],vertical_alignment='center')
             heading.title('GTM Launches')
+            with heading:budget_caption()
             with control:
                 mode=st.selectbox('Mode',['Live agent','Demo simulation'],key='ui-mode',format_func=lambda value:'Mode: '+value,label_visibility='collapsed', disabled=refresh_blocked())
     if mode=='Demo simulation':
@@ -412,13 +518,16 @@ def main():
     st.session_state['_data_mode']=mode
     if 'inventory' not in st.session_state and not refresh(display):st.stop()
     snapshot=st.session_state['inventory']
-    refresh_result(snapshot)
     if snapshot["status"] != "ok":
         st.warning("Some launch data is unavailable. Missing dates/readiness do not grant permission. Refresh data after resolving source access.")
-    if st.session_state["screen"] == "rebuild":
-        st.title("Rebuild evidence")
-        with st.container(key="rebuild-page"):
-            rebuild_evidence_card(snapshot)
+    if st.session_state["screen"] == "archives":
+        archived_page()
+    elif st.session_state["screen"] == "empty-run":
+        st.title('Current run')
+        st.info('No current package. Choose a market from GTM Launches to start a fresh run.')
+        budget_caption()
+        if st.button('Go to GTM launches',key='empty-home',type='primary'):
+            st.session_state['screen']='inventory';st.rerun()
     elif st.session_state["screen"] == "saved-review":
         from launchlens.review_decisions import load_saved_review
         from launchlens.agent_run_ui import review_page
@@ -437,4 +546,6 @@ def main():
         with left:brief_page(display, snapshot)
     else:
         inventory_page(display, snapshot)
+    if 'pending-archive-record' in st.session_state:
+        archive_confirmation(st.session_state['pending-archive-record'])
     st.caption("Independent educational project using a fictional launch scenario. Not affiliated with The Coca-Cola Company. LaunchLens never publishes content.")

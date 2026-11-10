@@ -240,3 +240,7 @@
  .st-key-header-navigation > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { flex-wrap:wrap; }
  .st-key-header-navigation > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { flex:1 1 calc(50% - 4px); }
 }
+
+/* D049: source actions belong to the source card; two stable page links. */
+.st-key-header-navigation [data-testid="stHorizontalBlock"] { gap: 1rem; }
+.st-key-source-documents .st-key-refresh button { padding-left: 0; }

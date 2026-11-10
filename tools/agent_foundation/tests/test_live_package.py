@@ -237,7 +237,7 @@ class LivePreparationTests(unittest.TestCase):
     def test_factory_consumption_is_durable_and_no_provider_call_at_creation(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);p=root/'authorization.json';p.write_text(json.dumps(permission()));p.chmod(0o600)
-            with patch('launchlens.live_package.ROOT',root),patch('launchlens.live_package.read_selected_keys',return_value=KEYS):
+            with patch('launchlens.live_package.ROOT',root),patch('launchlens.run_archive.ROOT',root),patch('launchlens.live_package.read_selected_keys',return_value=KEYS):
                 run=create_live_run(request(),authorization_path=p)
                 self.assertEqual(run.snapshot()['status'],'created');self.assertFalse(run.guard.events)
                 with self.assertRaises(LiveGateError):create_live_run(request(),authorization_path=p)

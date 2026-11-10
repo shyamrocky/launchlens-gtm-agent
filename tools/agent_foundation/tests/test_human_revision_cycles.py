@@ -86,12 +86,12 @@ class HumanRevisionTests(unittest.TestCase):
   import hashlib
   with tempfile.TemporaryDirectory() as tmp:
    root=Path(tmp);store=ProtectedStore(root/'data/generated/run');private=root/'data/private';private.mkdir()
-   old={'run_id':'same-run'};store.write('state-09.json',old);store.write('capture-09.json',{})
+   old={'run_id':'00000000-0000-0000-0000-000000000049','request':request(),'status':'awaiting_human_review'};store.write('state-09.json',old);store.write('capture-09.json',{})
    pointer=private/'current-live-run.json';spec={'state':{'path':'data/generated/run/state-09.json','sha256':'old'},'capture':{'path':'data/generated/run/capture-09.json','sha256':'old'},'store':'data/generated/run','authorization':{'path':'data/private/approval.json','sha256':'preserve'}}
    pointer.write_text(json.dumps(spec));pointer.chmod(0o600)
    store.write('state-100.json',old);store.write('capture-100.json',{'new':True})
    run=object.__new__(LivePackageRun);run.store=store
-   with patch('launchlens.live_package.ROOT',root):run._advance_current_pointer(old,store.path/'state-100.json',store.path/'capture-100.json')
+   with patch('launchlens.live_package.ROOT',root),patch('launchlens.run_archive.ROOT',root):run._advance_current_pointer(old,store.path/'state-100.json',store.path/'capture-100.json')
    updated=json.loads(pointer.read_text());self.assertEqual(updated['authorization'],spec['authorization'])
    self.assertTrue(updated['state']['path'].endswith('100.json'));self.assertEqual(updated['capture']['sha256'],hashlib.sha256((store.path/'capture-100.json').read_bytes()).hexdigest())
    self.assertEqual(pointer.stat().st_mode & 0o777,0o600)
@@ -190,6 +190,6 @@ class HumanRevisionTests(unittest.TestCase):
     for name,path in [('state',saved.path/'state-01.json'),('capture',saved.path/'capture-01.json'),('authorization',private.path/'approval.json')]:
      spec[name]={'path':str(path.relative_to(root)),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
     private.write('current-live-run.json',spec)
-    with patch('launchlens.live_package.ROOT',root),patch('launchlens.live_package.read_selected_keys',return_value=KEYS):loaded=load_current_live_run()
+    with patch('launchlens.live_package.ROOT',root),patch('launchlens.run_archive.ROOT',root),patch('launchlens.live_package.read_selected_keys',return_value=KEYS):loaded=load_current_live_run()
     self.assertEqual(loaded.snapshot(),s);self.assertTrue(loaded.guard.closed)
 if __name__=='__main__':unittest.main()

@@ -52,9 +52,11 @@ def profile():
     return value
 
 
-def preflight(*, package_hash=None):
+def preflight(*, package_hash=None, request=None):
     if package_hash is not None:configuration(package_hash)
     cfg = profile(); amounts = {}
+    try:selected = validate_request(request) if request is not None else cfg['request']
+    except HarnessError:raise LiveGateError('Unsupported registered scenario') from None
     for role, model in cfg['roles'].items():
         output = model['max_completion_tokens']; bound = model['context_tokens'] - output
         one = (Decimal(bound)*money(model['input_per_million_usd'])+
@@ -65,9 +67,9 @@ def preflight(*, package_hash=None):
     total = sum(Decimal(v['role_reservation_usd']) for v in amounts.values())
     scope = {'profile_sha256':PROFILE_SHA256,'package_sha256':package_hash or CONFIG_SHA256,
         'voice_policy_sha256':POLICY_SHA256,'projection_sha256':digest(load_policy()),
-        'registry':supported_use_cases(),'request':cfg['request']}
+        'registry':supported_use_cases(),'request':selected}
     return {'status':'PREPARED_NOT_AUTHORIZED','scope_sha256':digest(scope),'profile_sha256':PROFILE_SHA256,
-        'request':deepcopy(cfg['request']),'roles':amounts,'reservation_total_usd':str(total),
+        'request':deepcopy(selected),'roles':amounts,'reservation_total_usd':str(total),
         'proposal_ceiling_usd':cfg['proposal_ceiling_usd'],'max_model_calls':12,'max_required_review_calls':None,
         'automatic_retries':1,'automatic_retry_policy':'missing_citations_only_known_usage_standing_budget','automatic_repairs':0,'generation_calls':0,'credentials_read':False,
         'token_method':cfg['qualification']['token_reservation_method']}
@@ -84,13 +86,17 @@ def authorization_template():
 
 
 def validate_authorization(value, *, now=None):
-    plan = preflight(); cfg = profile(); expected = set(authorization_template())
+    plan = preflight(request=value.get('request') if type(value) is dict else None); cfg = profile(); expected = set(authorization_template())
+    if type(value) is dict and 'budget_ledger' in value:
+        expected.add('budget_ledger')
+        ledger=Path(value['budget_ledger'])
+        gate(ledger.parent==Path('data/private') and ledger.name.startswith('demo-budget-') and ledger.suffix=='.json' and value.get('standing_budget') is True,'Invalid demo budget binding')
     if type(value) is dict and 'allow_automatic_refinement' not in value:expected.remove('allow_automatic_refinement')
     gate(type(value.get('allow_automatic_refinement',False)) is bool if type(value) is dict else False,'Invalid automatic refinement permission')
     # A consumed run-bound v10 authorization can restore its original checkpoint,
     # never start a new run or authorize the new tone policy.
     for prior_hash in ('a6e796afa2949c064042d7e14604e6a2ce72bdfa08ac2612ef18661508dab6e6','04ba0495cdd9029b508ef6a05e6cced4c8138230c4482ab14ac78f6dd2a8b530','dad48142a22da770837754d5b8d230600afe964170900a0c3e5a559c57316257'):
-        legacy=preflight(package_hash=prior_hash)
+        legacy=preflight(package_hash=prior_hash,request=value.get('request') if type(value) is dict else None)
         if type(value) is dict and value.get('bound_run_id') is not None and value.get('scope_sha256')==legacy['scope_sha256']:
             gate(not value.get('allow_automatic_refinement',False) or prior_hash=='dad48142a22da770837754d5b8d230600afe964170900a0c3e5a559c57316257','Historical scope cannot acquire automatic refinement')
             plan=legacy
@@ -135,13 +141,34 @@ def read_authorization(path=AUTHORIZATION):
     return result
 
 
-def readiness(path=AUTHORIZATION):
+def demo_permission(request):
+    from launchlens.run_archive import demo_session, demo_budget
+    from uuid import uuid4
+    session=demo_session();gate(session is not None,'Demo approval unavailable')
+    gate(session['profile_sha256']==PROFILE_SHA256 and session['package_sha256']==CONFIG_SHA256,'Demo scope changed; approval required')
+    plan=preflight(request=request)
+    value=authorization_template()
+    from datetime import timedelta
+    value.update(owner_authorized=True,authorization_id='DEMO-'+uuid4().hex,
+        authorization_reference='Owner standing USD1 demo approval, November 10, 2026; dry run and recording',
+        scope_sha256=plan['scope_sha256'],request=deepcopy(plan['request']),source_permissions_confirmed=True,
+        acknowledge_catalog_not_entitlement=True,acknowledge_context_reservation_and_cap_assumptions=True,
+        standing_budget=True,allow_automatic_refinement=True,budget_ledger=session['budget_ledger'],
+        expires_utc=(datetime.fromisoformat(profile()['checked_utc'])+timedelta(seconds=profile()['qualification_max_age_seconds'])).isoformat())
+    validate_authorization(value)
+    remaining=Decimal(demo_budget()['remaining_usd'])
+    gate(remaining>=max(Decimal(v['per_call_reservation_usd']) for v in plan['roles'].values()),'Demo budget cannot cover the next bounded call plan')
+    return value
+
+
+def readiness(path=AUTHORIZATION, *, request=None):
     try:
-        permission = read_authorization(path)
+        from launchlens.run_archive import demo_session
+        permission = demo_permission(request or profile()['request']) if path==AUTHORIZATION and demo_session() else read_authorization(path)
         gate(profile().get('hosted_schema_qualified') is True or permission.get('standing_budget') is True, 'Hosted schema qualification pending')
         output = ROOT/'data/generated'/('live-package-'+permission['authorization_id'])
         gate(not output.exists(), 'Authorization already consumed; no rerun')
-        return {'ready':True,'request':deepcopy(permission['request']),'message':'One separately authorized US run is available.'}
+        return {'ready':True,'request':deepcopy(permission['request']),'message':'Standing demo budget applies. Starting makes live calls; archive never refreshes that budget.' if permission.get('budget_ledger') else 'One separately authorized US run is available.'}
     except Exception:
         return {'ready':False,'request':None,'message':'Live execution awaits separate owner authorization and spending qualification.'}
 
@@ -211,7 +238,7 @@ class RunBudget:
         self._now = now
         self.lock = Lock(); self.armed = False; self.closed = False; self.active = False
         self.counts = {r:0 for r in ROLES}; self.events = []; self.cost = Decimal(0)
-        self.standing=StandingBudget() if permission.get('standing_budget') is True else None
+        self.standing=StandingBudget(ROOT/permission['budget_ledger']) if permission.get('budget_ledger') else StandingBudget() if permission.get('standing_budget') is True else None
         self.pending_revision_claims={}
 
     def restore_accounting(self, summary, state, *, review_recovery=False, stopped_display=False):
@@ -245,8 +272,13 @@ class RunBudget:
             ledger={e['id']:e for e in self.standing.read()['claims']}
             gate(all(v.get('id') in ledger and ledger[v['id']]['role']==r and ledger[v['id']]['status']=='reserved_unknown_until_usage' for r,v in self.pending_revision_claims.items()),'Pending revision reservation differs')
 
+    def archive_gate(self):
+        from launchlens.run_archive import is_archived
+        gate(not getattr(self,'run_id',None) or not is_archived(self.run_id),'Archived runs cannot execute')
+
     def arm(self, request):
         with self.lock:
+            self.archive_gate()
             validate_authorization(self.permission,now=self._now)
             gate(not self.armed and not self.closed and request == self.permission['request'],
                  'Authorization is consumed or request differs')
@@ -254,6 +286,7 @@ class RunBudget:
 
     def claim(self, role, request_hash):
         with self.lock:
+            self.archive_gate()
             validate_authorization(self.permission,now=self._now)
             gate(type(request_hash) is str and re.fullmatch(r'[0-9a-f]{64}',request_hash), 'Request identity required')
             gate(self.armed and not self.closed and not self.active and role in self.counts,
@@ -357,6 +390,7 @@ class RunBudget:
         except Exception:return False
 
     def reserve_revision(self,binding):
+        self.archive_gate()
         validate_authorization(self.permission,now=self._now)
         with self.lock:
             available,amounts=self._revision_available()
@@ -422,9 +456,9 @@ class LiveTransport:
                  payload['messages'][1].get('role') == 'user', 'Unreviewed content envelope')
             stage = self.role
         bound_package_hash=CONFIG_SHA256
-        if self.guard.permission['scope_sha256'] != preflight()['scope_sha256']:
+        if self.guard.permission['scope_sha256'] != preflight(request=self.guard.permission['request'])['scope_sha256']:
             matches=[h for h in ('a6e796afa2949c064042d7e14604e6a2ce72bdfa08ac2612ef18661508dab6e6','04ba0495cdd9029b508ef6a05e6cced4c8138230c4482ab14ac78f6dd2a8b530','dad48142a22da770837754d5b8d230600afe964170900a0c3e5a559c57316257')
-                if self.guard.permission['scope_sha256']==preflight(package_hash=h)['scope_sha256']]
+                if self.guard.permission['scope_sha256']==preflight(package_hash=h,request=self.guard.permission['request'])['scope_sha256']]
             gate(self.guard.permission.get('bound_run_id') is not None and len(matches)==1,'Historical execution scope differs')
             bound_package_hash=matches[0]
         gate(payload['messages'][0] == {'role':'system','content':load_package_prompt(stage,bound_package_hash)}, 'Prompt binding differs')
@@ -509,6 +543,8 @@ class LivePackageRun:
                 for path in self.store.path.glob('state-*.json'):
                     self._saved.add(digest(strict_json(path.read_bytes())))
 
+        self.guard.run_id=self.session.snapshot()['run_id']
+
     def snapshot(self):return self.session.snapshot()
     def execute(self, run_id, *, on_update=None):
         def checkpoint(update,state):
@@ -577,6 +613,7 @@ class LivePackageRun:
         self._persist(state)
 
     def _persist(self,state):
+        self.guard.archive_gate()
         identity = digest(state)
         if self.store and identity not in self._saved:
             n = str(len(self._saved)+1).zfill(2)
@@ -588,12 +625,23 @@ class LivePackageRun:
     def _advance_current_pointer(self,state,state_path,capture_path):
         """Advance this same run only, atomically after both private receipts exist."""
         pointer=ROOT/'data/private/current-live-run.json'
-        if not self.store.path.resolve().is_relative_to((ROOT/'data/generated').resolve()) or not pointer.is_file():return
-        gate(not pointer.is_symlink() and not pointer.stat().st_mode & 0o077,'Current pointer must remain private')
-        spec=strict_json(pointer.read_bytes())
-        if (ROOT/spec['store']).resolve()!=self.store.path.resolve():return
-        prior=strict_json((ROOT/spec['state']['path']).read_bytes())
-        gate(prior['run_id']==state['run_id'],'Current pointer belongs to another run')
+        if not self.store.path.resolve().is_relative_to((ROOT/'data/generated').resolve()):return
+        from launchlens.run_archive import is_archived,remember
+        pointer.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
+        gate(not is_archived(state['run_id']),'Archived runs cannot advance')
+        if not pointer.is_file():
+            auth=self.store.path/'authorization.json'
+            spec={'store':str(self.store.path.relative_to(ROOT)),'authorization':{'path':str(auth.relative_to(ROOT)),'sha256':hashlib.sha256(auth.read_bytes()).hexdigest()}}
+        else:
+            spec=strict_json(pointer.read_bytes())
+        gate(not pointer.exists() or (not pointer.is_symlink() and not pointer.stat().st_mode & 0o077),'Current pointer must remain private')
+        if (ROOT/spec['store']).resolve()!=self.store.path.resolve():
+            if not self.guard.permission.get('budget_ledger'):return
+            auth=self.store.path/'authorization.json'
+            spec={'store':str(self.store.path.relative_to(ROOT)),'authorization':{'path':str(auth.relative_to(ROOT)),'sha256':hashlib.sha256(auth.read_bytes()).hexdigest()}}
+        if 'state' in spec:
+            prior=strict_json((ROOT/spec['state']['path']).read_bytes())
+            gate(prior['run_id']==state['run_id'],'Current pointer belongs to another run')
         for key,path in [('state',state_path),('capture',capture_path)]:
             spec[key]={'path':str(path.relative_to(ROOT)),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
         import os
@@ -603,6 +651,7 @@ class LivePackageRun:
         try:
             with os.fdopen(fd,'w') as stream:stream.write(json.dumps(spec,indent=2)+'\n');stream.flush();os.fsync(stream.fileno())
             os.replace(temporary,pointer)
+            remember(spec)
         finally:
             if temporary.exists():temporary.unlink()
 
@@ -618,9 +667,11 @@ def redact(value, secrets):
 
 def create_live_run(request, notes='', *, authorization_path=AUTHORIZATION):
     request = validate_request(request)
-    permission = read_authorization(authorization_path)
+    from launchlens.run_archive import demo_session,saved_runs
+    permission = demo_permission(request) if authorization_path==AUTHORIZATION and demo_session() else read_authorization(authorization_path)
+    gate(not any(r['request']['market_id']==request['market_id'] for r in saved_runs()) if authorization_path==AUTHORIZATION and demo_session() else True,'Archive this market package before starting fresh')
     gate(permission['bound_run_id'] is None,'This authorization permits revisions of the saved run only')
-    gate(request == permission['request'], 'Only the separately authorized US scenario can execute')
+    gate(request == permission['request'], 'Only the separately authorized registered scenario can execute')
     gate(profile().get('hosted_schema_qualified') is True or permission.get('standing_budget') is True, 'Hosted schema qualification pending')
     plan = validate_authorization(permission)  # Whole-run admission before credentials or source/model clients.
     keys = read_selected_keys({'NEBIUS_API_KEY','NOTION_API_KEY','PINECONE_API_KEY'},ROOT/'.env')
@@ -628,7 +679,9 @@ def create_live_run(request, notes='', *, authorization_path=AUTHORIZATION):
     try:store = ProtectedStore(ROOT/'data/generated'/('live-package-'+permission['authorization_id']))
     except FileExistsError:raise LiveGateError('Authorization already consumed; no rerun') from None
     store.write('authorization.json',permission);store.write('reservation.json',plan)
-    return LivePackageRun(permission,keys,notes=notes,store=store)
+    result=LivePackageRun(permission,keys,notes=notes,store=store)
+    result._persist(result.snapshot())
+    return result
 
 
 def current_resume_available():
@@ -642,6 +695,7 @@ def load_current_live_run():
     gate(pointer.is_file() and not pointer.is_symlink() and not pointer.stat().st_mode&0o077,
         'Current run receipt unavailable')
     spec=strict_json(pointer.read_bytes());loaded={}
+    from launchlens.run_archive import is_archived
     gate(set(spec)=={'state','capture','authorization','store'},'Invalid current run pointer')
     for name in ['state','capture','authorization']:
         entry=spec[name];relative=Path(entry['path'])
@@ -660,6 +714,7 @@ def load_current_live_run():
     validate_authorization(loaded['authorization'])
     from launchlens.package_content import authoritative_package_binding
     state=loaded['state']
+    gate(not is_archived(state['run_id']),'Current run was archived')
     stopped_display=state['status']=='failed' and state.get('package') is None and not state['drafts']
     if not stopped_display:authoritative_package_binding(state)
     recovery=state['status'] in {'failed','stopped'} and (state.get('package') or {}).get('version',0)>=2 and not state['review']

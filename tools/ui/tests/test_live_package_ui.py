@@ -23,6 +23,7 @@ class LivePackageUITests(unittest.TestCase):
         self.block=patch.object(socket.socket,'connect',side_effect=AssertionError('No UI network'))
         self.network=self.block.start();self.addCleanup(self.block.stop)
         self.addCleanup(lambda:self.assertEqual(self.network.call_count,0))
+        saved=patch('launchlens.inventory_ui.ui_saved_runs',return_value=[]);saved.start();self.addCleanup(saved.stop)
         self.clock=patch('launchlens.live_package.datetime',FrozenDateTime)
         self.clock.start();self.addCleanup(self.clock.stop)
         self.env=patch.dict(os.environ,{'LAUNCHLENS_UI_MODE':'offline','LANGSMITH_TRACING':'true'})
@@ -71,7 +72,7 @@ class LivePackageUITests(unittest.TestCase):
         self.assertTrue(any('Independent assessment' in x.value for x in app.caption))
         self.assertFalse(any('Mock assessment' in x.value for x in app.caption))
         self.assertFalse(any(b.label=='Generate again · simulation' for b in app.button))
-        self.assertTrue(any(b.label=='Reset current run' for b in app.button))
+        self.assertTrue(any(b.label=='Archive & start fresh' for b in app.button))
         for _ in range(3):app.run()
         self.assertEqual(len(wire.calls),6)
 
@@ -84,9 +85,10 @@ class LivePackageUITests(unittest.TestCase):
         self.assertEqual(len(wire.calls),8);self.assertEqual(run.guard.counts['package_revision'],1)
         self.assertEqual(run.guard.counts['package_reviewer'],2)
         app.run();self.assertEqual(len(wire.calls),8)
-        next(b for b in app.button if b.label=='Reset current run').click().run()
-        self.assertEqual(len(app.exception),0);self.assertTrue(run.guard.closed)
-        self.assertNotIn('offline_run',app.session_state)
+        # Archive persistence is tested with hash-bound saved records separately.
+        app.button(key='home').click().run();app.button(key='current').click().run()
+        self.assertEqual(len(app.exception),0);self.assertEqual(run.snapshot()['package']['version'],2)
+        self.assertEqual(len(wire.calls),8)
 
     def test_grouped_choices_reach_live_revision_and_version_two_on_same_page(self):
         from launchlens.review_decisions import grouped_findings
