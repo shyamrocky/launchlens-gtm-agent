@@ -73,6 +73,14 @@ class GroupedReviewTests(unittest.TestCase):
    self.assertEqual(error.exception.diagnostic['field_path'],'content.'+path)
  def test_preserved_predecessor_binding_revalidated_not_silently_migrated(self):
   s=self.state();inputs=prepare_package_input(s);inputs['package_contract']['sha256']=HISTORICAL_CONFIG_SHA256
+  # Recreate the actual historical input, not new tone rules under an old hash.
+  from launchlens.content_contracts import load_template
+  from launchlens.package_content import package_schema
+  inputs.pop('tone_policy')
+  from launchlens.voice_policy import POLICY_SHA256
+  inputs['voice_policy'].update(version=1,policy_sha256=POLICY_SHA256)
+  inputs['output_schema']=package_schema()
+  inputs['template']={'format':'package','templates':{f:load_template(f) for f in FORMATS}}
   from launchlens.package_content import package_value
   drafts,meta=admit_package(package_value(s),inputs)
   s['drafts']=drafts;s['package']=meta

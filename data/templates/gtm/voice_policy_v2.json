@@ -1,0 +1,341 @@
+{
+  "policy_id": "simulated_brand_v1",
+  "version": 2,
+  "scope": "Five-format GTM package; historical v1 remains registered for existing accepted packages",
+  "core_tone": "Warm, factual, lightly nostalgic",
+  "format_specs": {
+    "campaign_brief": {
+      "voice": "Neutral third person; no we/our",
+      "tone": "Strategic, factual, clear; label audience as hypothesis",
+      "label": "Strategic · factual · clear",
+      "avoid": [
+        "marketing language",
+        "superlatives",
+        "exclamation marks"
+      ],
+      "blocking": {
+        "neutral_pronouns": [
+          "we",
+          "our"
+        ],
+        "arrays": {
+          "messaging_pillars": {
+            "min": 3,
+            "max": 3
+          }
+        }
+      },
+      "advisory": [
+        {
+          "fields": [
+            "objective",
+            "audience_hypothesis",
+            "positioning",
+            "messaging_pillars",
+            "tone",
+            "primary_cta",
+            "restrictions_and_unknowns"
+          ],
+          "metric": "words",
+          "min": 250,
+          "max": 400
+        },
+        {
+          "fields": [
+            "$content"
+          ],
+          "metric": "exclamation_marks",
+          "max": 0
+        }
+      ]
+    },
+    "linkedin": {
+      "voice": "Simulated brand voice; we/our allowed",
+      "tone": "Professional, warm, brand-conscious, factual; one clear message",
+      "label": "Professional · warm",
+      "avoid": [
+        "superlatives",
+        "hype",
+        "urgency",
+        "novelty/launch claims"
+      ],
+      "blocking": {
+        "exact_supplied_cta": true,
+        "arrays": {
+          "hashtags": {
+            "min": 3,
+            "max": 3
+          }
+        }
+      },
+      "advisory": [
+        {
+          "fields": [
+            "hook",
+            "body",
+            "cta"
+          ],
+          "metric": "words",
+          "min": 100,
+          "max": 180
+        },
+        {
+          "fields": [
+            "$content"
+          ],
+          "metric": "exclamation_marks",
+          "max": 1
+        }
+      ]
+    },
+    "email": {
+      "voice": "Simulated brand voice",
+      "tone": "Warm, conversational, focused on one flavor idea",
+      "label": "Warm · conversational",
+      "avoid": [
+        "urgency: today, now",
+        "availability",
+        "offers",
+        "can't wait"
+      ],
+      "blocking": {},
+      "advisory": [
+        {
+          "fields": [
+            "subject"
+          ],
+          "metric": "characters",
+          "max": 60
+        },
+        {
+          "fields": [
+            "subject"
+          ],
+          "metric": "words",
+          "max": 9
+        },
+        {
+          "fields": [
+            "preview_text"
+          ],
+          "metric": "characters",
+          "min": 40,
+          "max": 90
+        },
+        {
+          "fields": [
+            "body"
+          ],
+          "metric": "words",
+          "min": 100,
+          "max": 160
+        },
+        {
+          "fields": [
+            "$content"
+          ],
+          "metric": "exclamation_marks",
+          "max": 1
+        }
+      ]
+    },
+    "blog": {
+      "voice": "Simulated brand voice",
+      "tone": "Explanatory, light storytelling, gently nostalgic about soda floats",
+      "label": "Explanatory · gently nostalgic",
+      "avoid": [
+        "invented company history: born from, designed to",
+        "consumer claims: many fondly remember",
+        "ingredient/dairy implications: creamy"
+      ],
+      "blocking": {
+        "arrays": {
+          "sections": {
+            "min": 2,
+            "max": 3
+          }
+        },
+        "heading_citations": "Factual section headings may inherit their own section body citations only; creative headings need no fact citation."
+      },
+      "advisory": [
+        {
+          "fields": [
+            "title",
+            "introduction",
+            "sections",
+            "conclusion",
+            "cta"
+          ],
+          "metric": "words",
+          "min": 300,
+          "max": 450
+        },
+        {
+          "fields": [
+            "$content"
+          ],
+          "metric": "exclamation_marks",
+          "max": 1
+        }
+      ]
+    },
+    "ads": {
+      "voice": "Simulated brand voice",
+      "tone": "Concise, playful, attention-grabbing; three clearly different angles",
+      "label": "Playful · concise",
+      "avoid": [
+        "Taste the difference",
+        "is here",
+        "superiority",
+        "functional claims: quench"
+      ],
+      "blocking": {
+        "arrays": {
+          "concepts": {
+            "min": 3,
+            "max": 3
+          }
+        }
+      },
+      "advisory": [
+        {
+          "fields": [
+            "concepts.0.headline"
+          ],
+          "metric": "characters",
+          "max": 60
+        },
+        {
+          "fields": [
+            "concepts.0.body"
+          ],
+          "metric": "characters",
+          "max": 125
+        },
+        {
+          "fields": [
+            "concepts.0.cta"
+          ],
+          "metric": "characters",
+          "max": 25
+        },
+        {
+          "fields": [
+            "concepts.0"
+          ],
+          "metric": "exclamation_marks",
+          "max": 1
+        },
+        {
+          "fields": [
+            "concepts.1.headline"
+          ],
+          "metric": "characters",
+          "max": 60
+        },
+        {
+          "fields": [
+            "concepts.1.body"
+          ],
+          "metric": "characters",
+          "max": 125
+        },
+        {
+          "fields": [
+            "concepts.1.cta"
+          ],
+          "metric": "characters",
+          "max": 25
+        },
+        {
+          "fields": [
+            "concepts.1"
+          ],
+          "metric": "exclamation_marks",
+          "max": 1
+        },
+        {
+          "fields": [
+            "concepts.2.headline"
+          ],
+          "metric": "characters",
+          "max": 60
+        },
+        {
+          "fields": [
+            "concepts.2.body"
+          ],
+          "metric": "characters",
+          "max": 125
+        },
+        {
+          "fields": [
+            "concepts.2.cta"
+          ],
+          "metric": "characters",
+          "max": 25
+        },
+        {
+          "fields": [
+            "concepts.2"
+          ],
+          "metric": "exclamation_marks",
+          "max": 1
+        }
+      ]
+    }
+  },
+  "all_formats": {
+    "no_links": true,
+    "never": [
+      "availability/launch timing",
+      "prices/offers",
+      "purchase destinations",
+      "ingredients beyond flavor notes",
+      "superiority",
+      "preference predictions",
+      "health/performance claims",
+      "invented company facts"
+    ],
+    "scan_phrases": {
+      "availability_urgency": [
+        "today",
+        "urgency",
+        "availability",
+        "offers"
+      ],
+      "novelty": [
+        "hype",
+        "novelty"
+      ],
+      "differentiation": [
+        "Taste the difference",
+        "superlatives",
+        "superiority"
+      ],
+      "preference_prediction": [
+        "many fondly remember",
+        "consumer claims"
+      ],
+      "invented_product_facts": [
+        "born from",
+        "designed to",
+        "quench",
+        "company history",
+        "company facts"
+      ],
+      "ingredient_intensity": [
+        "creamy"
+      ]
+    }
+  },
+  "precedence": "Tone and Notes are creative guidance only; evidence, launch permissions, required citations and structural limits always prevail. Advisory measurements never block approval.",
+  "format_voices": {
+    "campaign_brief": "neutral",
+    "linkedin": "simulated_brand",
+    "email": "simulated_brand",
+    "blog": "simulated_brand",
+    "ads": "simulated_brand"
+  },
+  "meaning": "Creative simulated brand voice; not factual evidence, affiliation, operational approval or publishing permission"
+}

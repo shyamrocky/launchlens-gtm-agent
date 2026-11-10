@@ -225,3 +225,18 @@
  .st-key-run-columns > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { width:100%; flex:1 1 100%; min-width:0; }
  .st-key-run-summary { padding:16px; }
 }
+
+/* Source changes are warnings, never successful indexed-evidence checks. */
+.source-access.warn { color:#FF9F0A; }
+.st-key-rebuild-evidence { background:#1b2430; border-color:#364356; border-radius:16px; padding:18px; margin-top:16px; }
+.st-key-rebuild-evidence h3 { font-size:18px; padding:0; }
+.st-key-rebuild-evidence p { font-size:14px; line-height:1.5; }
+
+/* D044: four top-level choices; the rebuild placeholder has its own selected view. */
+.st-key-rebuild button:not(:disabled) { color:#9bbaff; }
+.st-key-rebuild-page { max-width:840px; }
+.st-key-rebuild-page .st-key-rebuild-evidence { margin-top:0; }
+@media(max-width:640px) {
+ .st-key-header-navigation > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { flex-wrap:wrap; }
+ .st-key-header-navigation > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { flex:1 1 calc(50% - 4px); }
+}

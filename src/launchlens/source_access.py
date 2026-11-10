@@ -7,11 +7,13 @@ import urllib.request
 
 from launchlens.notion_tools import NoRedirect
 
-# Accepted M1.1/M1.2 PDFs; frozen identities, not runtime local-file dependencies.
-APPROVED_PDFS = {
-    "1pJhRHdp5Oe6sk6aG5D_aP2MQY7gdHT3x": "57d0cbf0e5064dddeab6dfdf73825e58a71b8cc1d4a5c183973b29a8c580cbfc",
-    "1ThKUJxAmUn2Qf-rVmyVbDu2M5ZSqyCgS": "95a0392d9c120a3001f20ab5d601a0345c9cbf170d5f2fd7f75b37f3c73cfcff",
+# Same frozen identities as retrieval's verified indexed corpus. No Pinecone request.
+from launchlens.retrieval import SOURCES
+DRIVE_AUTHORITIES = {
+    "1pJhRHdp5Oe6sk6aG5D_aP2MQY7gdHT3x": "public_product_facts",
+    "1ThKUJxAmUn2Qf-rVmyVbDu2M5ZSqyCgS": "synthetic_product_intent",
 }
+APPROVED_PDFS = {file_id: SOURCES[authority][2] for file_id, authority in DRIVE_AUTHORITIES.items()}
 MAX_PDF_BYTES = 1_000_000
 
 
@@ -43,9 +45,10 @@ def check_drive_pdf(file_id):
         if not raw.startswith(b"%PDF-") or b"%%EOF" not in raw[-1024:]:
             return access_result("unavailable", detail="not_pdf", http_status=status)
         if digest != expected:
-            return access_result("unavailable", detail="content_mismatch", http_status=status)
+            return access_result("changed", detail="content_mismatch", http_status=status,
+                sha256=digest, indexed_sha256=expected, bytes=len(raw))
         return access_result("accessible", detail="approved_pdf_sha256_match",
-            http_status=status, sha256=digest, bytes=len(raw))
+            http_status=status, sha256=digest, indexed_sha256=expected, bytes=len(raw))
     except urllib.error.HTTPError as error:
         return access_result("unavailable", detail="http_rejected", http_status=error.code)
     except (urllib.error.URLError, OSError, ValueError):

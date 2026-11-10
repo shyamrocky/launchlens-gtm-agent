@@ -208,7 +208,7 @@ class ContentCall:
         if self._stage == 'package_writer' and self.calls:check(retry,'attempt_limit','binding')
         check(retry or not any(c['binding'] == inputs['binding'] for c in self.calls), 'attempt_limit', 'binding')
         policy_id = state.get('voice_policy_id')
-        instructions = (load_package_prompt(self._stage) if package_stage else
+        instructions = (load_package_prompt(self._stage,inputs['writer_brief']['package_contract']['sha256']) if package_stage else
             voice_prompt(self._stage, policy_id) if policy_id is not None else load_review_prompt(self._stage))
         model_inputs = deepcopy(inputs)
         if retry:

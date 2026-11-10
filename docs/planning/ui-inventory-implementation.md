@@ -1,3 +1,146 @@
+## M2-D046 — Read-only format tones
+
+Prepare now shows the core Tone row and expandable five-format tone lines from
+voice_policy_v2.json. Package labels each deliverable with its configured tone;
+computed length/exclamation warnings are advisory and never block approval.
+Notes remains creative steering; editable tone presets are future scope.
+[Canonical policy/wiring/results](writer-run-experience-review.md#m2-d046--shared-per-format-tone-policy-and-measurable-checks).
+93UItestsPASS; native fixture-only screenshots: [Prepare](screenshots/d046/prepare-tones.jpg),
+[Package](screenshots/d046/package-tones.jpg). No live calls or main8520 restart.
+Temporary8524 preview has external connections blocked. Stop for owner review.
+
+---
+
+## M2-D045 — Refresh completion summary
+
+**Owner direction, November 10, 2026:** show what changed after Refresh, or No
+changes; show Last checked in Source documents. Optional action relocation was
+not taken: Refresh data remains in the existing header alongside Rebuild evidence.
+
+The existing refresh handler compares the preceding Home snapshot with the newly
+read one. Lists per-market planned launch date and four readiness-status changes,
+including `India · Marketing authorization: Pending → Approved`. Changes to blockers,
+supporting references and status dates are also identified without repeating source
+prose. Source-access changes and changed PDF digests are reported. Timestamp-only
+changes and row ordering do not count. Successful unchanged comparison displays
+**Updated · No changes**; incomplete/missing reads or missing comparison baselines
+show an explicit incomplete notice instead. First load has no invented comparison.
+Demo results are labeled Simulation updated and never claim live source reads.
+The source card now shows **Last checked <time>** with date/timezone; per-file checks
+retain their existing precise timestamp tooltips. Latest result stays associated
+with that Home snapshot; navigation does not fetch again. Mode replacement clears
+its prior result. Current run, captured evidence, decisions, approval and accounting
+stay unchanged; active-run Refresh guards still apply. No rebuild or model call.
+
+**Verification:**91 UI tests PASS (four new plus existing regressions). Mocked India
+approval/date/blocker changes, unchanged data, shuffled records, incomplete reads,
+source changes, completion rendering, timestamps and no-refetch navigation checked.
+Actual saved USVersion2 AppTest: zero network and same run/state/capture/decisions/
+approval/accounting after mocked refresh. Native Safari on8520 performed a real
+read-only Refresh: **Updated · No changes**, all5 sources accessible and Last checked
+10:34 AM displayed. No actual Notion value was changed for testing: the India change
+case is fixture verification, not a claim of live India approval. 745 protected file
+hashes unchanged, including saved runs/approval, source data, credentials, budget and
+MEMORY. Syntax/whitespace PASS. No dependency, Git staging/publication or next milestone.
+Broader harness/root suites not repeated for this UI-only change; D043 records
+prior full-suite results. [Verified page](screenshots/d045/refresh-no-changes.jpg).
+
+The Home summary describes refreshed source data, not a retroactive permission
+change to a saved run. Existing runs keep their original captured snapshot. Rebuild
+evidence remains an explicitly unimplemented placeholder. App restarted on8520;
+stop for owner review.
+
+---
+
+## M2-D044 — Rebuild evidence in top navigation
+
+**Owner correction, November 10, 2026:** Rebuild evidence belongs beside GTM
+launches, Current run and Refresh data; selecting it shows the placeholder card.
+Moved the same non-executable card out of Home's Source documents column into a
+single selected Rebuild evidence view. No duplicate card, confirmation or rebuild
+handler. Widened the header navigation for four readable options; narrow CSS wraps
+it to two rows. Current run/evidence/approval and Refresh guards are untouched.
+
+**87 UI tests PASS**, including a navigation regression verifying the four choices,
+exactly one disabled placeholder, Home-card removal, no source fetch on navigation
+and unchanged current run/capture. Updated mismatch test opens the new view.
+Native Safari verified the full header, Home without the duplicate card and the
+selected placeholder view. Read-only source checks on app reload passed; no model
+calls, embeddings, Pinecone operations, owner decisions, approval or revision.
+745 protected file hashes unchanged, including saved USVersion2 and its approval,
+credentials/budget/sources/generated artifacts/MEMORY. Whitespace check PASS.
+Broader harness/root suites were not rerun for this navigation-only follow-up;
+D043's585-test result remains the prior full verification. No installs or Git sync.
+
+Screenshots: [navigation](screenshots/d044/navigation.jpg),
+[Rebuild evidence view](screenshots/d044/rebuild-view.jpg).
+App8520 restarted; click the fourth header option. Stop for owner review.
+This supersedes D043's placement below Sources only; all its refresh behavior stays.
+
+---
+
+## M2-D043 — Run-preserving Refresh and Rebuild evidence placeholder
+
+**Owner authorization, November 10, 2026:** fix Refresh only; add a disabled,
+clearly labeled Rebuild evidence information card. No rebuild implementation,
+model calls, ingestion, Pinecone writes or Git publication.
+
+Refresh now replaces only the homepage/source snapshot, preserving the current
+run object, captured evidence, decisions, approval, notes, selected task, counters
+and current page. Source failures replace homepage permissions without altering
+run evidence. Previously documented refresh-clears-run behavior is superseded.
+An active run means created/queued, executing, paused for clarification, a queued
+command or pending revision. Both button and handler block refresh, displaying
+“Finish or stop the run to refresh” as disabled-button help (and a warning if the
+handler is called directly). A held/stopped/failed run or a completed package
+awaiting human review may refresh safely. Execution modes cannot be switched
+while active; an explicit idle mode switch retains its existing reset behavior,
+separate from Refresh. Missing-cache initialization cannot bypass the run guard.
+
+Drive checks use the same fixed source SHA-256 identities as retrieval's verified
+indexed corpus (retrieval.SOURCES), rather than a duplicate hash list. Refresh
+makes no Pinecone query: this is the frozen registered corpus identity, not a
+new remote index inventory. A valid PDF with a differing hash reports changed,
+retains observed/indexed digests and shows an amber “Product brief changed —
+evidence not re-indexed” warning (document-specific wording for Synthetic PRD).
+HTML/login responses, oversize files and access failures remain unavailable.
+No changed bytes are retained, accepted or indexed. Authority separation stays.
+
+The Home right column now includes **Rebuild evidence / Not implemented** with a
+permanently disabled “Coming later” action and no execution/confirmation handler.
+It describes future document acceptance and claim mapping; separate build,
+verification and activation; export before removal of affected product runs and
+protected audit-history preservation. These are future requirements, not active
+capabilities. Actual rebuild/embedding spending and run invalidation remain deferred.
+
+**Fresh verification: 585 tests PASS** (387 harness,86 UI,112 root), including
+six new tests and updated obsolete refresh-reset expectations. Socket-blocked
+AppTest verified completed-run/decision/approval preservation, notes/date retention,
+active/queued/locked/clarification guards, failed refresh isolation, mismatch badges
+and the non-executable placeholder. Actual saved US Version2 was also loaded in
+AppTest with zero network: mocked refresh updated Home only; the same run/evidence,
+approval/decisions and full capture/accounting remained identical.
+
+Native Safari on8520 verified the card and performed one explicit real Refresh
+while viewing the saved approved V2. Home timestamp advanced from10:01:46 to
+10:02:48 AM PST; all five source access checks passed. The current run stayed on
+V2 with3 kept choices, approval,1/3 revisions and$0.71 unchanged. Source reads only;
+no model calls, embeddings or Pinecone operations. No owner wording choices,
+revision, new approval or export was executed. All745 protected file hashes match
+before/after, including source datasets, private receipts/approval, budget,
+credentials, generated artifacts and MEMORY. Syntax and whitespace checks PASS.
+No installs or required workspace dependency. Checksum mismatch was simulated
+only; no actual source was modified to test it. No mobile-device test claimed.
+
+Screenshots: [Home](screenshots/d043/home.jpg),
+[disabled rebuild card](screenshots/d043/rebuild-placeholder.jpg),
+[approved V2 after Refresh](screenshots/d043/approved-after-refresh.jpg).
+
+App8520 restarted to load this change. Stop for owner review; no Git sync or
+Rebuild execution authorized. Historical implementation receipts below remain.
+
+---
+
 ## UI-D009 — Existing harness connected in explicit offline mode, 2026-11-09
 
 Owner approved checkpoint 2. [M2-D020](ui-agent-integration-review.md) is the

@@ -39,7 +39,7 @@ class InventoryUITests(unittest.TestCase):
         self.assertNotIn('Execution data',[x.label for x in app.selectbox])
         self.assertEqual(app.title[0].value,'GTM Launches')
         self.assertIn('Source documents',[s.value for s in app.subheader])
-        self.assertTrue(any('Source checks completed' in c.value for c in app.caption))
+        self.assertTrue(any('Last checked' in c.value for c in app.caption))
 
     def test_real_render_contains_all_markets_and_no_generation_controls(self):
         app = self.app()
@@ -105,7 +105,7 @@ class InventoryUITests(unittest.TestCase):
             self.assertEqual(fetch.call_count, 2)
             self.assertEqual(len(app.exception), 0)
 
-    def test_failed_refresh_replaces_old_permission_and_clears_brief(self):
+    def test_failed_refresh_replaces_home_permission_but_preserves_setup(self):
         app = self.app(); app.button(key="open-US").click().run()
         failed = deepcopy(self.snapshot); failed["status"] = "unavailable"
         from launchlens.inventory import unavailable_row
@@ -114,7 +114,8 @@ class InventoryUITests(unittest.TestCase):
             app.button(key="refresh").click().run()
             self.assertEqual(fetch.call_count, 1)
             self.assertEqual(app.session_state["inventory"]["status"], "unavailable")
-            self.assertNotIn("selected_request", app.session_state)
+            self.assertEqual(app.session_state["selected_request"]["market_id"], "US")
+            app.button(key="home").click().run()
             self.assertTrue(all(app.button(key=f"open-{m}").disabled for m in ("US", "UK", "IN")))
             self.assertGreater(len(app.warning), 0)
             app.run(); self.assertEqual(fetch.call_count, 1)
@@ -142,8 +143,8 @@ class InventoryUITests(unittest.TestCase):
                 self.assertIn(headline, html)
                 self.assertNotIn('class="source-item"', html)
                 self.assertNotIn("Source documents", " ".join(h.value for h in app.subheader))
-                self.assertEqual(len(app.expander), 1)
-                self.assertEqual(app.expander[0].label, "Details")
+                self.assertEqual({e.label for e in app.expander}, {'Details','per format ›'})
+                self.assertEqual(next(e for e in app.expander if e.label == 'Details').label, 'Details')
                 self.assertFalse(app.expander[0].proto.expanded)
                 self.assertTrue(app.button(key="prepare-start").disabled)
                 self.assertEqual(app.button(key="prepare-start").proto.type, "primary")
@@ -218,7 +219,7 @@ class InventoryUITests(unittest.TestCase):
             self.assertIn("Drafting permitted", html)
             self.assertTrue(app.button(key="prepare-start").disabled)
 
-    def test_refresh_clears_preparation_notes_and_date_widgets(self):
+    def test_refresh_preserves_preparation_notes_and_date_widgets(self):
         app = self.app(); app.button(key="open-US").click().run()
         app.text_area[0].input("Lean into nostalgia").run()
         app.checkbox[0].check().run()
@@ -226,12 +227,11 @@ class InventoryUITests(unittest.TestCase):
         with patch("launchlens.inventory_ui.fetch_inventory", return_value=deepcopy(self.snapshot)) as fetch:
             app.button(key="refresh").click().run()
             self.assertEqual(fetch.call_count, 1)
-            self.assertNotIn("selected_request", app.session_state)
-            self.assertNotIn("preparation_notes", app.session_state)
-            app.button(key="open-US").click().run()
-            self.assertEqual(app.text_area[0].value, "")
-            self.assertEqual(app.session_state["selected_request"]["evaluation_date"], "2026-12-14")
-            self.assertEqual(len(app.date_input), 0)
+            self.assertEqual(app.session_state["selected_request"]["market_id"], "US")
+            self.assertEqual(app.session_state["preparation_notes"]["US"], "Lean into nostalgia")
+            self.assertEqual(app.text_area[0].value, "Lean into nostalgia")
+            self.assertEqual(app.session_state["selected_request"]["evaluation_date"], "2026-11-08")
+            self.assertEqual(len(app.date_input), 1)
 
 
 if __name__ == "__main__": unittest.main()

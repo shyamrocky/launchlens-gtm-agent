@@ -11,6 +11,7 @@ def finish_stack(app):
 def show_card(app,group):
     from launchlens.review_decisions import grouped_findings
     s=app.session_state['offline_run'].snapshot()
-    groups=[g for g in grouped_findings(s) if g['needs_attention']]
-    app.session_state['run-review-position-'+s['run_id']]=next(i for i,g in enumerate(groups) if g['id']==group['id'])
+    from launchlens.package_presentation import must_decide
+    groups=[g for g in grouped_findings(s) if must_decide(g)]
+    app.session_state['run-review-position-'+s['run_id']]=next((i for i,g in enumerate(groups) if g['id']==group['id']),len(groups))
     app.run();return app

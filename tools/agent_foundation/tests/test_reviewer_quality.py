@@ -58,7 +58,8 @@ class ReviewerQualityTests(unittest.TestCase):
   payload=prepare_call(self.state,'package_reviewer')
   self.assertNotIn('editorial_warnings',payload)
   self.assertEqual(set(payload['computed_lengths']),set(FORMATS))
-  for f in FORMATS:self.assertEqual(payload['computed_lengths'][f],measured_lengths(payload['package'][f]['content'],f))
+  from launchlens.voice_policy import tone_measurements
+  for f in FORMATS:self.assertEqual(payload['computed_lengths'][f],tone_measurements(payload['package'][f]['content'],f,payload['writer_brief']['tone_policy']))
  def test_role_model_is_different_writer_unchanged_and_reasoning_bounded(self):
   roles=profile()['roles'];self.assertEqual(roles['package_writer']['model_id'],'NousResearch/Hermes-4-405B')
   self.assertEqual(roles['package_reviewer']['model_id'],'Qwen/Qwen3-30B-A3B-Instruct-2507')

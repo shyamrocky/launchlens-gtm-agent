@@ -52,7 +52,8 @@ def profile():
     return value
 
 
-def preflight():
+def preflight(*, package_hash=None):
+    if package_hash is not None:configuration(package_hash)
     cfg = profile(); amounts = {}
     for role, model in cfg['roles'].items():
         output = model['max_completion_tokens']; bound = model['context_tokens'] - output
@@ -62,7 +63,7 @@ def preflight():
             'completion_token_cap':output,'per_call_reservation_usd':str(one),
             'role_reservation_usd':str(one*(0 if role=='package_revision' else 1 if role=='package_reviewer' else model['max_attempts'])),'model_id':model['model_id']}
     total = sum(Decimal(v['role_reservation_usd']) for v in amounts.values())
-    scope = {'profile_sha256':PROFILE_SHA256,'package_sha256':CONFIG_SHA256,
+    scope = {'profile_sha256':PROFILE_SHA256,'package_sha256':package_hash or CONFIG_SHA256,
         'voice_policy_sha256':POLICY_SHA256,'projection_sha256':digest(load_policy()),
         'registry':supported_use_cases(),'request':cfg['request']}
     return {'status':'PREPARED_NOT_AUTHORIZED','scope_sha256':digest(scope),'profile_sha256':PROFILE_SHA256,
@@ -79,11 +80,20 @@ def authorization_template():
         'scope_sha256':plan['scope_sha256'],'request':plan['request'],
         'aggregate_ceiling_usd':plan['proposal_ceiling_usd'],'source_permissions_confirmed':False,
         'acknowledge_catalog_not_entitlement':False,'acknowledge_context_reservation_and_cap_assumptions':False,
-        'allow_explicit_revisions':True,'allow_one_explicit_writer_retry':True,'bound_run_id':None,'standing_budget':False,'expires_utc':'OWNER-SET-ISO-UTC'}
+        'allow_automatic_refinement':False,'allow_explicit_revisions':True,'allow_one_explicit_writer_retry':True,'bound_run_id':None,'standing_budget':False,'expires_utc':'OWNER-SET-ISO-UTC'}
 
 
 def validate_authorization(value, *, now=None):
     plan = preflight(); cfg = profile(); expected = set(authorization_template())
+    if type(value) is dict and 'allow_automatic_refinement' not in value:expected.remove('allow_automatic_refinement')
+    gate(type(value.get('allow_automatic_refinement',False)) is bool if type(value) is dict else False,'Invalid automatic refinement permission')
+    # A consumed run-bound v10 authorization can restore its original checkpoint,
+    # never start a new run or authorize the new tone policy.
+    for prior_hash in ('a6e796afa2949c064042d7e14604e6a2ce72bdfa08ac2612ef18661508dab6e6','04ba0495cdd9029b508ef6a05e6cced4c8138230c4482ab14ac78f6dd2a8b530','dad48142a22da770837754d5b8d230600afe964170900a0c3e5a559c57316257'):
+        legacy=preflight(package_hash=prior_hash)
+        if type(value) is dict and value.get('bound_run_id') is not None and value.get('scope_sha256')==legacy['scope_sha256']:
+            gate(not value.get('allow_automatic_refinement',False) or prior_hash=='dad48142a22da770837754d5b8d230600afe964170900a0c3e5a559c57316257','Historical scope cannot acquire automatic refinement')
+            plan=legacy
     gate(type(value) is dict and set(value) == expected and value['owner_authorized'] is True,
          'Separate explicit live-run authorization required')
     gate(type(value['authorization_id']) is str and re.fullmatch(r'[A-Za-z0-9_-]{1,64}',value['authorization_id']),
@@ -354,6 +364,10 @@ class RunBudget:
             ids=self.standing.reserve_revision(amounts,digest(binding)) if self.standing else {r:None for r in amounts}
             self.pending_revision_claims={r:{'id':ids[r],'reserved_usd':str(amount)} for r,amount in amounts.items()}
 
+    def reserve_automatic_revision(self,binding):
+        gate(self.permission.get('allow_automatic_refinement') is True,'Automatic refinement was not authorized')
+        self.reserve_revision(binding)  # atomic Writer+Reviewer reservation, same ledger/caps
+
     def can_retry_writer(self):
         try:validate_authorization(self.permission,now=self._now)
         except Exception:return False
@@ -364,12 +378,13 @@ class RunBudget:
                 and sum(n for r,n in self.counts.items() if r not in {'package_reviewer','package_revision'})+2<=12 and self.counts['controller']<self.plan['roles']['controller']['max_attempts'])
 
     def summary(self):
+        revision_label='revision_calls' if self.permission.get('allow_automatic_refinement') else 'human_revision_calls'
         return {'reserved_usd':self.plan['reservation_total_usd'],'estimated_usage_cost_usd':str(self.cost),
             'attempts':dict(self.counts),'stopped':self.closed,'events':deepcopy(self.events),
             'pending_revision_claims':deepcopy(self.pending_revision_claims),
-            'call_limits':{'research_task_calls':12,'human_revision_calls':3,'required_review_calls':'approved spending'},
+            'call_limits':{'research_task_calls':12,revision_label:3,'required_review_calls':'approved spending'},
             'call_usage':{'research_task_calls':sum(n for r,n in self.counts.items() if r not in {'package_reviewer','package_revision'}),
-                          'human_revision_calls':self.counts['package_revision'],'required_review_calls':self.counts['package_reviewer']},
+                          revision_label:self.counts['package_revision'],'required_review_calls':self.counts['package_reviewer']},
             'unknown_billing_policy':'Retain full reservation and stop; never retry',
             'standing_budget':self.standing.read() if self.standing else None}
 
@@ -406,12 +421,19 @@ class LiveTransport:
             gate(set(payload) == common and len(payload.get('messages',[])) == 2 and
                  payload['messages'][1].get('role') == 'user', 'Unreviewed content envelope')
             stage = self.role
-        gate(payload['messages'][0] == {'role':'system','content':load_package_prompt(stage)}, 'Prompt binding differs')
+        bound_package_hash=CONFIG_SHA256
+        if self.guard.permission['scope_sha256'] != preflight()['scope_sha256']:
+            matches=[h for h in ('a6e796afa2949c064042d7e14604e6a2ce72bdfa08ac2612ef18661508dab6e6','04ba0495cdd9029b508ef6a05e6cced4c8138230c4482ab14ac78f6dd2a8b530','dad48142a22da770837754d5b8d230600afe964170900a0c3e5a559c57316257')
+                if self.guard.permission['scope_sha256']==preflight(package_hash=h)['scope_sha256']]
+            gate(self.guard.permission.get('bound_run_id') is not None and len(matches)==1,'Historical execution scope differs')
+            bound_package_hash=matches[0]
+        gate(payload['messages'][0] == {'role':'system','content':load_package_prompt(stage,bound_package_hash)}, 'Prompt binding differs')
         wire = deepcopy(payload);wire['max_completion_tokens'] = spec['max_completion_tokens']
         if spec.get('reasoning_effort') is not None:wire['reasoning_effort']=spec['reasoning_effort']
         if self.role != 'controller':
             from launchlens.structured_output import response_format
             content = strict_json(wire['messages'][1]['content'])
+            gate(content.get('writer_brief',{}).get('package_contract',{}).get('sha256')==bound_package_hash, 'Authorized package policy differs')
             wire['response_format'] = response_format(content['output_schema'])
         raw_request = dumps(wire).encode()
         gate(len(raw_request) <= MAX_REQUEST_BYTES and not any(v.encode() in raw_request for v in self.keys.values()),
@@ -473,7 +495,8 @@ class LivePackageRun:
             for r in ['package_writer','package_reviewer','package_revision']]
         self.tools = tools if tools is not None else LiveResearchTools(NotionReader(NotionHTTP(keys['NOTION_API_KEY'])),PineconeHTTP(keys['PINECONE_API_KEY']))
         self.session = FoundationSession(self.controller,self.tools,mode='live_package',writer=self.writer,
-            reviewer=self.reviewer,revision_writer=self.reviser,voice_policy_id=BRAND_POLICY_ID,execution_guard=self.guard)
+            reviewer=self.reviewer,revision_writer=self.reviser,voice_policy_id=BRAND_POLICY_ID,execution_guard=self.guard,
+            automatic_refinement=permission.get('allow_automatic_refinement',False))
         if checkpoint is None:self.session.start(permission['request'],user_notes=notes)
         else:
             state,capture=checkpoint
@@ -503,12 +526,12 @@ class LivePackageRun:
     def review_saved(self, run_id, *, on_update=None):
         try:return self.session.review_saved(run_id,on_update=on_update)
         finally:self._save(self.snapshot())
-    def recheck_review(self, run_id):
+    def recheck_review(self, run_id, *, owner_requested=False):
         # A separate one-shot adapter is permitted for this explicit same-version
         # recheck; ordinary exact-binding replay protection stays unchanged.
         rechecker=ContentCall(self.reviewer._transport,stage='package_reviewer',
             model_id=self.reviewer._model,projector=self.reviewer._projector)
-        try:return self.session.recheck_package_review(run_id,rechecker)
+        try:return self.session.recheck_package_review(run_id,rechecker,owner_requested=owner_requested)
         finally:
             self.reviewer.calls.extend(rechecker.calls)
             self._save(self.snapshot())

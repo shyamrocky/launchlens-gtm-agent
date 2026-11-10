@@ -1,3 +1,82 @@
+## Owner-authorized refresh, tone and refinement sync — November 10, 2026
+
+Owner requested Git sync of completed M2-D043–D048: Refresh preserves current
+runs and reports source/readiness changes; Rebuild evidence is a disabled roadmap
+view; shared per-format tone rules and measurements; one authorized automatic
+refinement, extended to protected scan hits; required-only review cards with
+collapsed optional suggestions and same-version Reviewer-only rechecks.
+Fresh clean canonical copy: **412 harness+96 UI+112 root=620 tests PASS**.
+Current US V2 remains unapproved; the older run's approval is preserved. No new
+model calls, wording decisions or content approval during sync. Credentials,
+workspace, saved responses/runs and budget ledgers stay local. No further
+inference, rebuilding, source edits or next milestone is authorized by publication.
+[Publication scope and verification](repository-sync-2026-11-09.md#refresh-tone-and-protected-refinement-sync--m2-d048).
+Earlier checkpoint boundaries below remain historical.
+
+## Current checkpoint — M2-D048, November10,2026
+
+Review stack:3 required cards;8 collapsed optional suggestions. Future automatic
+refinement targets protected scan hits too, with full shared avoid-list, pre-return
+self-check instruction and postscan to fresh review/human; no extra Writer loop.
+620offlinePASS(412+96+112). One Reviewer-only call rechecked savedUSV2: copy/evidence/
+revisioncount unchanged,5 validblockers remain,4 unverifiable findings excluded.
+New usage estimateUSD0.0020731; sharedremainingUSD0.6595278/1.00.
+No Writer/controller/revision/research calls, content approval, source/index changes,
+MEMORY edit or Git publication. Existing1of3 revisionbyagent remains. Stopforowner.
+[Results and limits](writer-run-experience-review.md#m2-d048--required-only-review-and-protected-scan-refinement).
+
+## Current checkpoint — M2-D047, November 10, 2026
+
+Owner-approved single automatic blocking-only refinement implemented in existing
+harness; paired Writer/review reservation, protected keeps human-only, shared
+3-revision cap and agent/user attribution.614offlinePASS(407+95+112).
+One fresh US run: awaiting_human_review, V2, complete review
+True, 5 blocking findings remain;
+1 revisions used. New model estimate USD0.0464754,
+shared remaining USD0.6616009/1.00; no budget reset. No content approval,
+publishing, source/index change, MEMORY append or Git publication. Stop for owner.
+[Results and boundary](writer-run-experience-review.md#m2-d047--one-automatic-blocking-only-refinement).
+
+## Current checkpoint — M2-D046, November 10, 2026
+
+Shared per-format tone policy v2 wired to Writer, Reviewer, revision, harness and
+read-only Prepare/Package UI. Explicit structure blocks; code-measured lengths/!
+counts advisory only. Expanded policy-bound risky scan. Historical input/prompt/
+approval preserved; no old spending approval transferred to new policy.
+602offlinePASS(397harness93UI112root),12new; saved actualV2 socket-blocked preserved;
+745protectedhashes unchanged; native fixture screenshots verified. [Results](writer-run-experience-review.md#m2-d046--shared-per-format-tone-policy-and-measurable-checks).
+No live/model/source calls, Git sync or MEMORY append. Main8520 not restarted;
+offline preview8524 only. Stop for review. Editable tone presets are future scope.
+
+## Current checkpoint — M2-D045, November 10, 2026
+
+Refresh now reports changed market dates/readiness values or Updated · No changes;
+incomplete reads are explicit. Source card shows Last checked time/date/timezone.
+Header action retained. Same saved run/evidence/decisions/approval preserved; no
+rebuild/model calls.91UItestsPASS, actual savedV2 zero-network preservation test,
+native real Refresh/no-changes verified;745protectedfiles unchanged. [Results](ui-inventory-implementation.md#m2-d045--refresh-completion-summary).
+No Git publication, MEMORY append or next milestone. Stop for owner review.
+
+## Current checkpoint — M2-D044, November 10, 2026
+
+Rebuild evidence is now the fourth top-navigation option. It opens the single
+informational placeholder view; the duplicate Home card is removed. Execution
+remains disabled/unimplemented; Refresh preservation/guards remain.87UItestsPASS,
+native header/view verified,745protectedhashes unchanged. [Results/screenshots](ui-inventory-implementation.md#m2-d044--rebuild-evidence-in-top-navigation).
+No model calls, indexing, approval, MEMORY append or Git sync. Stop for owner review.
+
+## Current checkpoint — M2-D043, November 10, 2026
+
+Refresh now updates only Home/source data, preserving current run/evidence,
+decisions and approval. Disabled/guarded during active/queued/clarification work.
+Drive hashes share retrieval's indexed-corpus bindings; changed PDFs show an amber
+not-re-indexed warning. Home has a disabled Rebuild evidence information card;
+no rebuild handler or spending.585testsPASS(387harness86UI112root), actual savedV2
+socket-blocked refresh preservation and native real Refresh verified;745protected
+hashes unchanged. [Scope, results and screenshots](ui-inventory-implementation.md#m2-d043--run-preserving-refresh-and-rebuild-evidence-placeholder).
+No model calls, indexing, new approval, source writes, MEMORY append or Git sync.
+Stop for owner review; existing USVersion2 remains approved.
+
 ## Owner-authorized run UI and approval sync — November 10, 2026
 
 Owner requested Git sync of completed M2-D040–D042: grouped Activity phases and

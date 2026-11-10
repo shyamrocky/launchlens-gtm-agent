@@ -41,7 +41,7 @@ DIAGNOSTIC_RULES = frozenset({
     "duplicate_array_item", "nonempty_text_required", "invalid_enum_value",
     "invalid_content_field_reference", "duplicate_field_reference", "invalid_claim_reference",
     "evidence_validation_failed", "objective_claim_coverage", "cta_mismatch",
-    "prohibited_link", "prohibited_wording", "field_claim_coverage", "unknown_validation_failure",
+    "prohibited_link", "prohibited_wording", "field_claim_coverage", "neutral_voice_required", "unknown_validation_failure",
 })
 
 

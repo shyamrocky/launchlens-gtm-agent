@@ -1,3 +1,18 @@
+## Owner-authorized refresh, tone and refinement sync — November 10, 2026
+
+Owner requested Git sync of completed M2-D043–D048: Refresh preserves current
+runs and reports source/readiness changes; Rebuild evidence is a disabled roadmap
+view; shared per-format tone rules and measurements; one authorized automatic
+refinement, extended to protected scan hits; required-only review cards with
+collapsed optional suggestions and same-version Reviewer-only rechecks.
+Fresh clean canonical copy: **412 harness+96 UI+112 root=620 tests PASS**.
+Current US V2 remains unapproved; the older run's approval is preserved. No new
+model calls, wording decisions or content approval during sync. Credentials,
+workspace, saved responses/runs and budget ledgers stay local. No further
+inference, rebuilding, source edits or next milestone is authorized by publication.
+[Publication scope and verification](repository-sync-2026-11-09.md#refresh-tone-and-protected-refinement-sync--m2-d048).
+Earlier checkpoint boundaries below remain historical.
+
 ## Owner-authorized run UI and approval sync — November 10, 2026
 
 Owner requested Git sync of completed M2-D040–D042: grouped Activity phases and

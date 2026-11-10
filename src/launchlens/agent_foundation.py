@@ -86,7 +86,7 @@ class FoundationSession:
     Public run/resume methods accept a run ID, not model-provided graph updates.
     """
     def __init__(self, model, tools, *, max_turns=MAX_TURNS, max_searches=MAX_SEARCHES,
-                 mode="offline_simulation", writer=None, reviewer=None, revision_writer=None, voice_policy_id=None, execution_guard=None):
+                 mode="offline_simulation", writer=None, reviewer=None, revision_writer=None, voice_policy_id=None, execution_guard=None, automatic_refinement=False):
         require(mode in {"offline_simulation", "live_research", "live_linkedin", "offline_review", "offline_package", "live_package"}, "Invalid execution mode")
         require(callable(model), "A model adapter is required")
         require(all(callable(getattr(tools, name, None)) for name in
@@ -106,6 +106,8 @@ class FoundationSession:
                 "Full package requires the application-selected writing policy")
         require((mode == "live_package" and callable(getattr(execution_guard, "arm", None))) or
                 (mode != "live_package" and execution_guard is None), "Explicit live execution guard required")
+        require(type(automatic_refinement) is bool and (not automatic_refinement or mode in {'offline_package','live_package'}), 'Invalid automatic refinement mode')
+        self._automatic_refinement = automatic_refinement
         self._execution_guard = execution_guard
         self._voice_policy_id = voice_policy_id
         self._reviewer, self._revision_writer = reviewer, revision_writer
@@ -122,10 +124,12 @@ class FoundationSession:
         builder.add_node("dispatch", self._dispatch)
         builder.add_node("clarify", self._clarify)
         builder.add_node("required_review", self._required_review)
+        builder.add_node("required_refine", self._required_refine)
         builder.add_edge(START, "decide")
         builder.add_conditional_edges("decide", lambda s: "dispatch" if s["status"] == "running" else END)
         builder.add_conditional_edges("dispatch", self._route)
         builder.add_conditional_edges("required_review", self._route)
+        builder.add_conditional_edges("required_refine", self._route)
         builder.add_conditional_edges("clarify", lambda s: "decide" if s["status"]=="running" else END)
         # Suppress automatic tracing even if inherited environment enables LangSmith.
         with tracing_context(enabled=False):
@@ -134,6 +138,7 @@ class FoundationSession:
     @staticmethod
     def _route(state):
         if state["status"] == "running":
+            if (state.get('revision_request') or {}).get('origin')=='agent':return 'required_refine'
             if state.get('package') and state['mode'] in {'offline_package','live_package'} and not state.get('review'):
                 return 'required_review'
             return "decide"
@@ -247,17 +252,20 @@ class FoundationSession:
             self._graph.update_state(self._config(),deepcopy(state),as_node='dispatch')
         return self._snapshot()
 
-    def recheck_package_review(self, run_id, reviewer):
+    def recheck_package_review(self, run_id, reviewer, *, owner_requested=False):
         """One explicitly authorized Reviewer-only command; no planning/Writer calls."""
         require(self._lock.acquire(blocking=False), 'Execution is running')
         try:
             self._check_id(run_id);state=self._snapshot()
+            command_id='harness-owner-recheck-'+self._execution_guard.permission['authorization_id']
+            explicit=(owner_requested is True and self._execution_guard.permission.get('bound_run_id')==run_id and command_id not in state['ledger'])
+            legacy=(((state['package']['version']==1 and state['review_attempts']==1 and state['revision_attempts']==0) or
+                 (state['package']['version']==2 and state['review_attempts']==3 and state['revision_attempts']==1)) and not state['review'].get('review_complete'))
             require(self._mode=='live_package' and state['status']=='awaiting_human_review' and
-                ((state['package']['version']==1 and state['review_attempts']==1 and state['revision_attempts']==0) or
-                 (state['package']['version']==2 and state['review_attempts']==3 and state['revision_attempts']==1)) and
-                not state['review'].get('review_complete') and
+                (explicit or (not owner_requested and legacy)) and
                 (__import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_attempts'] is None or state['review_attempts']<__import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_attempts']), 'Reviewer-only recheck unavailable')
             authoritative_package_binding(state)
+            if explicit:state['ledger'][command_id]={'status':'attempted','source_review_sha256':digest(state['review'])}
             state['turns']+=1;state['review_attempts']+=1
             try:candidate=reviewer(deepcopy(state))
             except ReviewError:
@@ -371,7 +379,7 @@ class FoundationSession:
                     if inputs is not None and reply is None:
                         observed['status'] = 'running'
                     for update in self._graph.stream(inputs, self._config(), stream_mode='updates'):
-                        for node in ('decide', 'dispatch', 'clarify', 'required_review'):
+                        for node in ('decide', 'dispatch', 'clarify', 'required_review', 'required_refine'):
                             if node in update:
                                 observed.update(deepcopy(update[node]))
                         if on_update is not None:
@@ -404,6 +412,88 @@ class FoundationSession:
             return state
         result = self._dispatch(state)
         for event in result['events'][len(state['events']):]:event['origin']='harness_required'
+        if result['status']=='awaiting_human_review':
+            result=self._after_required_review(result)
+        return result
+
+    def _after_required_review(self,state):
+        from launchlens.package_content import blocking_findings,package_value,text_fields,MAX_PACKAGE_FEEDBACK,refinement_targets,protected_scan_hits,new_protected_hits
+        marker=state['ledger'].get('harness-auto-refinement')
+        if marker:
+            if marker.get('status')=='revised':
+                marker['status']='reviewed'
+                package=package_value(state);fixed=0
+                if state['review'].get('review_complete'):
+                    for f in marker['findings']:
+                        target=dict(text_fields(package[f['format']]['content'])).get(f['content_field'],'')
+                        remaining=blocking_findings(state['review'])
+                        field_blocked=any(n['format']==f['format'] and n['content_field'] in {f['content_field'],'$format'} for n in remaining)
+                        if f.get('quote') and f['quote'].casefold() not in target.casefold() and not field_blocked:fixed+=1
+                if 'protected_scan_hits' in marker:
+                    current=protected_scan_hits(state)
+                    marker['post_refinement_scan']={'protected_scan_hits':current,
+                        'new_protected_scan_hits':new_protected_hits(marker['protected_scan_hits'],current)}
+                    marker['protected_removed_count']=len(new_protected_hits(current,marker['protected_scan_hits']))
+                marker['fixed_count']=fixed
+                self._event(state,'automatic_refinement','completed',time.monotonic(),
+                    origin='agent',version=state['package']['version'],fixed_count=fixed,
+                    attempted_count=len(marker['findings']),protected_removed_count=marker.get('protected_removed_count',0),
+                    new_protected_count=len(marker.get('post_refinement_scan',{}).get('new_protected_scan_hits',[])),review_complete=state['review'].get('review_complete',False),
+                    why='Revised blocking wording and checked the new version; remaining protected wording still needs your decision.')
+            return state
+        if not self._automatic_refinement or state['human_accepted'] or not state['review'].get('review_complete'):return state
+        inputs,_,_=authoritative_package_binding(state)
+        if not configuration(inputs['package_contract']['sha256']).get('automatic_refinement'):return state
+        targets=refinement_targets(state);findings=targets['blocking_findings'];protected=targets['protected_scan_hits']
+        if not findings and not protected:return state
+        # The same original evidence, exact-version permission and paired spending
+        # reservation are reused. No keep dispositions or human approval are created.
+        _,_,binding=authoritative_package_binding(state)
+        permission={'binding':binding,'review_sha256':digest(state['review']),
+            'feedback':'Correct blocking_findings_to_fix and protected_scan_hits_to_rewrite using full_avoid_list when supplied. Preserve facts, citations, qualifications and format tone. Never grant keep clearance or human approval.',
+            'origin':'agent','blocking_findings':findings,**({'protected_scan_hits':protected} if configuration(inputs['package_contract']['sha256'])['automatic_refinement'].get('trigger')=='reviewer_blocking_or_protected_scan_hits' else {})}
+        marker={'status':'deferred','source_binding':binding,'findings':deepcopy(findings),**({'protected_scan_hits':deepcopy(protected)} if 'protected_scan_hits' in permission else {})}
+        state['ledger']['harness-auto-refinement']=marker  # one decision, including denial
+        if state['revision_attempts']>=configuration()['limits']['revision_attempts'] or len(permission['feedback'])>MAX_PACKAGE_FEEDBACK:
+            marker['reason']='revision_or_feedback_limit';return state
+        if self._execution_guard is not None:
+            try:self._execution_guard.reserve_automatic_revision(binding)
+            except Exception:
+                marker['reason']='budget_or_authorization_unavailable';return state
+        marker.update(status='scheduled',permission_sha256=digest(permission))
+        state['revision_request']=permission;state['status']='running'
+        return state
+
+    def resume_deferred_refinement(self,run_id,*,on_update=None):
+        """Owner-authorized recovery of a never-attempted automatic handoff."""
+        require(self._lock.acquire(blocking=False),'Execution is running')
+        try:
+            self._check_id(run_id);state=self._snapshot()
+            marker=state['ledger'].get('harness-auto-refinement',{})
+            require(self._automatic_refinement and state['status']=='awaiting_human_review' and
+                state['revision_attempts']==0 and marker.get('status')=='deferred' and
+                marker.get('reason')=='revision_or_feedback_limit' and
+                state['review'].get('review_complete') and not state['human_accepted'],
+                'No unattempted automatic handoff may resume')
+            authoritative_package_binding(state)
+            state['events'].append({'sequence':len(state['events'])+1,'action':'automatic_refinement_admission',
+                'origin':'harness_required','outcome':'recovered','why':'Removed duplicated revision direction; retained all findings and original accounting.',
+                'prior_admission':deepcopy(marker)})
+            del state['ledger']['harness-auto-refinement']
+            state=self._after_required_review(state)
+            with tracing_context(enabled=False):self._graph.update_state(self._config(),state,as_node='required_review')
+        finally:self._lock.release()
+        if state['status']=='running':return self.continue_run(run_id,on_update=on_update)
+        return state
+
+    def _required_refine(self,state):
+        state=deepcopy(state);permission=state.get('revision_request') or {}
+        require(permission.get('origin')=='agent' and self._automatic_refinement,'Automatic refinement unavailable')
+        state['pending']={'id':'agent-revision-v'+str(permission['binding']['draft_version']+1),
+            'name':'revise_package','arguments':{},'origin':'agent',
+            'why':'Rewrite blocking findings and protected scan wording once, preserving evidence and launch restrictions.'}
+        result=self._dispatch(state)
+        result['ledger']['harness-auto-refinement']['status']='revised' if result['status']=='running' else 'failed'
         return result
 
     def can_review_saved(self):
@@ -470,6 +560,7 @@ class FoundationSession:
             # Bounded, JSON-only action boundary. Never merge a model state patch.
             require(len(json.dumps(proposal, allow_nan=False)) <= 8000, "Action exceeds size bound")
             checked = validate_action(proposal, self._mode)
+            require(not checked['id'].startswith(('harness-','agent-revision-','human-revision-')), 'Harness action IDs are reserved')
             require(checked['name'] in view['allowed_actions'], 'Action unavailable in current state')
             state["pending"] = deepcopy(checked)
         except (HarnessError, TypeError, ValueError, OverflowError):
@@ -708,7 +799,7 @@ class FoundationSession:
                          "mode": state["mode"], "missing_requirements": list(state["research_gaps"])}
             state["ledger"][action_id].update(status="completed", result=deepcopy(value))
             self._event(state, name, outcome, started, action_id=action_id,
-                        decision=state["launch"]["decision"] if name == "check_launch" else None, why=action.get('why',''))
+                        decision=state["launch"]["decision"] if name == "check_launch" else None, why=action.get('why',''), **({'origin':action.get('origin','human')} if name=='revise_package' else {}))
         except Exception as error:
             state["ledger"][action_id]["status"] = "failed"
             state["status"] = "failed"
@@ -743,7 +834,7 @@ class FoundationSession:
                     if self._execution_guard is None or not self._execution_guard.closed:
                         state['status']='draft_incomplete'  # Recoverable format handoff, not policy stop.
 
-            self._event(state, name, "failed_safely", started, action_id=action_id, why=action.get('why',''))
+            self._event(state, name, "failed_safely", started, action_id=action_id, why=action.get('why',''), **({'origin':action.get('origin','human')} if name=='revise_package' else {}))
         return state
 
     def _clarify(self, state):

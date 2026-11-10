@@ -20,12 +20,14 @@ def date_label(value):
     return f'{d.strftime("%b")} {d.day}, {d.year}'
 
 
-def checked_label(result):
+def checked_label(result, name="Product Brief"):
     status = result.get("status", "not_checked")
     labels = {"accessible": "✓ Accessible", "unavailable": "Access unavailable", "not_checked": "Not checked"}
     label = labels.get(status, "Not checked")
+    if status == "changed":
+        label = ("Product brief" if name == "Product Brief" else name) + " changed — evidence not re-indexed"
     when = result.get("checked_at")
-    if when and status in {"accessible", "unavailable"}:
+    if when and status in {"accessible", "unavailable", "changed"}:
         stamp = datetime.fromisoformat(when).astimezone(ZoneInfo("America/Los_Angeles"))
         label += " · checked " + stamp.strftime("%b %d, %I:%M:%S %p %Z")
     return label
@@ -38,15 +40,15 @@ def source_documents(display, snapshot):
         with st.container(key="snapshot-caption"):
             stamp=datetime.fromisoformat(snapshot['fetched_at']).astimezone(ZoneInfo('America/Los_Angeles'))
             st.caption('Fixture snapshot · No live source checks performed.' if snapshot.get('data_mode')=='offline' else
-                'Source checks completed '+stamp.strftime('%b %d, %Y · %I:%M:%S %p %Z')+' · Navigation reuses this snapshot.')
+                'Last checked '+stamp.strftime('%I:%M %p').lstrip('0')+' · '+stamp.strftime('%b %d, %Y %Z'))
         groups = []
         for app in ("Google Drive", "Notion"):
             items = []
             for index, doc in enumerate(display["documents"]):
                 if doc["app"] == app:
                     result = snapshot.get("source_access", {}).get(doc["name"], {})
-                    tone = "good" if result.get("status") == "accessible" else "unknown"
-                    detail = checked_label(result)
+                    tone = "good" if result.get("status") == "accessible" else "warn" if result.get("status") == "changed" else "unknown"
+                    detail = checked_label(result, doc["name"])
                     label = detail.split(" · checked ", 1)[0]
                     tooltip = f"source-check-{index}"
                     items.append(f'<div class="source-item"><a href="{escape(doc["url"], quote=True)}" target="_blank" rel="noopener noreferrer">'
@@ -59,24 +61,115 @@ def source_documents(display, snapshot):
         st.html(f'<div class="source-grid">{"".join(groups)}</div>')
 
 
+REFRESH_BLOCKED_MESSAGE = "Finish or stop the run to refresh"
+
+
+def refresh_blocked():
+    """Read-only lifecycle guard, including queued commands and clarification pauses."""
+    if st.session_state.get("run-command") is not None:
+        return True
+    run = st.session_state.get("offline_run")
+    if run is None:
+        return False
+    try:
+        state = run.snapshot()
+    except HarnessError:  # The harness lock is held by executing work.
+        return True
+    return bool(state and (state["status"] in {"created", "running", "needs_clarification"}
+                           or state.get("revision_request") is not None))
+
+
+def refresh_changes(previous, current):
+    """Compare Home snapshots only; never read or mutate a run's evidence."""
+    changes, incomplete = [], []
+    for market in ("US", "UK", "IN"):
+        name = "India" if market == "IN" else market
+        old = previous.get("markets", {}).get(market, {})
+        new = current.get("markets", {}).get(market, {})
+        if old.get("source_status") != "ok" or new.get("source_status") != "ok":
+            incomplete.append(name)
+            continue
+        if old.get("planned_launch_date") != new.get("planned_launch_date"):
+            changes.append(f'{name} · Launch date: {date_label(old.get("planned_launch_date"))} → {date_label(new.get("planned_launch_date"))}')
+        def checks(row):
+            records = (row.get("context") or {}).get("readiness", [])
+            values = [record.get("values", {}) for record in records]
+            areas = [v.get("Readiness Area") for v in values]
+            required = {area for area, _ in READINESS_LABELS}
+            return {v["Readiness Area"]: v for v in values} if len(areas) == 4 and set(areas) == required else None
+        before, after = checks(old), checks(new)
+        if before is None or after is None:
+            incomplete.append(name)
+            continue
+        for area, label in READINESS_LABELS:
+            a, b = before[area], after[area]
+            if a.get("Status") != b.get("Status"):
+                changes.append(f'{name} · {label}: {a.get("Status", "Not verified")} → {b.get("Status", "Not verified")}')
+            # Other operational edits matter even when the displayed status stays the same.
+            for key, field in (("Blocker / Missing Information", "blocker / missing information"),
+                               ("Evidence / Reference", "supporting reference"), ("Last Updated", "status date")):
+                if a.get(key) != b.get(key):
+                    changes.append(f'{name} · {label}: {field} updated')
+    for name, new in current.get("source_access", {}).items():
+        old = previous.get("source_access", {}).get(name, {})
+        if new.get("status") in {"unavailable", "not_checked"}:
+            incomplete.append(name)
+        elif old.get("status") != new.get("status"):
+            changes.append(f'{name} · Access: {old.get("status", "not_checked").replace("_", " ")} → {new["status"]}')
+        elif new.get("sha256") != old.get("sha256"):
+            changes.append(f'{name} · Document changed — evidence not re-indexed')
+    return {"changes": changes, "incomplete": incomplete, "fetched_at": current.get("fetched_at")}
+
+
+def refresh_result(snapshot):
+    result = st.session_state.get("refresh-result")
+    if not result or result["fetched_at"] != snapshot.get("fetched_at"):
+        return
+    prefix = "Simulation updated" if snapshot.get("data_mode") == "offline" else "Updated"
+    if result["changes"]:
+        st.success(prefix + " · " + "\n\n".join(result["changes"]))
+    if result["incomplete"]:
+        st.warning("Refresh incomplete · Could not fully compare/check: " + ", ".join(result["incomplete"]) + ". Check source access before relying on readiness.")
+    elif not result["changes"]:
+        st.info(prefix + " · No changes")
+
+
 def refresh(display):
-    # Remove any preceding snapshot first: a failed refresh cannot keep an old green label.
+    """Replace only Home/source data. Never reset runs, decisions, approval or setup."""
+    if refresh_blocked():
+        st.warning(REFRESH_BLOCKED_MESSAGE)
+        return False
+    previous = st.session_state.get("inventory")
+    st.session_state.pop("refresh-result", None)
+    # Replace stale homepage permissions on failure, without touching run evidence.
     st.session_state.pop("inventory", None)
-    st.session_state.pop("selected_request", None)
-    st.session_state.pop("preparation_notes", None)
-    for key in list(st.session_state):
-        if key.startswith("prepare-"):
-            del st.session_state[key]
-    st.session_state["screen"] = "inventory"
-    if "offline_run" in st.session_state:
-        from launchlens.agent_run_ui import clear_run
-        clear_run()
     if st.session_state.get("ui-mode") == "Demo simulation":
         from launchlens.offline_ui_run import fixture_inventory
         st.session_state["inventory"] = fixture_inventory(display)
     else:
         with st.spinner("Checking launch data and source access…"):
             st.session_state["inventory"] = fetch_inventory(display, verify_documents=True)
+    if previous is not None:
+        st.session_state["refresh-result"] = refresh_changes(previous, st.session_state["inventory"])
+    return True
+
+
+def rebuild_evidence_card(snapshot):
+    """Roadmap placeholder only: deliberately no confirmation or execution handler."""
+    with st.container(border=True, key="rebuild-evidence"):
+        st.subheader("Planned rebuild process")
+        st.caption("Not implemented · Preview of a future capability")
+        changed = [name for name, check in snapshot.get("source_access", {}).items()
+                   if check.get("status") == "changed"]
+        if changed:
+            st.warning("Changed source: " + ", ".join(changed) + ". The indexed evidence is unchanged.")
+        st.write("Re-download approved Drive PDFs, re-chunk, re-embed, verify claim IDs and activate replacement Pinecone evidence.")
+        st.markdown("**1. Approve changed content.** A changed checksum does not approve new claims. Preserve Product Brief facts, synthetic PRD intent and validated claim mappings.")
+        st.markdown("**2. Build and verify first.** Activate only after chunks, embeddings, claim IDs and Pinecone checks pass. A failed rebuild must leave current evidence and runs usable.")
+        st.markdown("**3. Export before replacing runs.** A future confirmation will list affected product runs and offer Download first. Remove them from active use only after successful activation; retain protected audit history.")
+        st.button("Rebuild evidence · Coming later", key="rebuild-evidence-placeholder", disabled=True,
+                  help="Not implemented. No files, embeddings, Pinecone records or runs will change.")
+        st.caption("Blocked during an active run. Requires separate approval and an embedding budget. Nothing runs from this card.")
 
 
 def inventory_page(display, snapshot):
@@ -180,10 +273,18 @@ def brief_page(display, snapshot):
         elif result["decision"] != "Proceed" or tone == "unknown":
             package = "GTM package — paused pending readiness"
         objective = next(o["label"] for o in display["case"]["objectives"] if o["id"] == request["objective_id"])
+        from launchlens.voice_policy import load_tone_policy
+        tone_policy=load_tone_policy()
         with st.container(border=False, key="prepare-summary"):
             st.html('<dl class="prepare-summary">'
                 f'<div><dt>Objective</dt><dd>{escape(objective)}</dd></div>'
-                f'<div><dt>Package</dt><dd>{escape(package)}</dd></div></dl>')
+                f'<div><dt>Package</dt><dd>{escape(package)}</dd></div>'
+            f'<div><dt>Tone</dt><dd>{escape(tone_policy["core_tone"])}</dd></div></dl>')
+            with st.expander("per format ›", expanded=False):
+                from launchlens.package_content import LABELS
+                for name,spec in tone_policy['format_specs'].items():
+                    st.write(LABELS[name]+": "+spec['tone'])
+                st.caption("Steer the writing through Notes for the agent. Required evidence and policy rules still apply.")
         with st.container(border=False, key="prepare-gate"):
             st.html(f'<div class="gate-heading"><span class="readiness {tone}" aria-hidden="true">●</span>'
                 f'<h3>{escape(headline)}</h3></div><p class="gate-explanation">{escape(explanation)}</p>')
@@ -259,10 +360,10 @@ def main():
     st.session_state['ui-mode']=st.session_state.get('ui-mode',st.session_state.get('_data_mode','Demo simulation' if default_offline else 'Live agent'))
     mode=st.session_state['ui-mode']
     with st.container(key="page-header"):
-        brand, nav = st.columns([3, 2], vertical_alignment="center")
+        brand, nav = st.columns([2, 3], vertical_alignment="center")
         brand.html('<div class="launchlens-brand">LaunchLens</div><p class="launchlens-tagline">Your launch-aware GTM agent.</p>')
         with nav, st.container(border=True, key="header-navigation"):
-            back, current, reload = st.columns(3)
+            back, current, reload, rebuild = st.columns(4)
             if back.button("GTM launches", key="home", type="tertiary"):
                 st.session_state["screen"] = "inventory"
             from launchlens.review_decisions import saved_review_available
@@ -277,26 +378,48 @@ def main():
                     except Exception:
                         st.error('The current package could not be resumed. No model calls were made.');st.stop()
                 st.session_state["screen"] = "run" if "offline_run" in st.session_state else "saved-review" if has_saved else "brief"
-            if reload.button("Refresh data", key="refresh", type="tertiary"):
+            blocked = refresh_blocked()
+            if reload.button("Refresh data", key="refresh", type="tertiary", disabled=blocked,
+                             help=REFRESH_BLOCKED_MESSAGE if blocked else "Refresh Home/source data; keep the current run and approval."):
                 refresh(display)
-        active = "current" if st.session_state["screen"] in {"brief","run","saved-review"} else "home"
+            if rebuild.button("Rebuild evidence", key="rebuild", type="tertiary",
+                              help="View the planned rebuild process. Execution is not implemented."):
+                st.session_state["screen"] = "rebuild"
+        active = "rebuild" if st.session_state["screen"] == "rebuild" else "current" if st.session_state["screen"] in {"brief","run","saved-review"} else "home"
         st.html(f'<style>.st-key-{active} button:not(:disabled) {{ color: #f0f4fa; font-weight: 600; }}</style>')
     if st.session_state['screen']=='inventory':
         with st.container(key='launch-heading'):
             heading,control=st.columns([4,1],vertical_alignment='center')
             heading.title('GTM Launches')
             with control:
-                mode=st.selectbox('Mode',['Live agent','Demo simulation'],key='ui-mode',format_func=lambda value:'Mode: '+value,label_visibility='collapsed')
+                mode=st.selectbox('Mode',['Live agent','Demo simulation'],key='ui-mode',format_func=lambda value:'Mode: '+value,label_visibility='collapsed', disabled=refresh_blocked())
     if mode=='Demo simulation':
         st.warning('OFFLINE SIMULATION — fixture inventory and scripted model choices. No live AI, Notion, Drive or Pinecone calls.')
     previous_mode=st.session_state.get('_data_mode')
-    if previous_mode is not None and mode!=previous_mode:st.session_state.pop('inventory',None)
+    if previous_mode is not None and mode!=previous_mode:
+        # Explicit mode replacement retains its existing lifecycle; never a Refresh effect.
+        if refresh_blocked():
+            st.warning(REFRESH_BLOCKED_MESSAGE);st.stop()
+        from launchlens.agent_run_ui import clear_run
+        clear_run()
+        st.session_state.pop('selected_request', None)
+        st.session_state.pop('preparation_notes', None)
+        for key in list(st.session_state):
+            if key.startswith('prepare-'):del st.session_state[key]
+        st.session_state['screen']='inventory'
+        st.session_state.pop('inventory',None)
+        st.session_state.pop("refresh-result", None)
     st.session_state['_data_mode']=mode
-    if 'inventory' not in st.session_state:refresh(display)
+    if 'inventory' not in st.session_state and not refresh(display):st.stop()
     snapshot=st.session_state['inventory']
+    refresh_result(snapshot)
     if snapshot["status"] != "ok":
         st.warning("Some launch data is unavailable. Missing dates/readiness do not grant permission. Refresh data after resolving source access.")
-    if st.session_state["screen"] == "saved-review":
+    if st.session_state["screen"] == "rebuild":
+        st.title("Rebuild evidence")
+        with st.container(key="rebuild-page"):
+            rebuild_evidence_card(snapshot)
+    elif st.session_state["screen"] == "saved-review":
         from launchlens.review_decisions import load_saved_review
         from launchlens.agent_run_ui import review_page
         try:

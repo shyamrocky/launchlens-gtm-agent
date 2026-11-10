@@ -37,7 +37,8 @@ def phrase_key(quote, category):
 def current_scan(state):
     """Fresh deterministic matches; historical AI dispositions are not invented."""
     recorded={h['hit_id']:h for h in (state.get('review') or {}).get('risk_scan',[])}
-    hits=risky_phrase_scan(package_value(state))
+    current_policy=bool((state.get('package') or {}).get('tone_policy_sha256'))
+    hits=risky_phrase_scan(package_value(state),scan_additions='tone_v2' if current_policy else True)
     for hit in hits:
         prior=recorded.get(hit['hit_id'])
         if prior:hit['reviewer_disposition']=prior.get('reviewer_disposition','unassessed')

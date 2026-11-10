@@ -44,12 +44,24 @@ class SourceAccessTests(unittest.TestCase):
 
     def test_http200_html_changed_pdf_and_oversize_are_not_accessible(self):
         for raw, reason in [(b'<html>Sign in</html>', 'not_pdf'),
-                (PDF, 'content_mismatch'), (b'x'*(MAX_PDF_BYTES+1), 'size_limit')]:
+                (b'x'*(MAX_PDF_BYTES+1), 'size_limit')]:
             with self.subTest(reason=reason):
                 result = self.run_check(raw)
                 self.assertEqual(result['status'], 'unavailable')
                 self.assertEqual(result['detail'], reason)
                 self.assertNotIn('Sign in', str(result))
+
+    def test_changed_pdf_reports_observed_and_indexed_hash_without_accepting_or_retaining_bytes(self):
+        from launchlens.retrieval import SOURCES
+        from launchlens.source_access import DRIVE_AUTHORITIES
+        for file_id, authority in DRIVE_AUTHORITIES.items():
+            self.assertEqual(APPROVED_PDFS[file_id], SOURCES[authority][2])
+        result = self.run_check(PDF)
+        self.assertEqual(result['status'], 'changed')
+        self.assertEqual(result['detail'], 'content_mismatch')
+        self.assertEqual(result['sha256'], hashlib.sha256(PDF).hexdigest())
+        self.assertEqual(result['indexed_sha256'], APPROVED_PDFS[FILE])
+        self.assertNotIn('SAFE FIXTURE', str(result))
 
     def test_denied_or_transport_failure_does_not_retry_or_echo_error(self):
         secret = 'private-token-and-source-body'

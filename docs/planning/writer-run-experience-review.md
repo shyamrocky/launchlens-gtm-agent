@@ -1,3 +1,231 @@
+## M2-D048 — Required-only review and protected-scan refinement
+
+Owner direction, November10,2026: required decisions only in the card stack;
+optional findings collapsed and never required. Extend future automatic refinement
+to protected scan hits and provide the full avoid-list. Offline verification,
+then re-review the exact saved V2 without a Writer call. No Git publication.
+
+**UI:** the existing must_decide predicate selects stack/progress/recap cards.
+Advisory notes appear inside a collapsed `N optional suggestions ›` section, with
+optional screened hints, sentence previews, full-draft links and choices. Ignoring
+that section never blocks approval/revision. Existing decisions are not silently
+created or applied; no maintained pipeline or extra page was introduced.
+
+**Harness:** new immutable package executionv13/revision promptv5 adds protected
+scan hits as independent rewrite targets, even if the Reviewer cleared them or
+rated them advisory. They remain conservative scan matches, not fabricated
+Reviewer findings. The revision input contains every format's configured Avoid
+line, universal prohibitions, link restriction and exact shared scan patterns.
+The scanner and model input use the same pattern builder; no competing avoid-list.
+Exact binding checks prevent target tampering. One pass, shared cap3, paired
+reservation and human-only keep/approval rules remain unchanged.
+
+**Same-pass interpretation:** the Writer is told to inspect and rephrase new
+matches before returning its single response. The harness then deterministically
+scans that response; new protected hits are included in the SAME cycle's fresh
+Reviewer input and remain human decisions. A finished Writer call cannot receive
+its later scan results without another call. No extra Writer loop, automatic
+clearance or silent text replacement was added. This future Writer behavior has
+only offline wiring evidence in this checkpoint, not a new live-generation result.
+
+**Preservation:** v12 and previous bindings/prompts remain intact. The current V2
+retains its v12 policy and exact package/evidence hashes. A new consumed run-bound
+owner grant permits this one Reviewer-only command; repeat execution under that
+grant is rejected. It never routes through automatic refinement or the controller.
+No old grant is transferred to new v13 writing. Models and backend content/evidence/
+launch validation remain unchanged; no dependency install or corpus/index changes.
+
+**Verification:**620 offline tests PASS (412 harness+96 UI+112 root), including5
+new harness tests and1 new UI test. Covered protected-only triggering, complete
+avoid-list equality, current-only postscan, new occurrence vs shifted-offset
+classification, no extra Writer loop, same-V2 recheck/replay, required-only stack
+and collapsed optional notes, optional preview/choice preservation. Existing
+advisory-only trigger test now explicitly isolates absence of protected hits;
+UI navigation tests follow the required stack. No validator weakening.
+
+**Actual recheck:** same USrun `b61fab9e-e853-4666-b667-610ea6c64e03`, Version2; complete protocol review,
+3 required cards and8 optional suggestions.
+5 valid blocking findings remain;4 unverifiable findings excluded individually and
+shown as a warning. This is human-review readiness, not factual/content acceptance.
+ONE Qwen Reviewer call, ZERO Writer/revision/controller/research calls. Package copy,
+evidence and revision count remain unchanged (1of3 used byagent). New usage estimate
+USD0.0020731; existing shared USD1 ledger remaining USD0.6595278.
+These are usage estimates, not billing-console reconciliation. Original captures,
+V2 text, prior review and owner decisions remain protected; current pointer now
+references the new review. No new wording choice, approval or publishing action.
+
+Saved actualV2 AppTest passed all display checks with zero network/state changes.
+815 original protected files checked: only the authorized current pointer and
+budget ledger change during live re-review. No workspace dependency, MEMORY edit
+or Git staging/commit/push. App8520 reloaded; stop for owner inspection at
+Current run → Review. Native Safari inspection confirmed three required cards and
+the collapsed eight-optional section; expanding exposes the optional-only caption.
+No decision, revision or approval control was activated. Screenshots:
+[Required stack](screenshots/d048/required.jpg) ·
+[Collapsed optional section](screenshots/d048/optional.jpg).
+
+---
+
+## M2-D047 — One automatic blocking-only refinement
+
+**Authority:** owner approval November 10, 2026. Implement in the existing harness,
+offline verification first, then exactly one fresh live US run, USD1.00 ceiling,
+stop at human review. Protected phrases may be rewritten automatically; only the
+human may grant keep clearance. Agent and human revisions share the three-revision
+cap, and each revision's actor is displayed. No Git publication authorized.
+
+**Implementation:** same FoundationSession/LangGraph. The harness checks validated
+Reviewer blocking findings after required review, reserves both revision Writer
+and fresh Reviewer atomically, then routes one correction through the existing
+revision adapter. Advisory/cleared/scan-only findings do not trigger the pass.
+Incomplete reviews hand off rather than speculate. Exact original evidence,
+launch restrictions, current-version bindings, source permissions and budget
+validation remain. The automatic permission contains only blockers for correction;
+no human keep decisions, content acceptance or publishing permission are created.
+The second review sees only its new version. Remaining protected scan hits are
+human decisions even if the model clears them. No additional autonomous pass,
+including after later human revisions; attempted/failed calls still consume limits.
+
+New immutable package execution v12 binds the policy. v11 and earlier inputs,
+prompts and authorizations remain reconstructable; existing grants default to no
+automatic refinement. A new explicit private grant enables this test. Models,
+prompts, tone policy, output schemas and validators remain as accepted in D046.
+Controller/Reviewer: Qwen/Qwen3-30B-A3B-Instruct-2507. Writer/revision:
+NousResearch/Hermes-4-405B. No new dependency, pipeline or framework.
+
+**Activity/UI:** displays who used each revision (for example `1 of 3 used · by agent`).
+`Agent fixed N blocking issues` counts removed quoted findings only after a complete
+fresh review with no remaining blocker in that field. Otherwise reports refinement
+checked, preserving remaining issues. This is bounded review evidence, not a claim
+of universal factual accuracy. Existing approve-as-is human controls remain.
+
+**Offline gate:**614 tests PASS (407 harness +95 UI +112 root), including ten new
+harness and two UI tests. Covered: one automatic pass, no advisory/no-grant trigger,
+paired reservation and denial, unknown/closed budget, failed revision accounting,
+remaining blockers, subsequent human revisions sharing cap3, exact-V2-only review,
+permission tampering, reserved harness-ID spoofing, incomplete review, protected human-only keeps, replay and
+truthful Activity/actor labels. Existing saved approved USV2 restored with zero
+network; all745 protected baseline files were byte-identical before live execution.
+Initial verification command mistakes (missing jsonschema in the harness-only
+environment; missing PYTHONPATH for UI) were corrected using existing environments;
+no package installation or validation relaxation.
+
+**Observed integration correction:** the first live review returned28 valid blockers,
+but a duplicated serialization of findings in the feedback string exceeded the
+local12000-character feedback bound. No revision inference ran in that handoff.
+The short direction now refers to separately supplied complete blockers instead
+of duplicating them. A regression reproduces the denial and verifies same-run
+continuation without research/controller/initial-Writer calls or counter reset.
+The original denial and interim state/result remain protected; the single allowed
+refinement is the first and only revision attempt. No source or rule was loosened.
+
+**Live result:** `awaiting_human_review`, current Version `2`,
+5 formats; complete review `True`;
+5 validated Reviewer blockers remain. Automatic pass
+status `reviewed`; 17 original
+quoted blocking findings confirmed removed by the bounded check. Actual role
+calls: {"controller": 4, "package_writer": 1, "package_reviewer": 2, "package_revision": 1}. Total revisions consumed: 1.
+Human approval remains false, publishing disabled. Full requests/responses, usage,
+source events, both versions and exact findings remain protected at
+`data/generated/live-package-d047-auto-refine-us`. No additional fresh run was started.
+
+**Costs:** new run usage estimate USD0.0464754; shared ledger
+remaining USD0.6616009 under its original USD1.00 ceiling. The prior
+accounted balance was retained, never reset. Estimates use provider token usage;
+these are not a billing-console reconciliation. Unknown charges retain reservation.
+Read-only official account/public catalog checks confirmed both models active and
+unchanged relevant prices/context; the public catalog required a normal browser
+user-agent after HTTP403/1010. Production transport remained unchanged and its
+read-only account check returned200. Catalog snapshots are in the protected store.
+
+**Handoff:** open app8520 → Current run → Review; Package contains all five drafts.
+Original approved USV2 and historical approval receipts remain protected; prior
+current pointer is backed up separately. No source documents, claim mappings,
+Pinecone index, credentials or MEMORY changed. No Git stage/commit/push. Required
+code/config/tests and this record are canonical; no runtime dependency on workspace.
+Stop at human review. New live quality is one example, not a reliability benchmark.
+
+**Review limitations and UI verification:**4 unverifiable findings were dropped individually; valid findings remain. The current Review has11 phrase groups, including3 protected must-decide groups. This is not content approval. Socket-blocked AppTest restored the actual liveV2 across Activity/Review/Package without state or call changes. Native Safari verified Version2, agent attribution and the17-fix Activity line. Screenshots: [Review](screenshots/d047/review.jpg), [Activity](screenshots/d047/activity.jpg). No wording decisions, approval or later version were created during UI checks.
+
+---
+
+## M2-D046 — Shared per-format tone policy and measurable checks
+
+**Decision/authority:** explicit owner direction, November 10, 2026; no links in
+all five draft formats, with citation/source URLs kept separately. Status:
+implemented; offline verification PASS; owner review pending. No live validation
+or Git publication authorized by this checkpoint.
+
+**Source of truth:** [voice_policy_v2.json](../../data/templates/gtm/voice_policy_v2.json).
+Contains core tone, each format's Voice/Tone/Avoid/short label, structural rules,
+advisory measurements, all-format prohibitions and scan additions. The existing
+voice-policy mechanism is extended; immutable v1 remains a historical binding.
+New packages derive both voice modes and measurable rules from v2. Exact policy
+hash is bound through package_execution_v11, authoritative input and package
+metadata. Raw original templates remain unchanged; current model-facing template
+guidance/schema derives from the bound policy. No extra framework or dependency.
+
+Writer v3, Reviewer v7 and revision v4 receive the identical policy via
+writer_brief.tone_policy. Prompts refer to it rather than duplicating the tone
+spec. Reviewer judges each draft against its own Tone line; findings remain
+model judgments, statuses remain application-owned. Notes are lower-trust creative
+steering and cannot change the bound policy, evidence, launch gate or budgets.
+
+| Enforcement | Rules |
+|---|---|
+| Blocking structure | Exact supplied LinkedIn CTA; exactly3 LinkedIn hashtags; exactly3 ad concepts;2–3 blog sections; no copy links in any format; no case-insensitive standalone we/our in any campaign-brief field. Existing3 messaging pillars also stays hard. |
+| Advisory only | All configured word/character targets and exclamation counts:0 in brief, at most1 in LinkedIn/email/blog, at most1 per ad concept. Code computes and displays warnings on Package; these never block approval. |
+| Semantic review / scan | Format tone, hype/superlatives, distinct angles, audience-hypothesis language, unsupported claims and all Avoid categories. Scan matches are candidates, not semantic proof; existing protected categories still require human clearance. |
+
+Existing citation validation, original evidence verification, launch restrictions,
+link prohibitions and budget controls remain in force. Factual blog section
+headings can inherit only their own body's citations; other factual fields keep
+their own references. Creative headings do not acquire empty citation entries.
+Structural failures cannot be misclassified for the missing-citations-only retry.
+Source URLs remain available as separate evidence, never prohibited draft copy.
+The v2 scan adds uncovered Avoid terms (including standalone today and full
+phrases) from config; historical scan modes remain reproducible. Reviewer hints
+are screened against the current additions. No regex claims to identify every
+superlative or determine support; contextual review remains necessary.
+
+**Read-only UI:** Prepare has Tone = Warm, factual, lightly nostalgic, with
+per format › expanding all five tone lines. Existing Notes remains the only
+steering field. Package shows each short tone label next to its deliverable and
+plain advisory captions. No tone selectors. For historical packages, labels are
+explicitly current guidance; original policy, review and approval are retained.
+Editable per-format tone presets are a future feature, not implemented/authorized.
+
+**Preservation:** historical config/prompt files and all approved datasets remain
+unchanged. Existing packages reconstruct their original input/schema/advisories
+and retain exact approval bindings. Only a consumed, run-bound v10 authorization
+may restore that original scope; it cannot start a new run or call the new policy.
+Transport verifies the authorized package/prompt binding before dispatch. New
+policy scope does not inherit old spending approval. Models and budgets unchanged.
+
+**Verification:602 offline tests PASS** (397 harness +93 UI +112 root), including
+12 new tests. Checked exact policy/schema, Writer/Reviewer/revision input equality,
+structural rejection, no-links across5 formats, separate citation URLs, Notes/
+policy-tampering boundaries, advisory approval, precise measurements, risky terms,
+required-review behavior and historical authorization isolation. JSON Schema check
+PASS locally. The tiny final authorization input guard also passed the26-test
+mocked live-adapter subset. Mocks prove wiring/validation, not live tone quality
+or hosted-schema compatibility. Native Safari screenshots use only authored
+fixtures, with socket connections blocked in the temporary preview process:
+[Prepare tones](screenshots/d046/prepare-tones.jpg),
+[Package tones/advisories](screenshots/d046/package-tones.jpg).
+
+Actual saved USVersion2 was separately restored and revalidated in socket-blocked
+AppTest: same state/capture/evidence/decisions/approval/accounting, zero network.
+745 protected file hashes unchanged, including credentials, sources, private runs,
+ledger, approved receipt and MEMORY. Syntax/whitespace checks PASS. Required code,
+config and tests are canonical; no runtime dependency on workspace or the temporary
+visual launcher. Main8520 was not restarted during this offline checkpoint;
+fixture-only preview8524 shows the new screens. No source reads/writes, inference,
+new approval/revision, Pinecone operation, dependency install or Git sync occurred.
+Stop for owner review; further model verification is separately authorized work.
+
+---
+
 # M2-D024 — Writer output, recovery and run experience
 
 November 9, 2026 · **REVIEWER PROBE REJECTED; OFFLINE STREAM FIX VERIFIED; STOP FOR OWNER REVIEW.**

@@ -25,12 +25,12 @@ class CurrentVersionReviewTests(unittest.TestCase):
  def test_current_v2_has_no_prior_quotes_findings_or_feedback(self):
   r,w,s=self.revised();s['reviews'][0]['assessment']={'old':'V1_ONLY_SENTINEL'}
   p=prepare_call(s,'package_reviewer',projector=project)
-  self.assertEqual(p['package'],package_value(s));self.assertEqual(p['phrase_groups'],phrase_groups(package_value(s)))
+  self.assertEqual(p['package'],package_value(s));self.assertEqual(p['phrase_groups'],prepare_call(s,'package_reviewer')['phrase_groups'])
   self.assertNotIn('previous_review',p);self.assertNotIn('owner_feedback_data_only',p)
   self.assertNotIn('V1_ONLY_SENTINEL',json.dumps(p));self.assertNotIn('OLD_FEEDBACK_SENTINEL',json.dumps(p))
   self.assertEqual(p['binding']['draft_version'],2)
  def test_bad_quote_drops_one_finding_keeps_current_valid_findings(self):
-  r,w,s=self.revised();raw=judgments(phrase_groups(package_value(s)))
+  r,w,s=self.revised();raw=judgments(prepare_call(s,'package_reviewer')['phrase_groups'])
   text=s['drafts']['linkedin']['draft']['content']['body']
   valid={'format':'linkedin','content_field':'body','quote':text,'dimension':'tone','severity':'advisory',
    'reason':'Inspect the current draft tone.','suggestion':'No replacement','claim_ids':[]}
@@ -41,13 +41,13 @@ class CurrentVersionReviewTests(unittest.TestCase):
   self.assertFalse(any(f['quote']=='V1_ONLY_SENTINEL' for v in checked['assessment'].values() for f in v['findings']))
   self.assertEqual(checked['raw_response'],raw);self.assertFalse(checked['human_accepted'])
  def test_invalid_occurrence_does_not_erase_valid_group_default(self):
-  r,w,s=self.revised();raw=judgments(phrase_groups(package_value(s)));g=raw['group_judgments'][0]
-  hit=phrase_groups(package_value(s))[0]['locations'][0]['location_id']
+  r,w,s=self.revised();raw=judgments(prepare_call(s,'package_reviewer')['phrase_groups']);g=raw['group_judgments'][0]
+  hit=prepare_call(s,'package_reviewer')['phrase_groups'][0]['locations'][0]['location_id']
   g['occurrence_judgments']=[{'location_id':hit,'meaning_differs':False,**{k:g[k] for k in ['dimension','severity','reason','suggestion','claim_ids']}}]
   checked=validate_package_review(raw,s);self.assertEqual(checked['unverified_finding_count'],1)
   self.assertTrue(checked['review_complete']);self.assertTrue(any(hit in f['scan_hit_ids'] for v in checked['assessment'].values() for f in v['findings']))
  def test_unknown_reviewer_claim_never_enters_accepted_findings(self):
-  r,w,s=self.revised();raw=judgments(phrase_groups(package_value(s)));raw['group_judgments'][0]['claim_ids']=['PROD-999']
+  r,w,s=self.revised();raw=judgments(prepare_call(s,'package_reviewer')['phrase_groups']);raw['group_judgments'][0]['claim_ids']=['PROD-999']
   checked=validate_package_review(raw,s);self.assertGreater(checked['unverified_finding_count'],0)
   self.assertFalse(any('PROD-999' in f['claim_ids'] for v in checked['assessment'].values() for f in v['findings']))
   bad=deepcopy(s);bad['evidence'][0]['records'][0]['evidence_payload']['primary_text']='Changed'

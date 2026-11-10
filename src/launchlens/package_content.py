@@ -19,14 +19,14 @@ ROOT = Path(__file__).resolve().parents[2]
 FORMATS = ('campaign_brief', 'linkedin', 'email', 'blog', 'ads')
 LABELS = {'campaign_brief':'Campaign brief', 'linkedin':'LinkedIn post', 'email':'Promotional email',
           'blog':'Short blog', 'ads':'Ad variations'}
-CONFIG_SHA256 = 'a6e796afa2949c064042d7e14604e6a2ce72bdfa08ac2612ef18661508dab6e6'
+CONFIG_SHA256 = '6657f66802ef4f7f201aea37813353656fcf2cf42175ad3e21d0f482c251550b'
 
 
 class PackageError(ValueError):
     """Safe format-scoped diagnostic; raw candidates stay in model-call capture."""
     def __init__(self, format_name=None, code='invalid_package', field_path='$', rule='unknown_validation_failure'):
         allowed = {'invalid_package','invalid_structure','structure_or_evidence_reference',
-                   'objective_claim_coverage','field_claim_coverage','cta_mismatch','prohibited_link','prohibited_wording'}
+                   'objective_claim_coverage','field_claim_coverage','cta_mismatch','prohibited_link','prohibited_wording','neutral_voice_required'}
         from launchlens.content_contracts import validation_detail
         self.diagnostic = {'format':format_name if format_name in FORMATS else None,
             'code':code if code in allowed else 'invalid_package', **validation_detail(field_path,rule)}
@@ -37,6 +37,9 @@ HISTORICAL_CONFIG_SHA256 = '856921f61001f0b66d53df745ea5794c29ba7d1f2fe710e22bea
 
 
 HISTORICAL_CONFIGS = {
+    'dad48142a22da770837754d5b8d230600afe964170900a0c3e5a559c57316257': 'package_execution_v12.json',
+    '04ba0495cdd9029b508ef6a05e6cced4c8138230c4482ab14ac78f6dd2a8b530': 'package_execution_v11.json',
+    'a6e796afa2949c064042d7e14604e6a2ce72bdfa08ac2612ef18661508dab6e6': 'package_execution_v10.json',
     'cd407d68252a5bcea6f3872049238dace8370551ce2b26d659f4a2f0c6e22a56': 'package_execution_v9.json',
     '96f9292431f661fc233f2eea40f2054974b8788459dead1f2b84cd104488d1f8': 'package_execution_v8.json',
     '6f7d4640e846bdf71dee06eaf9862b62291062d06eeb38f8991cc9aa64c91358': 'package_execution_v7.json',
@@ -50,7 +53,7 @@ MAX_PACKAGE_FEEDBACK = 12000
 def configuration(expected_hash=None):
     expected_hash = expected_hash or CONFIG_SHA256
     check(expected_hash == CONFIG_SHA256 or expected_hash in HISTORICAL_CONFIGS, 'stale_binding')
-    filename = 'package_execution_v10.json' if expected_hash == CONFIG_SHA256 else HISTORICAL_CONFIGS[expected_hash]
+    filename = 'package_execution_v13.json' if expected_hash == CONFIG_SHA256 else HISTORICAL_CONFIGS[expected_hash]
     raw = (ROOT/'data/templates/gtm'/filename).read_bytes()
     check(hashlib.sha256(raw).hexdigest() == expected_hash, 'stale_binding')
     spec = json.loads(raw)
@@ -58,11 +61,14 @@ def configuration(expected_hash=None):
     for name, expected in spec['template_sha256'].items():
         from launchlens.content_contracts import TEMPLATE_DIR, TEMPLATES
         check(hashlib.sha256((TEMPLATE_DIR/TEMPLATES[name]).read_bytes()).hexdigest() == expected, 'stale_binding')
+    if spec.get('tone_policy_sha256'):
+        from launchlens.voice_policy import load_tone_policy
+        load_tone_policy(spec['tone_policy_sha256'])
     return spec
 
 
-def load_package_prompt(stage):
-    spec = configuration()['prompts'].get(stage)
+def load_package_prompt(stage, expected_hash=None):
+    spec = configuration(expected_hash)['prompts'].get(stage)
     check(type(spec) is dict, 'permission_denied')
     raw = (ROOT/'src/launchlens/prompts'/spec['file']).read_bytes()
     check(hashlib.sha256(raw).hexdigest() == spec['sha256'], 'stale_binding')
@@ -79,24 +85,37 @@ def prepare_package_input(state):
           'permission_denied')
     # Reuse the full original research, market/date/permission and two-claim checks.
     inputs = prepare_input(state)
-    spec = configuration(); policy = load_voice_policy(BRAND_POLICY_ID)
-    inputs['template'] = {'format':'package', 'templates':{f:load_template(f) for f in FORMATS}}
-    inputs['output_schema'] = package_schema()
-    inputs['voice_policy'] = {k:v for k,v in inputs['voice_policy'].items() if k not in {'format','voice_mode'}}
-    inputs['voice_policy']['format_voices'] = {f:policy['format_voices']['ad_variations' if f == 'ads' else f] for f in FORMATS}
-    inputs['package_contract'] = {'id':spec['contract_id'],'sha256':CONFIG_SHA256,
-        'formats':list(FORMATS),'campaign_brief_role':'Shared creative direction only; never evidence or launch permission'}
-    inputs['user_notes_data_only'] = state.get('user_notes','')
-    # Re-review preserved admitted packages against their ORIGINAL input contract.
-    # Only the pinned, approved predecessor is allowed; changed evidence still fails binding.
-    expected = (state.get('package') or {}).get('input_sha256')
-    if expected and digest(inputs) != expected:
+    base=deepcopy(inputs)
+    def configured(expected_hash):
+        result=deepcopy(base);spec=configuration(expected_hash);policy=load_voice_policy(BRAND_POLICY_ID)
+        result['template']={'format':'package','templates':{f:load_template(f) for f in FORMATS}}
+        result['output_schema']=package_schema()
+        result['voice_policy']={k:v for k,v in result['voice_policy'].items() if k not in {'format','voice_mode'}}
+        result['voice_policy']['format_voices']={f:policy['format_voices']['ad_variations' if f=='ads' else f] for f in FORMATS}
+        result['package_contract']={'id':spec['contract_id'],'sha256':expected_hash,'formats':list(FORMATS),
+            'campaign_brief_role':'Shared creative direction only; never evidence or launch permission'}
+        result['user_notes_data_only']=state.get('user_notes','')
+        if spec.get('tone_policy_sha256'):
+            from launchlens.voice_policy import load_tone_policy,tone_schema
+            result['tone_policy']=load_tone_policy(spec['tone_policy_sha256'])
+            result['voice_policy']={k:deepcopy(result['tone_policy'][k]) for k in ['policy_id','version','format_voices','meaning']}
+            result['voice_policy']['policy_sha256']=spec['tone_policy_sha256']
+            result['output_schema']=tone_schema(result['output_schema'],result['tone_policy'])
+            # Earlier raw templates remain immutable. Current derived guidance comes
+            # exclusively from the bound tone policy, not duplicate legacy targets.
+            for name,template in result['template']['templates'].items():
+                rules=result['tone_policy']['format_specs'][name]
+                template['content_schema']=deepcopy(result['output_schema']['properties'][name]['properties']['content'])
+                template['editorial_guidelines']['tone']=rules['tone']
+                template['editorial_guidelines']['length_targets']=deepcopy(rules['advisory'])
+        return result
+    inputs=configured(CONFIG_SHA256)
+    expected=(state.get('package') or {}).get('input_sha256')
+    if expected and digest(inputs)!=expected:
         for predecessor in HISTORICAL_CONFIGS:
-            historical = deepcopy(inputs)
-            historical['package_contract']['sha256'] = predecessor
-            if digest(historical) == expected:
-                configuration(predecessor)
-                inputs = historical
+            historical=configured(predecessor)
+            if digest(historical)==expected:
+                inputs=historical
                 break
     return inputs
 
@@ -124,9 +143,19 @@ def admit_package(value, inputs, *, version=1):
     if type(value) is not dict or set(value) != set(FORMATS):
         raise PackageError()
     records = evidence_records(inputs); drafts = {}
+    spec=configuration(inputs['package_contract']['sha256'])
+    if inputs.get('tone_policy'):
+        from launchlens.voice_policy import load_tone_policy
+        check(bool(spec.get('tone_policy_sha256')) and inputs['tone_policy']==load_tone_policy(spec['tone_policy_sha256']),'stale_binding')
+    else:check(not spec.get('tone_policy_sha256'),'stale_binding')
     anchor = digest(value['campaign_brief'])
     for name in FORMATS:
         try:
+            if inputs.get('tone_policy'):
+                from launchlens.voice_policy import validate_tone_structure
+                # Existing shape/reference validation still precedes typed access.
+                validate_draft(value[name],format_name=name,evidence_records=records)
+                validate_tone_structure(value[name],name,inputs['tone_policy'],inputs['draft_constraints']['exact_cta'])
             # Existing LinkedIn admission is retained, including its exact CTA.
             if name == 'linkedin':
                 record = admit_output(value[name], inputs)
@@ -148,12 +177,18 @@ def admit_package(value, inputs, *, version=1):
             raise PackageError(name, getattr(error,'code','structure_or_evidence_reference'),
                 **error.diagnostic) from None
         check_field_claims(value[name], name)
+        if inputs.get('tone_policy'):
+            from launchlens.voice_policy import tone_measurements
+            record['validation']['editorial_warnings']=[{k:v for k,v in m.items() if k!='meets_target'} | {'severity':'advisory'}
+                for m in tone_measurements(value[name]['content'],name,inputs['tone_policy']) if not m['meets_target']]
         record.update(version=version, review_status='unreviewed', human_accepted=False,
             publishing_allowed=False, input_sha256=digest(inputs), creative_anchor_sha256=anchor,
             writer_prompt_sha256=configuration(inputs['package_contract']['sha256'])['prompts']['package_writer' if version == 1 else 'package_revision']['sha256'])
         drafts[name] = record
     metadata = {'version':version,'input_sha256':digest(inputs),'package_sha256':digest(value),
         'creative_anchor_sha256':anchor,'human_accepted':False,'publishing_allowed':False}
+    if inputs.get('tone_policy'):
+        metadata['tone_policy_sha256']=configuration(inputs['package_contract']['sha256'])['tone_policy_sha256']
     return drafts, metadata
 
 
@@ -177,9 +212,16 @@ def authoritative_package_binding(state):
     return inputs, metadata, binding
 
 
+def package_measurements(package, inputs):
+    from launchlens.voice_policy import tone_measurements
+    from launchlens.content_contracts import measured_lengths
+    policy=inputs.get('tone_policy')
+    return {f:tone_measurements(package[f]['content'],f,policy) if policy else measured_lengths(package[f]['content'],f) for f in FORMATS}
+
+
 def validate_package_review(value, state, *, isolate_findings=True, scan_additions=True):
     inputs, _, binding = authoritative_package_binding(state)
-    return assess_package_review(value, package_value(state), inputs, binding, isolate_findings=isolate_findings,scan_additions=scan_additions)
+    return assess_package_review(value, package_value(state), inputs, binding, isolate_findings=isolate_findings,scan_additions='tone_v2' if inputs.get('tone_policy') and scan_additions else scan_additions)
 
 
 def prepare_call(state, stage, *, projector=None):
@@ -193,21 +235,27 @@ def prepare_call(state, stage, *, projector=None):
     else:
         _, _, binding = authoritative_package_binding(state)
     result = {'binding':binding,'writer_brief':brief, 'projection_manifest':manifest,
-              'output_schema':package_schema(stage == 'package_reviewer')}
+              'output_schema':package_schema(True) if stage == 'package_reviewer' else deepcopy(inputs['output_schema'])}
     if stage != 'package_writer':
         result['package'] = package_value(state)
     if stage == 'package_reviewer':
-        result['writing_instructions'] = load_package_prompt('package_writer')
+        result['writing_instructions'] = load_package_prompt('package_writer',inputs['package_contract']['sha256'])
         from launchlens.reviewer_groups import phrase_groups,group_schema,PROTOCOL
         result['review_protocol']=PROTOCOL
-        result['phrase_groups']=phrase_groups(result['package'])
+        result['phrase_groups']=phrase_groups(result['package'],scan_additions='tone_v2' if inputs.get('tone_policy') else True)
         result['output_schema']=group_schema(result['phrase_groups'])
         from launchlens.content_contracts import measured_lengths
-        result['computed_lengths'] = {f:measured_lengths(result['package'][f]['content'],f) for f in FORMATS}
+        result['computed_lengths'] = package_measurements(result['package'],inputs)
         result['review_criteria'] = inputs['common_review_criteria']
         # Judge only the bound CURRENT package. Prior findings and human feedback
         # contain obsolete quoted prose; they never cross this review boundary.
         result['review_scope'] = 'Current package version only; no inherited findings or clearance.'
+        marker=state['ledger'].get('harness-auto-refinement',{})
+        if marker.get('status')=='revised' and 'protected_scan_hits' in marker:
+            current=protected_scan_hits(state)
+            result['post_refinement_scan']={'current_version':binding['draft_version'],
+                'protected_scan_hits':current,'new_protected_scan_hits':new_protected_hits(marker['protected_scan_hits'],current),
+                'instruction':'Judge current V2 wording in context. Every surviving/new protected phrase still requires human clearance. No further automatic Writer call.'}
     if stage == 'package_revision':
         permission = state.get('revision_request'); review = state.get('review')
         check(type(permission) is dict and type(review) is dict and review.get('binding') == binding
@@ -215,8 +263,22 @@ def prepare_call(state, stage, *, projector=None):
               'permission_denied', 'binding')
         check(type(permission.get('feedback')) is str and 0 < len(permission['feedback'].strip()) <= MAX_PACKAGE_FEEDBACK,
               'permission_denied')
-        result.update(review=deepcopy(review['assessment']),owner_feedback_data_only=permission['feedback'],
-                      writing_instructions=load_package_prompt('package_writer'))
+        if permission.get('origin')=='agent':
+            marker=state['ledger'].get('harness-auto-refinement',{})
+            targets=refinement_targets(state)
+            check(marker.get('permission_sha256')==digest(permission) and marker.get('source_binding')==binding
+                  and permission.get('blocking_findings')==targets['blocking_findings']
+                  and permission.get('protected_scan_hits',[])==targets['protected_scan_hits']
+                  and bool(targets['blocking_findings'] or targets['protected_scan_hits']),
+                  'permission_denied','binding')
+            if targets['protected_scan_hits'] or configuration(inputs['package_contract']['sha256']).get('automatic_refinement',{}).get('trigger')=='reviewer_blocking_or_protected_scan_hits':
+                result['protected_scan_hits_to_rewrite']=deepcopy(targets['protected_scan_hits'])
+                result['full_avoid_list']=refinement_avoid_list(inputs)
+            result['revision_origin']='agent'
+            result['blocking_findings_to_fix']=deepcopy(permission['blocking_findings'])
+            result['protected_phrase_rule']='Rewrite if needed; never grant keep clearance. Remaining protected phrases require a human.'
+        result.update(review=({name:{**deepcopy(item),'findings':[f for f in deepcopy(item['findings']) if f.get('severity')=='blocking' and f.get('origin')!='deterministic_scan']} for name,item in review['assessment'].items()} if permission.get('origin')=='agent' else deepcopy(review['assessment'])),owner_feedback_data_only=permission['feedback'],
+                      writing_instructions=load_package_prompt('package_writer',inputs['package_contract']['sha256']))
     return result
 
 
@@ -253,6 +315,9 @@ def citation_only_failures(value, inputs):
         records=evidence_records(inputs);gaps=[]
         for name in FORMATS:
             validate_draft(value[name],format_name=name,evidence_records=records)
+            if inputs.get('tone_policy'):
+                from launchlens.voice_policy import validate_tone_structure
+                validate_tone_structure(value[name],name,inputs['tone_policy'],inputs['draft_constraints']['exact_cta'])
             if name=='linkedin' and value[name]['content']['cta']!=CTA:return []
             for path,text in text_fields(value[name]['content']):
                 if LINK.search(text):return []
@@ -337,6 +402,22 @@ def claims_length_compliance(text):
     return False
 
 
+def risk_patterns(*,scan_additions=True,suggestion=False):
+    patterns=dict(RISK_PATTERNS)
+    if scan_additions:
+        patterns['novelty'] += r'|\bpresenting\b'
+        patterns['invented_product_facts'] += r'|\b(?:guided the development|designed to)\b'
+    if scan_additions=='tone_v2':
+        from launchlens.voice_policy import load_tone_policy
+        for category,phrases in load_tone_policy()['all_formats']['scan_phrases'].items():
+            patterns[category] += '|'+ '|'.join(r'\b'+re.escape(term)+r'\b' for term in phrases)
+    if suggestion:
+        patterns['novelty'] += r'|\b(?:new|introduce)\b'
+        patterns['preference_prediction'] += r'|\b(?:may recall|remember|recall)\b'
+        patterns['ingredient_intensity'] += r'|\b(?:smooth|velvety)\b'
+    return patterns
+
+
 def risky_phrase_scan(package, *, suggestion=False, scan_additions=True):
     hits=[]
     for name in FORMATS:
@@ -344,16 +425,7 @@ def risky_phrase_scan(package, *, suggestion=False, scan_additions=True):
         for path,text in text_fields(package[name]['content']):
             if name=='campaign_brief' and path.startswith('restrictions_and_unknowns.'):
                 continue  # Policy warnings are not promotional copy; retained in context.
-            patterns=dict(RISK_PATTERNS)
-            if scan_additions:
-                patterns['novelty'] += r'|\bpresenting\b'
-                patterns['invented_product_facts'] += r'|\b(?:guided the development|designed to)\b'
-            if suggestion:
-                # Hints have no surrounding sentence: screen bare novelty, inferred
-                # consumer memory and replacement texture assertions conservatively.
-                patterns['novelty'] += r'|\b(?:new|introduce)\b'
-                patterns['preference_prediction'] += r'|\b(?:may recall|remember|recall)\b'
-                patterns['ingredient_intensity'] += r'|\b(?:smooth|velvety)\b'
+            patterns=risk_patterns(scan_additions=scan_additions,suggestion=suggestion)
             for category,pattern in patterns.items():
                 for match in re.finditer(pattern,text,re.I):
                     hit={'format':name,'content_field':path,'category':category,'quote':match.group(),
@@ -368,7 +440,7 @@ def risky_phrase_scan(package, *, suggestion=False, scan_additions=True):
         for a in hits))]
 
 
-def reviewer_hint(finding, *, scan_additions=True):
+def reviewer_hint(finding, *, scan_additions='tone_v2'):
     """Filter advisory replacements; absence of a scan hit is NOT semantic proof."""
     value=finding.get('suggested_change');original=finding.get('quote')
     if not isinstance(value,str) or not isinstance(original,str):return None,'not_wording_hint'
@@ -411,7 +483,7 @@ def assess_package_review(value, package, inputs, binding, *, isolate_findings=T
         else:value,group_errors=expand_judgments(value,package,scan_additions=scan_additions)
         log.append({'rule':'group_judgments_expanded','group_count':group_count})
     from launchlens.content_contracts import measured_lengths
-    lengths={f:measured_lengths(package[f]['content'],f) for f in FORMATS}
+    lengths=package_measurements(package,inputs)
     hits=risky_phrase_scan(package,scan_additions=scan_additions);by_id={h['hit_id']:h for h in hits};formats={};all_findings={};issues=[]
     for name in FORMATS:
         raw=value.get(name) if type(value) is dict else None
@@ -489,7 +561,7 @@ def assess_package_review(value, package, inputs, binding, *, isolate_findings=T
     result = {'binding':binding,'assessment':all_findings,'format_reviews':formats,'review_status':status,
         'review_complete':complete,'computed_lengths':lengths,'human_clearance_required':any(f['human_clearance_required'] for f in formats.values()),'raw_response':original,'risk_scan':hits,'normalizations':log,
         'human_accepted':False,'publishing_allowed':False}
-    if scan_additions:result['scan_additions']=True
+    if scan_additions:result['scan_additions']=scan_additions
     if isolate_findings:
         result.update(assessment_policy='isolated_findings_v1',unverified_finding_count=len(dropped),
             dropped_findings=dropped,coverage_issues=coverage_errors)
@@ -510,7 +582,7 @@ def human_edit_review(state, source_review, edited_fields, *, scan_additions=Tru
             # Unchanged fields retain their prior independent findings. Changed
             # fields get fresh scan hits, never stale AI quotations or clearances.
             raw[name]['findings'].append(deepcopy(finding))
-    result=assess_package_review(raw,package,inputs,binding,isolate_findings=True,scan_additions=scan_additions)
+    result=assess_package_review(raw,package,inputs,binding,isolate_findings=True,scan_additions='tone_v2' if inputs.get('tone_policy') and scan_additions else scan_additions)
     result.update(assessment_policy='human_edit_rescan_v1',source_review_sha256=digest(source_review),
         human_edited_fields=deepcopy(edited_fields),no_new_model_review=True)
     return result
@@ -523,3 +595,43 @@ def verify_human_edit_review(state):
     check(source is not None,'stale_binding')
     check(human_edit_review(state,source,review.get('human_edited_fields',[]),scan_additions=review.get('scan_additions',False))==review,'stale_binding')
     return review
+
+
+def blocking_findings(review):
+    """Validated Reviewer blockers only. Scan/advisory hits never schedule inference."""
+    return [dict(f,format=name) for name,item in review.get('format_reviews',{}).items()
+            for f in item['assessment']['findings']
+            if f.get('severity')=='blocking' and f.get('origin')!='deterministic_scan']
+
+
+def protected_scan_hits(state):
+    inputs,_,_=authoritative_package_binding(state)
+    return [h for h in risky_phrase_scan(package_value(state),scan_additions='tone_v2' if inputs.get('tone_policy') else True)
+            if h['human_clearance_required']]
+
+
+def refinement_targets(state):
+    inputs,_,_=authoritative_package_binding(state)
+    spec=configuration(inputs['package_contract']['sha256']).get('automatic_refinement',{})
+    expanded=spec.get('trigger')=='reviewer_blocking_or_protected_scan_hits'
+    return {'blocking_findings':blocking_findings(state['review']),
+            'protected_scan_hits':protected_scan_hits(state) if expanded else []}
+
+
+def refinement_avoid_list(inputs):
+    policy=inputs['tone_policy']
+    return {'per_format':{f:deepcopy(policy['format_specs'][f]['avoid']) for f in FORMATS},
+            'all_formats_never':deepcopy(policy['all_formats']['never']),
+            'no_links':policy['all_formats']['no_links'],
+            'scan_patterns':risk_patterns(scan_additions='tone_v2')}
+
+
+def new_protected_hits(before,after):
+    from collections import Counter
+    key=lambda h:(h['format'],h['content_field'],h['category'],' '.join(h['quote'].casefold().split()))
+    remaining=Counter(key(h) for h in before);new=[]
+    for hit in after:
+        identity=key(hit)
+        if remaining[identity]:remaining[identity]-=1
+        else:new.append(deepcopy(hit))
+    return new

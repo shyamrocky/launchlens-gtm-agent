@@ -126,15 +126,16 @@ class AgentRunUITests(unittest.TestCase):
         self.assertEqual(app.title[0].value, 'GTM Launches')
         self.assertNotIn('offline_run', app.session_state); self.assertIsNone(fresh.snapshot())
 
-    def test_offline_inventory_cold_start_checks_no_sources_and_switch_clears_run(self):
+    def test_offline_inventory_refresh_preserves_run_and_does_not_check_sources(self):
         app = self.start(); run = app.session_state['offline_run']
         app.button(key='home').click().run()
         html = '\n'.join(e.proto.body for e in app.get('html'))
         self.assertEqual(html.count('class="source-access unknown">Not checked'), 5)
         self.assertNotIn('✓ Accessible', html)
+        before=run.snapshot()
         app.button(key='refresh').click().run()
-        self.assertNotIn('offline_run', app.session_state); self.assertIsNone(run.snapshot())
-        self.assertNotIn('selected_request', app.session_state)
+        self.assertIs(app.session_state['offline_run'], run); self.assertEqual(run.snapshot(),before)
+        self.assertEqual(app.session_state['selected_request'], before['request'])
         self.assertEqual(app.session_state['inventory']['data_mode'], 'offline')
 
     def test_mode_switch_clears_current_run_and_never_uses_fixture_as_live(self):

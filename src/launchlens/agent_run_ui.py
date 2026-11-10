@@ -73,9 +73,12 @@ def activity_phases(state):
         if name=='revise_package' and outcome=='duplicate_suppressed':title='Skipped an already-used revision request'
         if name=='review_package' and outcome=='completed':
             title='Re-check (requested by you)' if event.get('origin')=='owner_command' else 'Reviewer checked Version '+str(target)
-        if name=='revise_package' and outcome=='completed' and state.get('revision_feedback'):
+        if name=='revise_package' and outcome=='completed' and event.get('origin')!='agent' and state.get('revision_feedback'):
             rows.append({'action':'human_feedback','title':'You reviewed and asked for changes','failed':False,
                 'icon':'✓','why':'Your recorded choices and notes were sent to the revision Writer.','source':None})
+        if name=='automatic_refinement':
+            title='Agent fixed '+str(event['fixed_count'])+' blocking issues' if event.get('fixed_count') else 'Agent refined '+str(event['protected_removed_count'])+' protected phrases' if event.get('protected_removed_count') else 'Agent refinement checked'
+        if name=='revise_package' and event.get('origin')=='agent' and outcome=='completed':title='Agent created Version '+str(target)
         failed=outcome in failures
         if failed:
             title="Couldn’t draft the package" if name=='generate_package' else 'A required action could not finish'
@@ -280,6 +283,15 @@ def _legacy_run_page(display):
         if st.button('Reset current run' if live else 'Reset demo',key='run-reset-'+run_id):
             clear_run();st.session_state['screen']='inventory';st.rerun()
 
+def revision_usage(state):
+    used=state.get('revision_attempts',0)
+    agent=sum(e.get('action')=='revise_package' and e.get('origin')=='agent' and e.get('outcome') in {'completed','failed_safely'} for e in state.get('events',[]))
+    owners=[('agent' if e.get('origin')=='agent' else 'you') for e in state.get('events',[]) if e.get('action')=='revise_package' and e.get('outcome') in {'completed','failed_safely'}][:used]
+    owners+=['you']*max(0,used-len(owners))
+    detail=' · by '+owners[0] if len(owners)==1 else ''.join(' · '+str(i+1)+': '+owner for i,owner in enumerate(owners))
+    return str(used)+' of 3 used'+detail
+
+
 def run_summary_meta(state,run):
     version=(state.get('package') or {}).get('version')
     if getattr(run,'kind','demo')=='live':
@@ -288,7 +300,7 @@ def run_summary_meta(state,run):
         budget='$'+format(Decimal(remaining),'.2f')
     else:budget='No model spending'
     return ('<dl class="run-summary-meta"><div><dt>Version</dt><dd>'+str(version if version else 'Not drafted')+
-        '</dd></div><div><dt>Revisions used</dt><dd>'+str(state.get('revision_attempts',0))+' / 3</dd></div>'+
+        '</dd></div><div><dt>Revisions used</dt><dd>'+escape(revision_usage(state))+'</dd></div>'+
         '<div><dt>Budget left</dt><dd>'+escape(budget)+'</dd></div></dl>')
 
 
@@ -392,7 +404,7 @@ def run_page(display):
             with st.expander('Technical details',expanded=False):
                 st.caption('Live agent · Independent assessment' if live else 'Demo simulation · Scripted actions, authored fixture drafts and mock assessments · No live calls')
                 st.caption('Writing voice: simulated brand channels · Neutral campaign brief · Policy v1')
-                st.caption('Run '+run_id+' · Task calls '+str(state['turns']-state['review_attempts']-state['revision_attempts'])+'/12 · Human revisions '+str(state['revision_attempts'])+'/3 · Required reviews '+str(state['review_attempts'])+' · Evidence searches '+str(state['searches'])+'/4')
+                st.caption('Run '+run_id+' · Task calls '+str(state['turns']-state['review_attempts']-state['revision_attempts'])+'/12 · Revisions '+str(state['revision_attempts'])+'/3 · Required reviews '+str(state['review_attempts'])+' · Evidence searches '+str(state['searches'])+'/4')
                 st.json({'events':state['events'],'review':state.get('review'),'failure_history':state.get('failure_history'),
                     'normalizations':state.get('normalizations'),'responses':rounded_budget_display(run.capture())})
                 if live:st.json(rounded_budget_display(run.guard.summary()))
@@ -429,9 +441,7 @@ def draft_outputs(state, *, selected=None):
             record=state['drafts'][name];st.subheader(LABELS[name]+' · Version '+str(record['version']))
             st.html(draft_markup(state,name))
             for warning in record['validation']['editorial_warnings']:
-                target=warning['target'];low=target.get('min');high=target.get('max')
-                expected=f"{low}–{high}" if low is not None and high is not None else f"up to {high}" if high is not None else f"at least {low}"
-                st.caption(f"Length: {warning['actual']} {warning['metric']}; suggested {expected}. Advisory only.")
+                st.caption(measurement_caption(warning))
 
 
 def package_outputs(state):
@@ -448,7 +458,8 @@ def review_page(state, *, run=None, saved=False, embedded=False):
     if not current_review_matches(state):
         st.info('Version '+str(state['package']['version'])+' is current. Its review is not ready yet; no earlier-version decisions are shown.')
         return
-    all_groups=grouped_findings(state);groups=[g for g in all_groups if g['needs_attention']]
+    all_groups=grouped_findings(state);groups=[g for g in all_groups if must_decide(g)]
+    optional=[g for g in all_groups if g['needs_attention'] and not must_decide(g)]
     key='run-review-decisions-'+state['run_id'];book=decision_book(state,st.session_state.get(key));st.session_state[key]=book
     position='run-review-position-'+state['run_id'];identity='run-review-position-binding-'+state['run_id']
     if st.session_state.get(identity)!=book['binding']:
@@ -570,6 +581,42 @@ def review_page(state, *, run=None, saved=False, embedded=False):
             if not embedded:revision_action(state,run,book,notes,saved=saved,primary=True)
             if st.button('Back to cards',key='review-back-cards',disabled=not groups):move(0)
             st.caption('Your choices apply only when you create another version. Approval accepts the current text as-is.')
+    if optional:
+        with st.expander(str(len(optional))+' optional suggestions ›',expanded=False):
+            st.caption('Optional only. These never require a choice or block approval.')
+            for group in optional:
+                first=group['occurrences'][0]
+                st.markdown('**“'+group['phrase']+'”**')
+                st.caption(LABELS[first['format']]+' · '+field_label(first['content_field'])+
+                    (' · Also in '+str(len(group['occurrences'])-1)+' places' if len(group['occurrences'])>1 else ''))
+                st.write(card_reason(group,demo=state['mode']!='live_package'))
+                hints=safe_hints(group)
+                if hints:
+                    st.caption('Reviewer hint (advisory): '+hints[0])
+                    from launchlens.review_decisions import replacement_preview
+                    preview=replacement_preview(first,hints[0])
+                    st.html('<div class="suggestion-box"><small>Sentence after the change</small><p>'+escape(preview)+'</p></div>')
+                    if state['revision_attempts']<3 and st.button('Use “'+hints[0]+'”',key='use-'+group['id']):
+                        changed=record_decision(state,book,group['id'],'request_changes',suggestion=hints[0])
+                        from uuid import uuid4
+                        store=getattr(run,'store',None)
+                        if store is not None:store.write('human-decision-'+uuid4().hex+'.json',changed)
+                        st.session_state[key]=changed;st.rerun()
+                if st.button('See full draft ›',key='optional-full-'+group['id'],type='tertiary'):full_draft_dialog(state,first['format'],first)
+                a,b=st.columns(2)
+                if state['revision_attempts']<3 and a.button('Request optional change',key='optional-change-'+group['id']):
+                    changed=record_decision(state,book,group['id'],'request_changes')
+                    from uuid import uuid4
+                    store=getattr(run,'store',None)
+                    if store is not None:store.write('human-decision-'+uuid4().hex+'.json',changed)
+                    st.session_state[key]=changed;st.rerun()
+                if b.button('Keep wording',key='optional-keep-'+group['id']):
+                    changed=record_decision(state,book,group['id'],'keep_wording')
+                    from uuid import uuid4
+                    store=getattr(run,'store',None)
+                    if store is not None:store.write('human-decision-'+uuid4().hex+'.json',changed)
+                    st.session_state[key]=changed;st.rerun()
+                if choice_label(group,book)!='Not decided':st.caption('Your choice: '+choice_label(group,book))
     if not embedded:
         with st.expander('Technical details',expanded=False):st.json({'review':state['review'],'wording_choices':book})
 
@@ -603,6 +650,20 @@ def revision_action(state,run,book,notes='',*,saved=False,primary=False):
     elif not eligible:st.caption('Another version requires the existing authorization and enough budget for writing and review.')
 
 
+def measurement_caption(warning):
+    """PMM-facing advisory text; schema paths stay out of the main UI."""
+    target=warning['target'];low=target.get('min');high=target.get('max')
+    expected=f"{low}–{high}" if low is not None and high is not None else f"≤{high}" if high is not None else f"≥{low}"
+    fields=warning['fields'];metric=warning['metric'];field=fields[0] if len(fields)==1 else None
+    label={'subject':'Subject','preview_text':'Preview','body':'Body'}.get(field,'Draft')
+    if field and field.startswith('concepts.'):
+        parts=field.split('.');label='Ad '+str(int(parts[1])+1)
+        if len(parts)>2:label+=' '+{'cta':'CTA'}.get(parts[2],parts[2])
+    if metric=='exclamation_marks':label=('Exclamation marks' if label=='Draft' else label+' exclamation marks');unit=''
+    else:unit=' '+metric
+    return f"Advisory · {label}: {warning['actual']}{unit}; target {expected}. Does not block approval."
+
+
 def package_panel(state,run,*,controls=True):
     from launchlens.package_content import FORMATS,LABELS,text_fields
     from launchlens.package_presentation import (approval_issues,
@@ -615,12 +676,19 @@ def package_panel(state,run,*,controls=True):
     with st.container(key='package-deliverables'):
         st.subheader('Deliverables · Version '+str(version))
         st.caption('Human-edited current version · Re-scanned; no new AI review.' if state['review'].get('no_new_model_review') else 'Reviewer checked Version '+str(version) if state['review'].get('binding',{}).get('draft_version')==version else 'Current-version assessment')
+        if not state['package'].get('tone_policy_sha256'):
+            st.caption('Tone labels show current guidance. This saved package retains its original policy and approval.')
         for name in FORMATS:
             relevant=[g for g in groups if any(o['format']==name and o['needs_attention'] and effective_choice(book,g,o)!='keep_wording' for o in g['occurrences'])]
             record=state['drafts'][name]
             status='Review incomplete' if not state['review'].get('review_complete') else str(len(relevant))+' need attention' if relevant else 'Reviewed ✓'
             cols=st.columns([2,1.6,.5])
             cols[0].write(LABELS[name]);cols[1].caption(status)
+            from launchlens.voice_policy import load_tone_policy
+            tone_policy=load_tone_policy(state['package'].get('tone_policy_sha256'))
+            cols[0].caption(tone_policy['format_specs'][name]['label'])
+            for warning in record['validation']['editorial_warnings']:
+                st.caption(measurement_caption(warning))
             if cols[2].button('View',key='package-view-'+name,type='tertiary'):full_draft_dialog(state,name)
     if controls:package_approval(state,run)
 
