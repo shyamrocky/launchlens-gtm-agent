@@ -136,8 +136,18 @@ def native_history(state):
         action = entry["action"]
         expected = hashlib.sha256(json.dumps({"name": action["name"], "arguments": action["arguments"]},
             sort_keys=True, allow_nan=False).encode()).hexdigest()
-        if entry["status"] != "completed" or entry["fingerprint"] != expected or action["id"] != action_id:
+        recovered = (entry['status']=='failed' and action['name']=='generate_package'
+            and state.get('mode') in {'offline_package','live_package'} and state.get('retry_attempts')==1
+            and state.get('package') is not None and len(state.get('failure_history',[]))==1
+            and state['failure_history'][0].get('stage')=='draft_validation')
+        if (entry["status"] != "completed" and not recovered) or entry["fingerprint"] != expected or action["id"] != action_id:
             raise ContextError("Uncompleted or mismatched action cannot become model history")
+        if recovered:
+            history.extend([{'role':'assistant','tool_calls':[{'id':action_id,'type':'function',
+                'function':{'name':action['name'],'arguments':canonical(action['arguments'])}}]},
+                {'role':'tool','tool_call_id':action_id,'content':canonical({'lower_trust_data_only':True,
+                    'result':{'status':'rejected','diagnostic':state['failure_history'][0]}})}])
+            continue
         history.append({"role": "assistant", "tool_calls": [{"id": action_id, "type": "function",
             "function": {"name": action["name"], "arguments": canonical(action["arguments"])}}]})
         name = action["name"]

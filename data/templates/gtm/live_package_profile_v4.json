@@ -1,0 +1,84 @@
+{
+  "profile_id": "nebius_gtm_package_v4",
+  "version": 4,
+  "default_execution": "disabled",
+  "checked_utc": "2026-11-10T01:08:47.333935+00:00",
+  "qualification_max_age_seconds": 86400,
+  "qualification": {
+    "checks": [
+      {
+        "url": "https://api.tokenfactory.nebius.com/v1/models",
+        "status": 200,
+        "bytes": 2350,
+        "sha256": "c45c8b5031228fa8fe8dc4c856a89fdce75297472f5a5198dc07616ac511f812"
+      },
+      {
+        "url": "https://tokenfactory.nebius.com/api/public/models_info",
+        "status": 200,
+        "bytes": 35780,
+        "sha256": "75818db5c912d5249da37ada7349e0014cc66f996cd39b7c84bce7f746f1c157"
+      }
+    ],
+    "account_catalog_count": 25,
+    "limitation": "Catalog listing is authentication/discovery, not a fresh inference-entitlement or hosted token/cap proof.",
+    "api_contract_source": "https://docs.tokenfactory.nebius.com/api-reference/inference/create-chat-completion",
+    "token_reservation_method": "Published provider context limit minus completion cap, not an exact prompt count; accepted requests must satisfy that API contract.",
+    "output_cap_method": "Set both max_tokens and max_completion_tokens to bound visible and reasoning completion; first live request remains compatibility validation.",
+    "schema_probe": "M2-D026 authorized integrated live qualification; Reviewer changed to catalog-confirmed GPT-OSS120B, reasoning/output share8192cap; no prior hosted v4 quality claim.",
+    "reviewer_model_source": "https://nebius.com/services/token-factory/models/openai-gpt-oss"
+  },
+  "proposal_ceiling_usd": "1.00",
+  "max_model_calls": 12,
+  "max_searches": 4,
+  "request": {
+    "use_case_id": "cherry-float-gtm",
+    "product_id": "CC-CHERRY-FLOAT",
+    "market_id": "US",
+    "evaluation_date": "2026-12-14",
+    "objective_id": "flavor_discovery"
+  },
+  "roles": {
+    "controller": {
+      "model_id": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+      "max_attempts": 7,
+      "max_completion_tokens": 512,
+      "context_tokens": 262144,
+      "input_per_million_usd": "0.1",
+      "output_per_million_usd": "0.3",
+      "account_catalog_listed": true,
+      "current_inference_entitlement": "not_proven_without_inference"
+    },
+    "package_writer": {
+      "model_id": "NousResearch/Hermes-4-405B",
+      "max_attempts": 2,
+      "max_completion_tokens": 8192,
+      "context_tokens": 131072,
+      "input_per_million_usd": "1",
+      "output_per_million_usd": "3",
+      "account_catalog_listed": true,
+      "current_inference_entitlement": "not_proven_without_inference"
+    },
+    "package_reviewer": {
+      "model_id": "openai/gpt-oss-120b",
+      "max_attempts": 2,
+      "max_completion_tokens": 8192,
+      "context_tokens": 131072,
+      "input_per_million_usd": "0.15",
+      "output_per_million_usd": "0.6",
+      "account_catalog_listed": true,
+      "current_inference_entitlement": "not_proven_without_inference",
+      "reasoning_effort": "low"
+    },
+    "package_revision": {
+      "model_id": "NousResearch/Hermes-4-405B",
+      "max_attempts": 1,
+      "max_completion_tokens": 8192,
+      "context_tokens": 131072,
+      "input_per_million_usd": "1",
+      "output_per_million_usd": "3",
+      "account_catalog_listed": true,
+      "current_inference_entitlement": "not_proven_without_inference"
+    }
+  },
+  "hosted_schema_qualified": false
+}

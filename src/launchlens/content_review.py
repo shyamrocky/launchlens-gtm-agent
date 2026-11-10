@@ -110,6 +110,11 @@ def prepare_review(state, *, projector=None):
 def validate_review(value, state):
     """Validate coverage, exact quotations and eligible IDs; NOT semantic entailment."""
     inputs, record, binding = authoritative_binding(state)
+    return validate_assessment(value, inputs, record, binding)
+
+
+def validate_assessment(value, inputs, record, binding, *, resolve_field=None):
+    """Shared exact-quote/coverage validator; caller independently binds authority."""
     def keys(item, expected, path):
         check(type(item) is dict and set(item) == set(expected), path=path)
     keys(value, ['assessments','findings'], '$')
@@ -132,7 +137,9 @@ def validate_review(value, state):
                   path=path + '.' + field)
         check(finding['dimension'] in DIMENSIONS and finding['severity'] in {'blocking','advisory'}, path=path)
         field = finding['content_field']; content = record['draft']['content']
-        if field in {'hook','body','cta'}:
+        if resolve_field is not None:
+            target = resolve_field(content, field)
+        elif field in {'hook','body','cta'}:
             target = content[field]
         elif re.fullmatch(r'hashtags\.(0|[1-9][0-9]{0,2})', field):
             index = int(field.split('.')[1])
@@ -178,7 +185,7 @@ class ContentCall:
     Complete returned response is captured before parsing. No retries or repairs.
     """
     def __init__(self, transport, *, stage, model_id, projector=None):
-        check(callable(transport) and stage in {'linkedin_reviewer','linkedin_revision'})
+        check(callable(transport) and stage in {'linkedin_reviewer','linkedin_revision','package_writer','package_reviewer','package_revision'})
         check(type(model_id) is str and model_id.strip() and len(model_id) <= 120)
         self._transport, self._stage, self._model = transport, stage, model_id
         self._projector = projector
@@ -188,20 +195,35 @@ class ContentCall:
         self.calls.clear()
 
     def __call__(self, state):
-        maximum = 2 if self._stage == 'linkedin_reviewer' else 1
+        package_stage = self._stage.startswith('package_')
+        maximum = __import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_attempts'] if self._stage == 'package_reviewer' else 2 if self._stage in {'linkedin_reviewer','package_writer'} else 1
         check(len(self.calls) < maximum, 'attempt_limit')
-        inputs = (prepare_review(state, projector=self._projector) if maximum == 2 else
-                  prepare_revision(state, projector=self._projector))
-        check(not any(c['binding'] == inputs['binding'] for c in self.calls), 'attempt_limit', 'binding')
+        if package_stage:
+            from launchlens.package_content import prepare_call, load_package_prompt
+            inputs = prepare_call(state, self._stage, projector=self._projector)
+        else:
+            inputs = (prepare_review(state, projector=self._projector) if maximum == 2 else
+                      prepare_revision(state, projector=self._projector))
+        retry = self._stage == 'package_writer' and state.get('writer_retry') is True and len(self.calls)==1
+        if self._stage == 'package_writer' and self.calls:check(retry,'attempt_limit','binding')
+        check(retry or not any(c['binding'] == inputs['binding'] for c in self.calls), 'attempt_limit', 'binding')
         policy_id = state.get('voice_policy_id')
-        instructions = voice_prompt(self._stage, policy_id) if policy_id is not None else load_review_prompt(self._stage)
+        instructions = (load_package_prompt(self._stage) if package_stage else
+            voice_prompt(self._stage, policy_id) if policy_id is not None else load_review_prompt(self._stage))
+        model_inputs = deepcopy(inputs)
+        if retry:
+            model_inputs['previous_validation_diagnostic_data_only'] = deepcopy(state['draft_failure'])
+        if package_stage:
+            model_inputs.pop('projection_manifest', None)  # Audit ledger stays outside model context.
         payload = {'model':self._model, 'messages':[
             {'role':'system','content':instructions},
-            {'role':'user','content':dumps(inputs)}],
-            'temperature':0, 'max_tokens':2048, 'stream':False, 'store':False}
+            {'role':'user','content':dumps(model_inputs)}],
+            'temperature':0, 'max_tokens':(__import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_output_tokens'] if self._stage == 'package_reviewer' else 8192) if package_stage else 2048, 'stream':False, 'store':False}
         check(len(dumps(payload).encode()) <= MAX_REQUEST_BYTES, 'request_too_large')
         event = {'binding':deepcopy(inputs['binding']), 'input_sha256':digest(inputs),
                  'request_sha256':digest(payload), 'input':deepcopy(inputs), 'outcome':'attempted'}
+        if package_stage:
+            event.update(model_input=deepcopy(model_inputs), model_input_sha256=digest(model_inputs))
         self.calls.append(event); started = time.monotonic()
         try:
             response = self._transport(deepcopy(payload))
@@ -217,6 +239,10 @@ class ContentCall:
                 candidate = strict_json(message['content'])
             except Exception:
                 raise ReviewError('invalid_json') from None
+            event['raw_candidate'] = deepcopy(candidate)
+            if self._stage in {'package_writer','package_revision'}:
+                from launchlens.package_content import normalize_package
+                candidate,journal=normalize_package(candidate);event['normalizations']=journal
             event['candidate'] = deepcopy(candidate); event['outcome'] = 'returned_for_validation'
             return candidate
         except Exception as error:

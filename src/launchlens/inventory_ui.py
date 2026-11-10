@@ -67,7 +67,7 @@ def refresh(display):
     if "offline_run" in st.session_state:
         from launchlens.agent_run_ui import clear_run
         clear_run()
-    if st.session_state.get("ui-mode") == "Offline simulation":
+    if st.session_state.get("ui-mode") == "Demo simulation":
         from launchlens.offline_ui_run import fixture_inventory
         st.session_state["inventory"] = fixture_inventory(display)
     else:
@@ -171,11 +171,11 @@ def brief_page(display, snapshot):
                 st.error("Choose a valid date within the supported task.")
         result = evaluate_launch(row["context"], request["evaluation_date"])
         tone, headline, explanation = preparation_gate(row, result)
-        package = "LinkedIn post (email, blog and ads coming next)"
+        package = "Campaign brief · LinkedIn · Email · Blog · Three ad variations"
         if result["decision"] == "Hold":
             package = "Promotional package blocked"
         elif result["decision"] != "Proceed" or tone == "unknown":
-            package = "LinkedIn post — paused pending readiness"
+            package = "GTM package — paused pending readiness"
         objective = next(o["label"] for o in display["case"]["objectives"] if o["id"] == request["objective_id"])
         with st.container(border=False, key="prepare-summary"):
             st.html('<dl class="prepare-summary">'
@@ -208,29 +208,35 @@ def brief_page(display, snapshot):
             key=f"prepare-notes-{market}", max_chars=1000,
             placeholder="Lean into nostalgia; avoid health claims",
             help="Campaign guidance only. Notes cannot change supported tasks, evidence or launch permissions.")
-        offline = st.session_state.get("ui-mode") == "Offline simulation"
+        offline = st.session_state.get("ui-mode") == "Demo simulation"
         existing = st.session_state.get("offline_run")
         if offline:
             from launchlens.offline_ui_run import OfflineUIRun, SCENARIOS
             scenario = st.selectbox("Simulation case", SCENARIOS, key="prepare-scenario")
         else:
             scenario = None
+        from launchlens.live_package import readiness
+        ready = readiness() if not offline else {'ready':False}
+        live_allowed = ready['ready'] and ready.get('request') == request
         if st.button("Start simulation" if offline else "Start agent", key="prepare-start", type="primary",
-                     disabled=not offline or existing is not None):
+                     disabled=(not offline and not live_allowed) or existing is not None):
             try:
                 from launchlens.voice_policy import BRAND_POLICY_ID
-                run = OfflineUIRun(request, notes[market], scenario, voice_policy_id=BRAND_POLICY_ID)
+                if offline:
+                    run = OfflineUIRun(request, notes[market], scenario, voice_policy_id=BRAND_POLICY_ID, package=True)
+                else:
+                    from launchlens.live_package import create_live_run
+                    run = create_live_run(request, notes[market])
                 st.session_state["offline_run"] = run  # Own before execution; rerender never re-dispatches.
-                with st.spinner("Running offline harness actions…"):
-                    run.execute(run.snapshot()["run_id"])
+                st.session_state['run-command']='execute'
                 st.session_state["screen"] = "run"
                 st.rerun()
             except HarnessError:
                 st.error("Run could not start. Check the registered task and reset any current run.")
-        if existing is not None and st.button("View current simulation", key="prepare-view-run", type="tertiary"):
+        if existing is not None and st.button("View current simulation" if offline else "View current run", key="prepare-view-run", type="tertiary"):
             st.session_state["screen"] = "run"; st.rerun()
         st.caption("Scripted offline simulation only. No model or source calls; one current run. Reset it before changing tasks."
-                   if offline else "Live agent execution is not connected yet. Choose Offline simulation to inspect the tested harness flow.")
+                   if offline else ready['message'])
         if result["decision"] == "Hold":
             st.caption("Promotional drafting is blocked. Research-only runs are not connected.")
         elif result["decision"] != "Proceed":
@@ -247,10 +253,10 @@ def main():
         st.stop()
     st.session_state.setdefault("screen", "inventory")
     default_offline = os.environ.get("LAUNCHLENS_UI_MODE") == "offline"
-    mode = st.selectbox("Execution data", ["Real inventory", "Offline simulation"],
+    mode = st.selectbox("Execution data", ["Live agent", "Demo simulation"],
         index=1 if default_offline else 0, key="ui-mode",
-        help="Switching modes clears the current setup and simulation. Real inventory never dispatches a model.")
-    if mode == "Offline simulation":
+        help="Switching modes clears the current task. Live agent uses actual sources; model execution requires separate authorization and Start agent.")
+    if mode == "Demo simulation":
         try:
             from launchlens.offline_ui_run import fixture_inventory
         except ImportError:
@@ -271,21 +277,40 @@ def main():
             back, current, reload = st.columns(3)
             if back.button("GTM launches", key="home", type="tertiary"):
                 st.session_state["screen"] = "inventory"
-            if current.button("Current run" if "offline_run" in st.session_state else "Current setup", key="current", type="tertiary", disabled="selected_request" not in st.session_state):
-                st.session_state["screen"] = "run" if "offline_run" in st.session_state else "brief"
+            from launchlens.review_decisions import saved_review_available
+            has_saved=mode=="Live agent" and "selected_request" not in st.session_state and saved_review_available()
+            from launchlens.live_package import current_resume_available,load_current_live_run
+            has_resume=mode=='Live agent' and 'offline_run' not in st.session_state and current_resume_available()
+            if current.button("Current run" if "offline_run" in st.session_state or has_resume else "Saved review" if has_saved else "Current setup", key="current", type="tertiary", disabled="selected_request" not in st.session_state and not has_saved and not has_resume):
+                if has_resume:
+                    try:
+                        restored=load_current_live_run();st.session_state['offline_run']=restored
+                        st.session_state['selected_request']=restored.snapshot()['request']
+                    except Exception:
+                        st.error('The current package could not be resumed. No model calls were made.');st.stop()
+                st.session_state["screen"] = "run" if "offline_run" in st.session_state else "saved-review" if has_saved else "brief"
             if reload.button("Refresh data", key="refresh", type="tertiary"):
                 refresh(display)
                 snapshot = st.session_state["inventory"]
-        active = "current" if st.session_state["screen"] == "brief" else "home"
+        active = "current" if st.session_state["screen"] in {"brief","run","saved-review"} else "home"
         st.html(f'<style>.st-key-{active} button:not(:disabled) {{ color: #f0f4fa; font-weight: 600; }}</style>')
         stamp = datetime.fromisoformat(snapshot["fetched_at"]).astimezone(ZoneInfo("America/Los_Angeles"))
-        if mode == "Offline simulation":
+        if mode == "Demo simulation":
             st.caption("Fixture snapshot · All access badges remain Not checked · No live source checks performed.")
         else:
             st.caption(f'Source checks completed {stamp.strftime("%b %d, %Y · %I:%M:%S %p %Z")} · Explicit refresh; navigation reuses this snapshot.')
     if snapshot["status"] != "ok":
         st.warning("Some launch data is unavailable. Missing dates/readiness do not grant permission. Refresh data after resolving source access.")
-    if st.session_state["screen"] == "run" and "offline_run" in st.session_state:
+    if st.session_state["screen"] == "saved-review":
+        from launchlens.review_decisions import load_saved_review
+        from launchlens.agent_run_ui import review_page
+        try:
+            saved=load_saved_review()
+        except Exception:
+            st.error("Saved review is unavailable or has changed. No model calls were made.")
+        else:
+            with st.container(key="agent-run"):review_page(saved,saved=True)
+    elif st.session_state["screen"] == "run" and "offline_run" in st.session_state:
         from launchlens.agent_run_ui import run_page
         run_page(display)
     elif st.session_state["screen"] == "brief" and "selected_request" in st.session_state:

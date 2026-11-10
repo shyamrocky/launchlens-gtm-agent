@@ -1,0 +1,48 @@
+{
+  "contract_id": "gtm_package_v1",
+  "version": 1,
+  "scope": "Offline full-package integration; no live provider route or spending authorization",
+  "formats": [
+    "campaign_brief",
+    "linkedin",
+    "email",
+    "blog",
+    "ads"
+  ],
+  "voice_policy_id": "simulated_brand_v1",
+  "prompts": {
+    "package_writer": {
+      "file": "package_writer_v1.txt",
+      "sha256": "74a3354f87592c0a4d6fd7c6adbd543918b263b5e2e58f2551f45a7c22021c28"
+    },
+    "package_reviewer": {
+      "file": "package_reviewer_v1.txt",
+      "sha256": "afa187262c98602e425f56415fe1b4eb77c37d016c6bd862a9c6b640eb03bdc5"
+    },
+    "package_revision": {
+      "file": "package_revision_v1.txt",
+      "sha256": "0a371fa31042e4fffcc28bff89ed84c98ac068e2db2329f06355270200ad0356"
+    },
+    "package_controller": {
+      "file": "package_controller_v1.txt",
+      "sha256": "0ffb11e3a4f313ba4dd35fbb02beaadc54a7dde57e4acd4c7ff12534996bd838"
+    }
+  },
+  "template_sha256": {
+    "campaign_brief": "0e106b276716dee6d9020b774ebe4b1b12cb20140f6cdd6bdf39417f852a9637",
+    "linkedin": "a3329e911086702c1d853e7875b7ccef5a5561ed9d6c3aabbab95ac032d24bf8",
+    "email": "c5853dcea7e207a4e94cb070331790ebd475e7f9c5c5e24ca2aa0cada77a3695",
+    "blog": "bf21047baca5146aa0a29657d7107564abde23f6af3748e76da123658209d2b0",
+    "ads": "052dfacbc723801d37a594c87ae60ef5cadc22eb63a0a748c4edb4fe77e75401"
+  },
+  "limits": {
+    "shared_model_calls": 12,
+    "searches": 4,
+    "writer_attempts": 1,
+    "review_attempts": 2,
+    "revision_attempts": 1,
+    "writer_output_tokens": 8192,
+    "review_output_tokens": 4096,
+    "revision_output_tokens": 8192
+  }
+}

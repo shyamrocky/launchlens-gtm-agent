@@ -1,3 +1,258 @@
+## Owner acceptance and scoped Git sync — November 9, 2026
+
+Owner approved Git sync of the completed canonical implementation through M2-D031:
+full-package harness, live adapters, run/review UI, required review after revision,
+V2-only context and individually isolated findings. This accepts this engineering
+checkpoint for preservation; marketing-content approval remains pending and
+publishing remains disabled. [Publication scope and verification](repository-sync-2026-11-09.md#full-package-and-version-2-review-sync--m2-d031).
+No further inference, next milestone or ongoing publication is authorized.
+Earlier no-Git/pending labels below retain their historical state.
+
+## Current result — M2-D031, November 9, 2026
+
+Saved Version2 re-reviewed using V2-only text/groups; V1 findings/feedback excluded.
+One Reviewer call, no Writer/research:6groups/11locations assessed, zero unverifiable
+findings. Package ready for human review; changes requested, no content approval.
+Invalid findings now isolated with a visible count. Separate caps:12taskcalls and
+4requiredreviews, same USD1 ledger/history. Actual9task/4reviewcalls; newestimate
+USD0.0015152, cumulativeUSD0.2489891.505offlinePASS; actualV2UI6cards/5drafts/0network.
+[Results, limits and protected handoff](writer-run-experience-review.md#m2-d031--current-version-2-only-review-and-isolated-findings).
+Stop for owner inspection; no further calls, MEMORY append or Git publication.
+Earlier results below are preserved history.
+
+## Current result — M2-D030, November 9, 2026
+
+Harness-owned review now follows every package draft/revision; each review waits
+for the owner. Used revision actions are removed. Existing run screen now has
+Activity | Review | Package plus merged phrase cards and clearer controls.
+Saved Version2 recovered with ONE Reviewer-only call, no Writer/regeneration.
+Fresh review returned, but is explicitly **Review incomplete**: invalid occurrence
+exceptions and6quotes refer to wording absent from V2. Raw output retained; no
+validation weakening or repeat call.497offlinePASS;12/12actualcalls used, cumulative
+accountedUSD0.2474739/1.00. Same run/drafts/history; human approval/publishing false.
+[Results, limits and handoff](writer-run-experience-review.md#m2-d030--required-review-saved-version-2-recovery-and-run-tabs).
+Stop for owner inspection. No MEMORY append, further inference or Git publication.
+History below preserved.
+
+## Current result — M2-D029, November 9, 2026
+
+Current US Version1 now has a **complete review** and is **Package ready**. One
+Qwen Reviewer-only call:9phrase groups/21locations,1,802outputtokens,25.2seconds;
+all reason/suggestion limits met. Same drafts/runID, zero Writer/research/revision
+calls. Group judgments expand deterministically; human clearance remains required.
+486offlinePASS; cumulative accountedUSD0.2199694/1.00. Current run → Review
+package retains the owner's one live revision and original counters/history.
+[Scope, results, limits and private handoff](writer-run-experience-review.md#m2-d029--compact-grouped-reviewer-and-completed-version-1-review).
+No content approval, further inference, MEMORY append or Git publication. History below kept.
+
+## Current result — M2-D028, November 9, 2026
+
+Owner-authorized exact-field Writer instructions and current-live-run grouped
+revision wiring completed. Fresh US app run reached **Package ready, Version 1**:
+five formats, one Writer attempt, one independent Qwen Reviewer attempt, zero revisions.
+7 calls/1 search. **Review incomplete:** Reviewer output hit8192tokens
+and ended with truncated JSON; no complete semantic assessment was admitted.
+Deterministic scan findings remain; raw model output retained without retry. No automatic revision; Request revision now
+passes grouped changes, kept wording, occurrence overrides and notes through the
+same guard, then shows fresh-reviewed Version 2. Live revision remains unexecuted
+for the owner to click. 476 offline PASS; old artifacts and validation preserved.
+Cumulative accounted USD0.2180048/1.00, including old unknown reserve.
+[Actual results, exact roles and access](writer-run-experience-review.md#m2-d028--first-review-handoff-and-live-human-revision-wiring).
+No content acceptance, source changes, dependency additions or Git publication.
+Status: IMPLEMENTED / OWNER REVIEW AND LIVE REVISION PENDING. Earlier history kept.
+
+## Current result — M2-D027, November 9, 2026
+
+Owner-approved order completed: expanded scan/same-package Qwen re-review; exact
+Writer diagnosis with validation unchanged; grouped PMM review page replacement.
+31valid findings /31hits →10phrase decisions,8protected occurrences/4groups.7unsafe
+hints hidden; raw responses retained. Two Writer failures are uncited factual
+headline/title field_claim_coverage, NOT per-format objective coverage. No relaxation.
+Saved review accessible locally without inference; current live/offline runs retain
+one revision, saved CLI graph restoration/revision is not connected.469offlinePASS;
+cumulativeUSD0.1911457/1.00; one newReviewercall0.0029349; no further inference/Git.
+[Actual evidence, limitations and provisioning](writer-run-experience-review.md#m2-d027--expanded-review-writer-diagnosis-and-grouped-pmm-page).
+Status:IMPLEMENTED / OWNER REVIEW PENDING. No content acceptance. History below kept.
+
+Decision M2-D027: replace repetitive findings with package-wide phrase decisions
+and occurrence exceptions, preserving exact-version authority. Rationale: PMM
+reviews10choices rather than31repetitions. Alternatives rejected: automatic hint
+application, relaxed citation rules without diagnosis, new pipeline/framework.
+Owner approval: explicit ordered scope in this conversation, November9,2026;
+implemented results await owner review. Later UK/India/revision/observability and
+submission are roadmap items; no new full-agent inference/Git authorization inferred.
+
+## Current result — M2-D026 Reviewer quality, November 9, 2026
+
+#1implemented/tested; #2page restructure deferred. Final Reviewer Qwen30, Writer
+Hermes405B unchanged. GPT-OSS candidate failed with length-terminated whitespace,
+preserved; two fresh Writer citation failures also preserved. Full third US run
+produced valid drafts; one separate production Qwen re-review of that exact package
+returned24valid findings(4blocking/20advisory), all24scan hits assessed; four matches
+require human clearance. Changes requested, no human acceptance/publication.
+All12ownerphrases covered offline; measured lengths authoritative/advisory, no false
+length-compliance claim admitted.454offlinePASS, newusage0.0722899/cumulative
+accounted0.1882108of1.00 (includesoldunknown0.0278528reserve). Calls stopped.
+Canonical report:writer-run-experience-review.md, M2-D026. Readable review:
+ data/generated/d026-qwen-reviewer-us-v1/readable-review.md. This is a re-review,
+not a new app-session restore or an independently completed second autonomous loop.
+Status:IMPLEMENTED / OWNER REVIEW PENDING. Prior proposal/experiment history below
+is retained; final Qwen selection supersedes the initial GPT-OSS proposal.
+
+## Current authorized scope — M2-D026, November 9, 2026
+
+Owner requests Reviewer quality (#1) FIRST, with a different Nebius Reviewer,
+Hermes Writer unchanged, compulsory human clearance for availability/urgency,
+invented product facts and preference/prediction matches; all12 explicitly listed
+phrases are the acceptance checklist (owner clarified in reply). Require computed
+length truth, not model length praise. Review-page restructure (#2) DEFERRED.
+Goal: offline verification then one bounded real US rerun with the new Reviewer.
+Standing USD1 ceiling retained conservatively with prior0.1159209 accounted; no
+per-call check-ins, installs, source writes or Git publication. Preserve old runs.
+
+Decision: Reviewer openai/gpt-oss-120b via Nebius; controller remains Qwen30B,
+Writer/revision remain Hermes405B. Authenticated catalog HTTP200 confirms the exact
+Reviewer ID. Official public catalog lists active, JSON mode, context131072,
+USD0.15input/0.60output perM. Low reasoning with8192totalcompletion cap; accounting
+includes reasoning. Qwen235B alternative rejected because its serving entry is
+marked deprecated. Different models do not prove independent semantic accuracy.
+Official references: https://api.tokenfactory.nebius.com/v1/models,
+https://tokenfactory.nebius.com/api/public/models_info,
+https://nebius.com/services/token-factory/models/openai-gpt-oss.
+
+High-risk matches cannot receive effective model clearance; deterministic findings
+preserve attention even if model output is malformed or omits hits. Raw model
+opinions remain retained. No human acceptance interface is introduced here.
+Length targets stay advisory. The original measured-length function is shared with
+validation; Reviewer sees computed_lengths, never editorial_warnings. Contradictory
+length praise is unaccepted and retained raw, not a run stop. This uses the same
+harness/config/profile/UI, with v4 artifacts preserving v1-v3 history.
+
+Status: OWNER AUTHORIZED / OFFLINE VERIFICATION; no live v4 inference claimed yet.
+Canonical actual results will be appended to writer-run-experience-review.md.
+Unused ceiling alone does not authorize work after the scoped completion boundary.
+
+## Current goal — M2-D025, November 9, 2026
+
+**Owner approved implementation and calls through one live US Package ready outcome,
+within USD1.00 cumulative model spending; no per-call approval check-ins.**
+Decision: normalize and log quoted JSON, content-prefixed paths and empty citations;
+keep evidence/launch/budget violations enforced. Reviewer returns findings only;
+code derives statuses. Format findings allow quote=null; wording requires exact
+quotes. Malformed review becomes visible Review incomplete, never a lost package.
+Remove editorial_warnings from Reviewer input; deterministically scan risky phrases
+and require contextual judgments, showing hits even when cleared. Preserve original
+responses, prior prompts/configs and evidence. No new pipeline/framework/dependency.
+
+Rationale: finish the useful full-package experience without treating harmless
+formatting or Reviewer formatting as factual failures. Rejected alternative: strict
+format-only termination. Status: IMPLEMENTED / LIVE PACKAGE READY; owner content review pending.
+The completed live result and limitations are recorded below. Models remain Qwen controller, Hermes Writer/Reviewer/revision.
+
+Standing budget uses the existing guard plus a locked private JSON ledger. Carry
+forward0.0437376USD (including oldunknown0.0278528reserve), leaving0.9562624 for this
+approved goal. Reserve each call before dispatch; settle known usage, retain unknown
+reservations, never reset counters across new runs.12calls/run and4searches retained.
+Full live validation may proceed under this explicit authorization without claiming
+prior hosted qualification of the new Reviewer contract. Evidence-blocking review
+may yield one model-selected correction and fresh review within the same limits.
+
+Canonical work/results: [existing review](writer-run-experience-review.md). Stop when
+the goal is reached or the budget cannot safely admit the next call. No publishing
+or Git sync requested. Earlier stop/per-call rules below are historical and superseded
+only by this latest explicit owner direction.
+
+### M2-D025 completion
+
+Live browser US run reached Package ready for your review, all five deliverables.
+Actual model-selected research → generation → independent review, seven calls,
+one evidence search. Overall Review incomplete is explicit: 14/19 scan hits have
+valid cleared judgments; five unassessed, malformed findings kept raw. Content is
+not owner-accepted; publishing disabled. No further model calls after success.
+448 fresh offline tests PASS. New model estimate0.0721833; cumulative accounted
+0.1159209/1.00 includes oldunknownreserve0.0278528. Remaining0.8840791 is not new
+execution authorization. See the existing review's M2-D025 actual completion section.
+Next owner review of content/incomplete findings; no autonomous next milestone,
+Git publication or LangSmith claim. Prior decisions/results below remain history.
+
+## Current bounded delivery batch — Writer output and run experience
+
+Decision **M2-D024, revision 3**, November 9, 2026.
+**REVIEWER PROBE REJECTED; OFFLINE STREAM FIX VERIFIED; STOP FOR OWNER REVIEW.**
+[Implementation, probe receipt, verification and review boundary](writer-run-experience-review.md)
+is the current result record. The remainder preserves decision history unchanged.
+Calendar targets were superseded by the owner's instruction to finish ASAP.
+
+- Scoped models: Hermes Writer and separate Hermes Reviewer/revision; Qwen controller.
+- One existing harness/screen, no new pipeline/dependencies/background workers.
+- Provider schema added; unsupported uniqueItems omitted only in provider dialect,
+  backend checks retained. First Qwen probe HTTP400/uniqueItems, usage unknown;
+  stop policy retained $0.0278528 reserve, no Hermes/channel requests. $0.18 ceiling
+  not increased. Subsequent owner-authorized audit/probes:14metaschemasPASS;
+  exactly2HTTP200,Qwen/HermesnestedobjectsandschemasPASS. Qwenrelativecitationpaths
+  rejected;HermesprobecontractPASS,nofallback. Newusageestimate0.0057408USD plus old
+  held0.0278528=0.0335936/0.18. Backendunchanged. Full live gate remains closed;
+  Reviewer schema hosted qualification/content acceptance remain pending.
+- Subsequent owner-scoped Reviewer probe: exactly1HermesHTTP200, actual production
+  prompt/schema/preservedpackage. JSONschemasPASS, backendREJECTEDinvalidpaths/
+  quotes/statusconsistency;9rawadvisories/0blockers, requestedphrasesnotflagged.
+  Costestimate0.010144USD; cumulativeaccounted0.0437376/0.18includingoldreserve.
+  No retry/repair/fullrun. Reviewer semantic qualification remains open.
+- Offline progress-stream timing race fixed using actual node updates for observation;
+  checkpoints keep execution authority. Deterministic lag/mutation/UKresume coverage,
+  originaltest50/50PASS;286agent+41UIandclean286PASS. No policy/prompt/schemachange.
+- Narrow per-field citation checks plus Reviewer inspection of uncited fields;
+  complete original authority remains independent of the model projection.
+- Actual LangGraph updates → st.status; four dark states, bounded action purpose,
+  per-format progress and collapsed details. Real skipped/review/trace claims only.
+- UK same-run interrupt/resume: availability-free /recheck /stop. Frozen Missing
+  explicitly continues without availability wording; Clarify and restrictions kept.
+- One user-clicked failed-Writer retry from saved research, retained original failure,
+  cumulative calls/searches/costs, no retries for unknown billing or tool failures.
+- 426 offline tests PASS; four-state desktop visual inspection. These are not live
+  semantic-quality results or owner acceptance of content. Sources/history preserved.
+- Final full-run budget proposal reconciled: 12calls/4searches, reserve $0.9051136,
+  proposed $0.92, UNAPPROVED. Prior $0.80 run consumed; no new authorization issued.
+
+Next: owner review of the rejected Reviewer probe and verified offline stream fix;
+then separately authorize any Reviewer correction or full-package live acceptance. Conditional brief→channel
+fallback remains agreed but unactivated/unqualified. No further isolated LinkedIn
+experiments. M2.5 LangSmith evidence follows core flow, then export/submission evidence;
+these remain required work, without fixed calendar slots. No Git publication.
+
+## Single US live test — ceiling approved, November 9, 2026
+
+Owner approved the USD 0.80 model-spending ceiling for the described single US
+full-package test. [Authorization and boundary](live-package-preparation-review.md).
+Private scoped permission is provisioned; user clicks Start agent to begin.
+No inference has started. Zero automatic retries/repairs; one explicit revision
+shares the same limits. No Git publication, content acceptance or model adoption.
+Earlier unapproved-ceiling notes below retain their historical preparation state.
+
+## Live full-package preparation — current checkpoint, 2026-11-09
+
+Owner authorized preparation and offline tests only. M2-D023:
+[scope, model qualification, spending proposal and verification](live-package-preparation-review.md).
+Existing harness now has guarded live controller/Writer/Reviewer adapters alongside
+Demo simulation; no authorization file was created and live Start remains blocked.
+399 offline tests PASS (255 agent / 111 root / 33 UI). Two read-only catalog GETs
+passed; zero inference. Proposed conservative model ceiling USD 0.80 remains
+unapproved (USD 0.7839744 reserved maximum); earlier USD 0.50 is insufficient for
+this method. Prompts/projection/contracts/source history and dependencies preserved.
+Stop for owner review before any live run, Git sync or next milestone. Earlier
+M2-D022 offline-only statements describe that historical checkpoint.
+
+## Full-package integration — current authorized checkpoint, 2026-11-09
+
+Owner approved extending the existing harness to the full GTM package before a
+separately authorized live run, superseding LinkedIn-first sequencing for this
+increment. M2-D022: [scope, prompts, results and next boundary](full-package-integration-review.md).
+Five-format generation/review/one explicit revision are connected offline in the
+same graph and UI; historical LinkedIn profiles/templates remain available.
+371offline testsPASS(231agent/111root/29UI). No live model adoption or execution,
+new dependency, source changes, human acceptance/export, hosted tracing, MEMORY
+append or Git publication. Content acceptance/live quality remain pending.
+
 ## Repository sync authorization — 2026-11-09
 
 Owner authorized Git sync of the completed canonical work; earlier no-publication

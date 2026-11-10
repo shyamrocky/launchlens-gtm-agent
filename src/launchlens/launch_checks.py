@@ -119,3 +119,15 @@ def evaluate_launch(context, evaluation_date):
 def check_launch(reader, market, evaluation_date):
     """Read authoritative operational sources, then apply deterministic policy."""
     return evaluate_launch(reader.get_launch_context(market), evaluation_date)
+
+
+def availability_only_gap(result):
+    """Only frozen UK availability Missing; no other unresolved condition permitted."""
+    if not (type(result) is dict and result.get('market_id')=='UK' and result.get('decision')=='Clarify'
+            and result.get('authority')=='synthetic_launch_decision' and result.get('publishing_allowed') is False
+            and result.get('planned_launch_date') and len(result.get('conditions',[]))==1
+            and result['conditions'][0]['code']=='readiness_unresolved'):
+        return False
+    rows=[r.get('values',{}) for r in result.get('readiness_evidence',[])]
+    return (len(rows)==4 and {r.get('Readiness Area') for r in rows}==set(AREAS)
+        and all(r.get('Status')==('Missing' if r['Readiness Area']=='Regional availability' else 'Approved') for r in rows))

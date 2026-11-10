@@ -1,0 +1,760 @@
+{
+  "notice": "Independently authored OFFLINE fixture outputs and expected assessments. No live generation or semantic review is claimed.",
+  "initial_package": {
+    "campaign_brief": {
+      "format": "campaign_brief",
+      "content": {
+        "objective": "Introduce Coca-Cola Cherry Float's cherry-with-vanilla flavor notes and classic soda-float inspiration through one coherent flavor-discovery campaign.",
+        "audience_hypothesis": "Hypothesis: adult consumers curious about familiar soda-float ideas expressed in a different flavor story. This is proposed audience direction, not validated consumer research.",
+        "positioning": "A flavor story combining cherry with vanilla notes and drawing inspiration from classic soda floats; no claim of uniqueness, superior taste or actual ingredients.",
+        "messaging_pillars": [
+          "Cherry with vanilla notes.",
+          "Classic soda-float inspiration.",
+          "Nostalgia as a proposed creative lens, not a measured consumer response."
+        ],
+        "tone": [
+          "Accessible",
+          "Playful without exaggerated product claims",
+          "Source-faithful"
+        ],
+        "primary_cta": "Invite readers to explore the flavor inspiration without a purchase destination.",
+        "restrictions_and_unknowns": [
+          "Internal educational simulation; human review required.",
+          "Ingredient and intensity assertions are not established by flavor notes.",
+          "Audience validation and feedback methods remain unresolved.",
+          "Operational permission comes from the readiness tracker and calendar; public product facts do not establish current stock."
+        ]
+      },
+      "claim_references": [
+        {
+          "content_field": "objective",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        },
+        {
+          "content_field": "positioning",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        },
+        {
+          "content_field": "messaging_pillars.0",
+          "claim_ids": [
+            "PROD-002"
+          ]
+        },
+        {
+          "content_field": "messaging_pillars.1",
+          "claim_ids": [
+            "PROD-003"
+          ]
+        }
+      ]
+    },
+    "linkedin": {
+      "format": "linkedin",
+      "content": {
+        "hook": "Remember the classic soda float? We’re bringing that nostalgic inspiration to a new Coca-Cola flavor.",
+        "body": "Introducing Cherry Float, a fresh take on cherry soda with a hint of vanilla. This flavor combination draws from the beloved soda-float experience, offering a taste that’s both familiar and new. It’s a playful twist for those who enjoy exploring unique flavor profiles while savoring a touch of nostalgia.",
+        "cta": "What would you like to know about Cherry Float's flavor inspiration?",
+        "hashtags": [
+          "#CocaCola",
+          "#CherryFloat",
+          "#FlavorInnovation"
+        ]
+      },
+      "claim_references": [
+        {
+          "content_field": "hook",
+          "claim_ids": [
+            "PROD-003"
+          ]
+        },
+        {
+          "content_field": "body",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        }
+      ]
+    },
+    "email": {
+      "format": "email",
+      "content": {
+        "subject": "A familiar inspiration, a Cherry Float story",
+        "preview_text": "Explore cherry with vanilla notes and classic soda-float inspiration.",
+        "headline": "Let’s explore a familiar flavor inspiration",
+        "body": "Our flavor story starts with a familiar idea: the classic soda float. Coca-Cola Cherry Float draws inspiration from classic soda floats and combines cherry with vanilla notes. That pairing provides the starting point for this flavor-discovery story. Which part of the inspiration catches your curiosity? Explore the idea in your own way, without assuming that a flavor description establishes a particular ingredient or preparation.",
+        "cta": "What would you like to know about the flavor inspiration?"
+      },
+      "claim_references": [
+        {
+          "content_field": "preview_text",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        },
+        {
+          "content_field": "body",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        }
+      ]
+    },
+    "blog": {
+      "format": "blog",
+      "content": {
+        "title": "Exploring the inspiration behind Coca-Cola Cherry Float",
+        "introduction": "A familiar idea can be a starting point for a different story. For Coca-Cola Cherry Float, that story connects cherry with vanilla notes and inspiration from classic soda floats. Here is a closer look at the flavor description and the idea behind it.",
+        "sections": [
+          {
+            "heading": "Start with the flavor notes",
+            "body": "Coca-Cola Cherry Float combines cherry with vanilla notes. That is the supported flavor description, and it offers a clear starting point for discovery. The description gives us something specific to discuss without assuming a particular ingredient or intensity. A flavor note describes part of the flavor story; it does not, on its own, establish what ingredients are used."
+          },
+          {
+            "heading": "Follow the soda-float inspiration",
+            "body": "The concept takes inspiration from classic soda floats. That connection offers a creative way to explore the story: a familiar reference, viewed through cherry and vanilla notes. Inspiration and ingredients are different ideas. Soda-float inspiration does not establish that the drink contains ice cream or dairy. Keeping that distinction clear allows the story to stay playful while remaining faithful to the documented description."
+          }
+        ],
+        "conclusion": "Our starting points are simple: cherry with vanilla notes and classic soda-float inspiration. Nostalgia is one way to approach this story creatively, rather than a claim about how every person will respond. You can explore the inspiration without a promise of a particular experience.",
+        "cta": "What part of the flavor inspiration would you like to explore?"
+      },
+      "claim_references": [
+        {
+          "content_field": "introduction",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        },
+        {
+          "content_field": "sections.0.body",
+          "claim_ids": [
+            "PROD-002"
+          ]
+        },
+        {
+          "content_field": "sections.1.body",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        },
+        {
+          "content_field": "conclusion",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        }
+      ]
+    },
+    "ads": {
+      "format": "ads",
+      "content": {
+        "concepts": [
+          {
+            "angle": "Flavor notes",
+            "headline": "Cherry meets vanilla notes",
+            "body": "Explore Coca-Cola Cherry Float’s cherry-with-vanilla flavor story.",
+            "cta": "Explore the flavor"
+          },
+          {
+            "angle": "Classic inspiration",
+            "headline": "Inspired by classic soda floats",
+            "body": "A classic soda-float idea is the inspiration behind Cherry Float.",
+            "cta": "Explore the inspiration"
+          },
+          {
+            "angle": "Creative curiosity",
+            "headline": "Where does a flavor story begin?",
+            "body": "Cherry with vanilla notes. Classic soda-float inspiration. An invitation to explore.",
+            "cta": "Discover the story"
+          }
+        ]
+      },
+      "claim_references": [
+        {
+          "content_field": "concepts.0.headline",
+          "claim_ids": [
+            "PROD-002"
+          ]
+        },
+        {
+          "content_field": "concepts.0.body",
+          "claim_ids": [
+            "PROD-002"
+          ]
+        },
+        {
+          "content_field": "concepts.1.headline",
+          "claim_ids": [
+            "PROD-003"
+          ]
+        },
+        {
+          "content_field": "concepts.1.body",
+          "claim_ids": [
+            "PROD-003"
+          ]
+        },
+        {
+          "content_field": "concepts.2.body",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        }
+      ]
+    }
+  },
+  "revision_package": {
+    "campaign_brief": {
+      "format": "campaign_brief",
+      "content": {
+        "objective": "Introduce Coca-Cola Cherry Float's cherry-with-vanilla flavor notes and classic soda-float inspiration through one coherent flavor-discovery campaign.",
+        "audience_hypothesis": "Hypothesis: adult consumers curious about familiar soda-float ideas expressed in a different flavor story. This is proposed audience direction, not validated consumer research.",
+        "positioning": "A flavor story combining cherry with vanilla notes and drawing inspiration from classic soda floats; no claim of uniqueness, superior taste or actual ingredients.",
+        "messaging_pillars": [
+          "Cherry with vanilla notes.",
+          "Classic soda-float inspiration.",
+          "Nostalgia as a proposed creative lens, not a measured consumer response."
+        ],
+        "tone": [
+          "Accessible",
+          "Playful without exaggerated product claims",
+          "Source-faithful",
+          "Keep introductions exploratory, with no implied launch commitment."
+        ],
+        "primary_cta": "Invite readers to explore the flavor inspiration without a purchase destination.",
+        "restrictions_and_unknowns": [
+          "Internal educational simulation; human review required.",
+          "Ingredient and intensity assertions are not established by flavor notes.",
+          "Audience validation and feedback methods remain unresolved.",
+          "Operational permission comes from the readiness tracker and calendar; public product facts do not establish current stock."
+        ]
+      },
+      "claim_references": [
+        {
+          "content_field": "objective",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        },
+        {
+          "content_field": "positioning",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        },
+        {
+          "content_field": "messaging_pillars.0",
+          "claim_ids": [
+            "PROD-002"
+          ]
+        },
+        {
+          "content_field": "messaging_pillars.1",
+          "claim_ids": [
+            "PROD-003"
+          ]
+        }
+      ]
+    },
+    "linkedin": {
+      "format": "linkedin",
+      "content": {
+        "hook": "We’re exploring the classic soda-float inspiration behind Coca-Cola Cherry Float.",
+        "body": "Cherry with vanilla notes, inspired by classic soda floats. Nostalgia offers a creative starting point for this flavor story.",
+        "cta": "What would you like to know about Cherry Float's flavor inspiration?",
+        "hashtags": [
+          "#CocaCola",
+          "#CherryFloat",
+          "#FlavorDiscovery"
+        ]
+      },
+      "claim_references": [
+        {
+          "content_field": "hook",
+          "claim_ids": [
+            "PROD-003"
+          ]
+        },
+        {
+          "content_field": "body",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        }
+      ]
+    },
+    "email": {
+      "format": "email",
+      "content": {
+        "subject": "A familiar inspiration, a Cherry Float story",
+        "preview_text": "Explore cherry with vanilla notes and classic soda-float inspiration.",
+        "headline": "Let’s explore a familiar flavor inspiration",
+        "body": "Our flavor story starts with a familiar idea: the classic soda float. Coca-Cola Cherry Float draws inspiration from classic soda floats and combines cherry with vanilla notes. That pairing provides the starting point for this flavor-discovery story. Which part of the inspiration catches your curiosity? Explore the idea in your own way, without assuming that a flavor description establishes a particular ingredient or preparation.",
+        "cta": "What would you like to know about the flavor inspiration?"
+      },
+      "claim_references": [
+        {
+          "content_field": "preview_text",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        },
+        {
+          "content_field": "body",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        }
+      ]
+    },
+    "blog": {
+      "format": "blog",
+      "content": {
+        "title": "Exploring the inspiration behind Coca-Cola Cherry Float",
+        "introduction": "A familiar idea can be a starting point for a different story. For Coca-Cola Cherry Float, that story connects cherry with vanilla notes and inspiration from classic soda floats. Here is a closer look at the flavor description and the idea behind it.",
+        "sections": [
+          {
+            "heading": "Start with the flavor notes",
+            "body": "Coca-Cola Cherry Float combines cherry with vanilla notes. That is the supported flavor description, and it offers a clear starting point for discovery. The description gives us something specific to discuss without assuming a particular ingredient or intensity. A flavor note describes part of the flavor story; it does not, on its own, establish what ingredients are used."
+          },
+          {
+            "heading": "Follow the soda-float inspiration",
+            "body": "The concept takes inspiration from classic soda floats. That connection offers a creative way to explore the story: a familiar reference, viewed through cherry and vanilla notes. Inspiration and ingredients are different ideas. Soda-float inspiration does not establish that the drink contains ice cream or dairy. Keeping that distinction clear allows the story to stay playful while remaining faithful to the documented description."
+          }
+        ],
+        "conclusion": "Our starting points are simple: cherry with vanilla notes and classic soda-float inspiration. Nostalgia is one way to approach this story creatively, rather than a claim about how every person will respond. You can explore the inspiration without a promise of a particular experience.",
+        "cta": "What part of the flavor inspiration would you like to explore?"
+      },
+      "claim_references": [
+        {
+          "content_field": "introduction",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        },
+        {
+          "content_field": "sections.0.body",
+          "claim_ids": [
+            "PROD-002"
+          ]
+        },
+        {
+          "content_field": "sections.1.body",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        },
+        {
+          "content_field": "conclusion",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        }
+      ]
+    },
+    "ads": {
+      "format": "ads",
+      "content": {
+        "concepts": [
+          {
+            "angle": "Flavor notes",
+            "headline": "Cherry meets vanilla notes",
+            "body": "Explore Coca-Cola Cherry Float’s cherry-with-vanilla flavor story.",
+            "cta": "Explore the flavor"
+          },
+          {
+            "angle": "Classic inspiration",
+            "headline": "Inspired by classic soda floats",
+            "body": "A classic soda-float idea is the inspiration behind Cherry Float.",
+            "cta": "Explore the inspiration"
+          },
+          {
+            "angle": "Creative curiosity",
+            "headline": "Where does a flavor story begin?",
+            "body": "Cherry with vanilla notes. Classic soda-float inspiration. An invitation to explore.",
+            "cta": "Discover the story"
+          }
+        ]
+      },
+      "claim_references": [
+        {
+          "content_field": "concepts.0.headline",
+          "claim_ids": [
+            "PROD-002"
+          ]
+        },
+        {
+          "content_field": "concepts.0.body",
+          "claim_ids": [
+            "PROD-002"
+          ]
+        },
+        {
+          "content_field": "concepts.1.headline",
+          "claim_ids": [
+            "PROD-003"
+          ]
+        },
+        {
+          "content_field": "concepts.1.body",
+          "claim_ids": [
+            "PROD-003"
+          ]
+        },
+        {
+          "content_field": "concepts.2.body",
+          "claim_ids": [
+            "PROD-002",
+            "PROD-003"
+          ]
+        }
+      ]
+    }
+  },
+  "initial_review": {
+    "campaign_brief": {
+      "assessments": [
+        {
+          "dimension": "grounding",
+          "status": "pass"
+        },
+        {
+          "dimension": "qualifications",
+          "status": "pass"
+        },
+        {
+          "dimension": "voice",
+          "status": "pass"
+        },
+        {
+          "dimension": "tone",
+          "status": "pass"
+        },
+        {
+          "dimension": "consistency",
+          "status": "pass"
+        },
+        {
+          "dimension": "completeness",
+          "status": "pass"
+        }
+      ],
+      "findings": []
+    },
+    "linkedin": {
+      "assessments": [
+        {
+          "dimension": "grounding",
+          "status": "uncertain"
+        },
+        {
+          "dimension": "qualifications",
+          "status": "uncertain"
+        },
+        {
+          "dimension": "voice",
+          "status": "pass"
+        },
+        {
+          "dimension": "tone",
+          "status": "pass"
+        },
+        {
+          "dimension": "consistency",
+          "status": "pass"
+        },
+        {
+          "dimension": "completeness",
+          "status": "pass"
+        }
+      ],
+      "findings": [
+        {
+          "dimension": "grounding",
+          "content_field": "hook",
+          "quote": "Remember the classic soda float? We’re bringing that nostalgic inspiration to a new Coca-Cola flavor.",
+          "severity": "blocking",
+          "rationale": "First-person brand voice is permitted. The complete sentence may nevertheless imply a current introduction or novelty through bringing and new, which eligible flavor/inspiration claims do not establish. This material ambiguity needs safer wording under the current launch/availability-copy restrictions; it is not proof of current stock or proven falsity.",
+          "suggested_change": "Keep optional brand voice while describing the supported flavor/inspiration without a product-introduction promise.",
+          "claim_ids": [
+            "PROD-003"
+          ]
+        },
+        {
+          "dimension": "qualifications",
+          "content_field": "body",
+          "quote": "a hint of vanilla",
+          "severity": "blocking",
+          "rationale": "This may add unverified flavor intensity beyond documented vanilla notes. The evidence does not establish intensity; this is not proof the phrase is false.",
+          "suggested_change": "Use the source-faithful phrase cherry with vanilla notes.",
+          "claim_ids": [
+            "PROD-002"
+          ]
+        },
+        {
+          "dimension": "completeness",
+          "content_field": "body",
+          "quote": "Introducing Cherry Float",
+          "severity": "advisory",
+          "rationale": "The post is shorter than the advisory target; do not pad with unsupported claims.",
+          "suggested_change": "Optionally develop the creative story while preserving factual restraint.",
+          "claim_ids": []
+        }
+      ]
+    },
+    "email": {
+      "assessments": [
+        {
+          "dimension": "grounding",
+          "status": "pass"
+        },
+        {
+          "dimension": "qualifications",
+          "status": "pass"
+        },
+        {
+          "dimension": "voice",
+          "status": "pass"
+        },
+        {
+          "dimension": "tone",
+          "status": "pass"
+        },
+        {
+          "dimension": "consistency",
+          "status": "pass"
+        },
+        {
+          "dimension": "completeness",
+          "status": "pass"
+        }
+      ],
+      "findings": []
+    },
+    "blog": {
+      "assessments": [
+        {
+          "dimension": "grounding",
+          "status": "pass"
+        },
+        {
+          "dimension": "qualifications",
+          "status": "pass"
+        },
+        {
+          "dimension": "voice",
+          "status": "pass"
+        },
+        {
+          "dimension": "tone",
+          "status": "pass"
+        },
+        {
+          "dimension": "consistency",
+          "status": "pass"
+        },
+        {
+          "dimension": "completeness",
+          "status": "pass"
+        }
+      ],
+      "findings": []
+    },
+    "ads": {
+      "assessments": [
+        {
+          "dimension": "grounding",
+          "status": "pass"
+        },
+        {
+          "dimension": "qualifications",
+          "status": "pass"
+        },
+        {
+          "dimension": "voice",
+          "status": "pass"
+        },
+        {
+          "dimension": "tone",
+          "status": "pass"
+        },
+        {
+          "dimension": "consistency",
+          "status": "pass"
+        },
+        {
+          "dimension": "completeness",
+          "status": "pass"
+        }
+      ],
+      "findings": []
+    }
+  },
+  "revision_review": {
+    "campaign_brief": {
+      "assessments": [
+        {
+          "dimension": "grounding",
+          "status": "pass"
+        },
+        {
+          "dimension": "qualifications",
+          "status": "pass"
+        },
+        {
+          "dimension": "voice",
+          "status": "pass"
+        },
+        {
+          "dimension": "tone",
+          "status": "pass"
+        },
+        {
+          "dimension": "consistency",
+          "status": "pass"
+        },
+        {
+          "dimension": "completeness",
+          "status": "pass"
+        }
+      ],
+      "findings": []
+    },
+    "linkedin": {
+      "assessments": [
+        {
+          "dimension": "grounding",
+          "status": "pass"
+        },
+        {
+          "dimension": "qualifications",
+          "status": "pass"
+        },
+        {
+          "dimension": "voice",
+          "status": "pass"
+        },
+        {
+          "dimension": "tone",
+          "status": "pass"
+        },
+        {
+          "dimension": "consistency",
+          "status": "pass"
+        },
+        {
+          "dimension": "completeness",
+          "status": "pass"
+        }
+      ],
+      "findings": []
+    },
+    "email": {
+      "assessments": [
+        {
+          "dimension": "grounding",
+          "status": "pass"
+        },
+        {
+          "dimension": "qualifications",
+          "status": "pass"
+        },
+        {
+          "dimension": "voice",
+          "status": "pass"
+        },
+        {
+          "dimension": "tone",
+          "status": "pass"
+        },
+        {
+          "dimension": "consistency",
+          "status": "pass"
+        },
+        {
+          "dimension": "completeness",
+          "status": "pass"
+        }
+      ],
+      "findings": []
+    },
+    "blog": {
+      "assessments": [
+        {
+          "dimension": "grounding",
+          "status": "pass"
+        },
+        {
+          "dimension": "qualifications",
+          "status": "pass"
+        },
+        {
+          "dimension": "voice",
+          "status": "pass"
+        },
+        {
+          "dimension": "tone",
+          "status": "pass"
+        },
+        {
+          "dimension": "consistency",
+          "status": "pass"
+        },
+        {
+          "dimension": "completeness",
+          "status": "pass"
+        }
+      ],
+      "findings": []
+    },
+    "ads": {
+      "assessments": [
+        {
+          "dimension": "grounding",
+          "status": "pass"
+        },
+        {
+          "dimension": "qualifications",
+          "status": "pass"
+        },
+        {
+          "dimension": "voice",
+          "status": "pass"
+        },
+        {
+          "dimension": "tone",
+          "status": "pass"
+        },
+        {
+          "dimension": "consistency",
+          "status": "pass"
+        },
+        {
+          "dimension": "completeness",
+          "status": "pass"
+        }
+      ],
+      "findings": []
+    }
+  }
+}

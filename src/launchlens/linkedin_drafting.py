@@ -49,15 +49,18 @@ def digest(value):
 def prepare_input(state):
     """Fail before inference unless current protected state admits this draft."""
     request = validate_request(state['request'])
-    require(state['mode'] in {'live_linkedin', 'offline_review'} and request['market_id'] == 'US',
+    require(state['mode'] in {'live_linkedin', 'offline_review', 'offline_package', 'live_package'} and (request['market_id'] == 'US' or (request['market_id']=='UK' and state['mode'] in {'offline_package','live_package'})),
             'This checkpoint supports US LinkedIn drafting only')
     launch, pmm = state['launch'], state['pmm']
+    from launchlens.launch_checks import availability_only_gap
+    restricted = (availability_only_gap(launch) and state.get('restricted_drafting') == {
+        'request_sha256':digest(request),'launch_sha256':digest(launch),'availability_wording_allowed':False})
     require(type(launch) is dict and launch.get('authority') == 'synthetic_launch_decision'
             and launch.get('product_id') == request['product_id']
             and launch.get('market_id') == request['market_id']
             and launch.get('evaluation_date') == request['evaluation_date']
-            and launch.get('decision') == 'Proceed' and launch.get('conditions') == []
-            and launch.get('promotional_draft_allowed') is True
+            and ((launch.get('decision') == 'Proceed' and launch.get('conditions') == []
+            and launch.get('promotional_draft_allowed') is True) or restricted)
             and launch.get('publishing_allowed') is False, 'Drafting permission is absent')
     require(type(pmm) is dict and pmm.get('status') == 'ok' and pmm.get('page_id') == PMM_PAGE
             and pmm.get('authority') == 'synthetic_pmm_guidance'
@@ -95,7 +98,7 @@ def prepare_input(state):
             'availability_wording_allowed':False, 'offers_allowed':False}}
     policy_id = state.get('voice_policy_id')
     if policy_id is not None:
-        require(state['mode'] == 'offline_review', 'New writing policy is offline-only')
+        require(state['mode'] in {'offline_review', 'offline_package', 'live_package'}, 'New writing policy is offline-only')
         result['voice_policy'] = voice_brief(policy_id)
     return result
 

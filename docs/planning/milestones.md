@@ -1,3 +1,113 @@
+## Owner acceptance and scoped Git sync — November 9, 2026
+
+Owner approved Git sync of the completed canonical implementation through M2-D031:
+full-package harness, live adapters, run/review UI, required review after revision,
+V2-only context and individually isolated findings. This accepts this engineering
+checkpoint for preservation; marketing-content approval remains pending and
+publishing remains disabled. [Publication scope and verification](repository-sync-2026-11-09.md#full-package-and-version-2-review-sync--m2-d031).
+No further inference, next milestone or ongoing publication is authorized.
+Earlier no-Git/pending labels below retain their historical state.
+
+## Current result — M2-D031, November 9, 2026
+
+Saved Version2 re-reviewed using V2-only text/groups; V1 findings/feedback excluded.
+One Reviewer call, no Writer/research:6groups/11locations assessed, zero unverifiable
+findings. Package ready for human review; changes requested, no content approval.
+Invalid findings now isolated with a visible count. Separate caps:12taskcalls and
+4requiredreviews, same USD1 ledger/history. Actual9task/4reviewcalls; newestimate
+USD0.0015152, cumulativeUSD0.2489891.505offlinePASS; actualV2UI6cards/5drafts/0network.
+[Results, limits and protected handoff](writer-run-experience-review.md#m2-d031--current-version-2-only-review-and-isolated-findings).
+Stop for owner inspection; no further calls, MEMORY append or Git publication.
+Earlier results below are preserved history.
+
+## Current result — M2-D030, November 9, 2026
+
+Harness-owned review now follows every package draft/revision; each review waits
+for the owner. Used revision actions are removed. Existing run screen now has
+Activity | Review | Package plus merged phrase cards and clearer controls.
+Saved Version2 recovered with ONE Reviewer-only call, no Writer/regeneration.
+Fresh review returned, but is explicitly **Review incomplete**: invalid occurrence
+exceptions and6quotes refer to wording absent from V2. Raw output retained; no
+validation weakening or repeat call.497offlinePASS;12/12actualcalls used, cumulative
+accountedUSD0.2474739/1.00. Same run/drafts/history; human approval/publishing false.
+[Results, limits and handoff](writer-run-experience-review.md#m2-d030--required-review-saved-version-2-recovery-and-run-tabs).
+Stop for owner inspection. No MEMORY append, further inference or Git publication.
+History below preserved.
+
+## Current result — M2-D029, November 9, 2026
+
+Current US Version1 now has a **complete review** and is **Package ready**. One
+Qwen Reviewer-only call:9phrase groups/21locations,1,802outputtokens,25.2seconds;
+all reason/suggestion limits met. Same drafts/runID, zero Writer/research/revision
+calls. Group judgments expand deterministically; human clearance remains required.
+486offlinePASS; cumulative accountedUSD0.2199694/1.00. Current run → Review
+package retains the owner's one live revision and original counters/history.
+[Scope, results, limits and private handoff](writer-run-experience-review.md#m2-d029--compact-grouped-reviewer-and-completed-version-1-review).
+No content approval, further inference, MEMORY append or Git publication. History below kept.
+
+## Current result — M2-D028, November 9, 2026
+
+Owner-authorized exact-field Writer instructions and current-live-run grouped
+revision wiring completed. Fresh US app run reached **Package ready, Version 1**:
+five formats, one Writer attempt, one independent Qwen Reviewer attempt, zero revisions.
+7 calls/1 search. **Review incomplete:** Reviewer output hit8192tokens
+and ended with truncated JSON; no complete semantic assessment was admitted.
+Deterministic scan findings remain; raw model output retained without retry. No automatic revision; Request revision now
+passes grouped changes, kept wording, occurrence overrides and notes through the
+same guard, then shows fresh-reviewed Version 2. Live revision remains unexecuted
+for the owner to click. 476 offline PASS; old artifacts and validation preserved.
+Cumulative accounted USD0.2180048/1.00, including old unknown reserve.
+[Actual results, exact roles and access](writer-run-experience-review.md#m2-d028--first-review-handoff-and-live-human-revision-wiring).
+No content acceptance, source changes, dependency additions or Git publication.
+Status: IMPLEMENTED / OWNER REVIEW AND LIVE REVISION PENDING. Earlier history kept.
+
+## Current checkpoint — Reviewer probe and offline stream fix, November 9, 2026
+
+[Actual results](writer-run-experience-review.md): owner-authorized one Hermes
+Reviewercall, productionprompt/schema/exactpreservedpackage. JSONschemasPASS;
+backendREJECTED.9rawadvisories/0blockers; requestedphrasesnotflagged. No retries,
+repairs, Writer regeneration or full live run. Estimate0.010144USD; cumulative
+0.0437376/0.18includingoldunknown0.0278528reserve. ReviewerqualificationOPEN.
+Offline progress race FIXED from deterministic reproduction: actualstreamupdates
+now supplyUIviews, checkpointsremainexecutionauthority.16recoverytests,50repeats,
+286agent+41UI PASS; clean286PASSwithoutignoredinputs. No dependency/prompt/schema/
+validator/policychanges, sourcewrites, MEMORYappend or Gitpublication.
+Livegate remainsclosed; proposedfullrun0.92ceilingunapproved. STOPforownerreview.
+LangSmith/export/submission remain later bounded work. Earlier results historical.
+
+## Single US live test — ceiling approved, November 9, 2026
+
+Owner approved the USD 0.80 model-spending ceiling for the described single US
+full-package test. [Authorization and boundary](live-package-preparation-review.md).
+Private scoped permission is provisioned; user clicks Start agent to begin.
+No inference has started. Zero automatic retries/repairs; one explicit revision
+shares the same limits. No Git publication, content acceptance or model adoption.
+Earlier unapproved-ceiling notes below retain their historical preparation state.
+
+## Live full-package preparation — current checkpoint, 2026-11-09
+
+Owner authorized preparation and offline tests only. M2-D023:
+[scope, model qualification, spending proposal and verification](live-package-preparation-review.md).
+Existing harness now has guarded live controller/Writer/Reviewer adapters alongside
+Demo simulation; no authorization file was created and live Start remains blocked.
+399 offline tests PASS (255 agent / 111 root / 33 UI). Two read-only catalog GETs
+passed; zero inference. Proposed conservative model ceiling USD 0.80 remains
+unapproved (USD 0.7839744 reserved maximum); earlier USD 0.50 is insufficient for
+this method. Prompts/projection/contracts/source history and dependencies preserved.
+Stop for owner review before any live run, Git sync or next milestone. Earlier
+M2-D022 offline-only statements describe that historical checkpoint.
+
+## Full-package integration — current authorized checkpoint, 2026-11-09
+
+Owner approved extending the existing harness to the full GTM package before a
+separately authorized live run, superseding LinkedIn-first sequencing for this
+increment. M2-D022: [scope, prompts, results and next boundary](full-package-integration-review.md).
+Five-format generation/review/one explicit revision are connected offline in the
+same graph and UI; historical LinkedIn profiles/templates remain available.
+371offline testsPASS(231agent/111root/29UI). No live model adoption or execution,
+new dependency, source changes, human acceptance/export, hosted tracing, MEMORY
+append or Git publication. Content acceptance/live quality remain pending.
+
 ## Repository sync authorization — 2026-11-09
 
 Owner authorized Git sync of the completed canonical work; earlier no-publication

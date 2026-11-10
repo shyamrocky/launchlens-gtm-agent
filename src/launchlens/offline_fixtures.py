@@ -222,3 +222,51 @@ def review_adapters(voice_policy_id=None):
     reviewer = ContentCall(ScriptedContentTransport('review', voice_policy_id), stage='linkedin_reviewer', model_id='OFFLINE-REVIEW-FIXTURE')
     reviser = ContentCall(ScriptedContentTransport('revision', voice_policy_id), stage='linkedin_revision', model_id='OFFLINE-REVISION-FIXTURE')
     return reviewer, reviser
+
+
+# Five-format examples remain canonical test data, never a live generation route.
+def package_cases():
+    return json.loads(FIXTURE.with_name('gtm_package_cases_v1.json').read_text())
+
+
+class PackageFixtureTransport:
+    """Prewritten package/review responses, not a semantic classifier or live Writer."""
+    def __init__(self, stage):
+        self.stage = stage
+        self.calls = []
+
+    def __call__(self, payload):
+        self.calls.append(deepcopy(payload))
+        data = package_cases(); inputs = json.loads(payload['messages'][1]['content'])
+        if self.stage == 'package_writer':
+            candidate = data['initial_package']
+        elif self.stage == 'package_revision':
+            candidate = data['revision_package']
+        else:
+            name = 'initial' if inputs['binding']['draft_version'] == 1 else 'revision'
+            if digest(inputs['package']) != digest(data[name+'_package']):
+                raise ValueError('No mock review for this exact package')
+            candidate = fixture_package_review(data[name+'_review'],inputs['package'])
+        return {'model':payload['model'],'choices':[{'finish_reason':'stop',
+            'message':{'role':'assistant','content':json.dumps(candidate,ensure_ascii=False)}}]}
+
+
+def package_adapters():
+    return tuple(ContentCall(PackageFixtureTransport(stage), stage=stage, model_id='OFFLINE-'+stage.upper())
+                 for stage in ['package_writer','package_reviewer','package_revision'])
+
+
+def fixture_package_review(legacy, package):
+    """Authored mock dispositions only; never used by a live Reviewer or validator."""
+    from launchlens.package_content import FORMATS,risky_phrase_scan
+    result={name:{'findings':deepcopy(legacy[name]['findings'])} for name in FORMATS}
+    for hit in risky_phrase_scan(package):
+        findings=result[hit['format']]['findings']
+        match=next((f for f in findings if f['content_field']==hit['content_field'] and hit['quote'] in f.get('quote','')),None)
+        if match:match.setdefault('scan_hit_ids',[]).append(hit['hit_id'])
+        else:findings.append({'dimension':'grounding','content_field':hit['content_field'],
+            'quote':hit['quote'],'severity':'cleared','rationale':'Authored safe fixture disposition; not semantic verification.',
+            'suggested_change':'No mock correction.','claim_ids':[],'scan_hit_ids':[hit['hit_id']]})
+    for group in result.values():
+        for f in group['findings']:f.setdefault('scan_hit_ids',[])
+    return result

@@ -64,13 +64,16 @@ def load_prompt(name="research"):
     return raw.decode("utf-8")
 
 
-def tool_schemas(mode="live_research"):
+def tool_schemas(mode="live_research", names=None):
     definitions = []
     for name, specification in action_registry(mode).items():
+        if names is not None and name not in names:continue
         properties = {key: {"type": "string"} for key in specification["arguments"]}
         if "query" in properties:
             properties["query"].update(minLength=1, maxLength=2000)
             properties["authority"]["enum"] = sorted(SOURCES)
+        if mode == 'live_package':
+            properties['why']={'type':'string','minLength':1,'maxLength':300,'description':'Short business purpose, not private reasoning'}
         if "question" in properties:
             properties["question"].update(minLength=1, maxLength=500)
         definitions.append({"type": "function", "function": {
@@ -163,10 +166,14 @@ class NebiusHTTP:
 class ResearchModel:
     """Model chooses actions; evidence/history is rebuilt solely from current run state."""
     def __init__(self, transport, *, mode="live_research"):
-        require(mode in {"live_research", "live_linkedin"}, "Invalid controller mode")
+        require(mode in {"live_research", "live_linkedin", "live_package"}, "Invalid controller mode")
         self._mode = mode
         self._transport = transport
-        self._prompt = load_prompt("linkedin_controller" if mode == "live_linkedin" else "research")
+        if mode == "live_package":
+            from launchlens.package_content import load_package_prompt
+            self._prompt = load_package_prompt("package_controller")
+        else:
+            self._prompt = load_prompt("linkedin_controller" if mode == "live_linkedin" else "research")
         self._run_id = None
         self.calls = []
 
@@ -192,6 +199,14 @@ class ResearchModel:
         if self._mode == "live_linkedin":
             progress["draft_status"] = "unreviewed" if state["drafts"].get("linkedin") else "absent"
             progress["writing_attempts"] = state["writing_attempts"]
+        if self._mode == "live_package":
+            progress["package_state"] = {"version":(state.get("package") or {}).get("version"),
+                "review_status":state.get("review", {}).get("review_status"),
+                "writing_attempts":state["writing_attempts"], "review_attempts":state["review_attempts"],
+                "revision_attempts":state["revision_attempts"], "revision_permitted":state.get("revision_request") is not None}
+            progress['restricted_drafting'] = state.get('restricted_drafting')
+            progress["owner_notes_data_only"] = state.get("user_notes", "")
+            progress["revision_feedback_data_only"] = state.get("revision_feedback", "")
         messages = [{"role": "system", "content": self._prompt},
             {"role": "system", "content": "Use native function tool calls. Their envelope supplies "
              "the action id and name; function arguments follow the supplied schema. Select one "
@@ -205,7 +220,9 @@ class ResearchModel:
              "supported_task_label": selected["label"], "objective": selected["objectives"][0]["label"]})},
             *native_history(state), {"role": "user", "content": dumps({
                 "harness_state": progress, "research_context": context})}]
-        payload = {"model": MODEL, "messages": messages, "tools": tool_schemas(self._mode),
+        from launchlens.gtm_registry import eligible_actions
+        allowed=eligible_actions(state) if self._mode=='live_package' else None
+        payload = {"model": MODEL, "messages": messages, "tools": tool_schemas(self._mode, allowed),
             "tool_choice": "auto", "parallel_tool_calls": False, "temperature": 0,
             "max_tokens": MAX_OUTPUT_TOKENS, "stream": False, "store": False}
         require(len(dumps(payload).encode("utf-8")) <= MAX_REQUEST_BYTES,
@@ -231,7 +248,19 @@ class ResearchModel:
             require(type(function.get("arguments")) is str, "Tool arguments must be JSON text")
             action = {"id": native.get("id"), "name": function.get("name"),
                       "arguments": strict_json(function["arguments"])}
+            if self._mode == 'live_package':
+                action['why'] = action['arguments'].pop('why', None)
+                if action['why'] is None or (type(action['why']) is str and not action['why'].strip()):
+                    registered = action_registry(self._mode).get(action['name'])
+                    if registered is not None:
+                        action['why'] = 'Registry purpose (agent omitted explanation): ' + registered['purpose']
+                        event['normalizations'] = [{'rule':'missing_action_purpose_labeled_registry_fallback'}]
+                if type(action['why']) is str and len(action['why'])>300:
+                    event['original_action_purpose']=action['why']
+                    action['why']=action['why'][:299].rstrip()+'…'
+                    event['normalizations']=[{'rule':'action_purpose_display_shortened','original_length':len(event['original_action_purpose'])}]
             validate_action(action, self._mode)
+            require(allowed is None or action['name'] in allowed, 'Action is unavailable in the current state')
             event.update(outcome="proposed", action=deepcopy(action))
             return action
         except Exception:

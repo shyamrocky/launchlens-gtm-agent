@@ -84,15 +84,24 @@ def action_registry(mode="live_research"):
         actions["revise_linkedin"] = {"arguments": {}, "purpose":
             "Request one revision only after explicit owner feedback; harness owns permission"}
         actions["finish"]["purpose"] = "Completion requires current-version independent review; never grants human approval"
+    if mode in {'offline_package','live_package'}:
+        actions.update({
+            'generate_package': {'arguments': {}, 'purpose': 'Draft the five-format GTM package after verified research and launch eligibility'},
+            'review_package': {'arguments': {}, 'purpose': 'Delegate independent review of every format and cross-format consistency'},
+            'revise_package': {'arguments': {}, 'purpose': 'Revise the package once only after explicit owner feedback; require fresh review'},
+        })
+        actions['finish']['purpose'] = 'Completion requires all five formats and current-version review; never grants approval'
     return actions
 
 
 def validate_action(value, mode="live_research"):
-    require(type(value) is dict and set(value) == {"id", "name", "arguments"},
+    require(type(value) is dict and (set(value) == {'id','name','arguments'} or (mode in {'offline_package','live_package'} and set(value)=={'id','name','arguments','why'})),
             "Action must contain only id, name and arguments")
     require(type(value["id"]) is str and re.fullmatch(r"[A-Za-z0-9_-]{1,64}", value["id"]),
             "Invalid action identifier")
     require(type(value["name"]) is str and value["name"] in action_registry(mode), "Unregistered action")
+    if 'why' in value:
+        require(type(value['why']) is str and 0 < len(value['why'].strip()) <= 300, 'Invalid action purpose')
     args = value["arguments"]
     require(type(args) is dict and set(args) == set(action_registry(mode)[value["name"]]["arguments"]),
             "Unexpected or missing action arguments")
@@ -110,3 +119,14 @@ def objective_claims(request):
     """Fresh minimum-evidence configuration for the validated selected objective."""
     request = validate_request(request)
     return dict(OBJECTIVE_CLAIMS[request["objective_id"]])
+
+
+def eligible_actions(state):
+    """Application-owned options inside the registered task; not model policy."""
+    actions=action_registry(state['mode'])
+    if state['mode'] in {'offline_package','live_package'}:
+        actions.pop('review_package',None)  # Required graph edge after every admission.
+        if not state.get('revision_request') or state.get('revision_attempts'):
+            actions.pop('revise_package',None)
+        if state.get('package'):actions.pop('generate_package',None)
+    return actions

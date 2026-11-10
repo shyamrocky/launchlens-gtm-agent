@@ -41,7 +41,7 @@ DIAGNOSTIC_RULES = frozenset({
     "duplicate_array_item", "nonempty_text_required", "invalid_enum_value",
     "invalid_content_field_reference", "duplicate_field_reference", "invalid_claim_reference",
     "evidence_validation_failed", "objective_claim_coverage", "cta_mismatch",
-    "prohibited_link", "prohibited_wording", "unknown_validation_failure",
+    "prohibited_link", "prohibited_wording", "field_claim_coverage", "unknown_validation_failure",
 })
 
 
@@ -224,6 +224,25 @@ def _eligible_claims(records):
     return claims
 
 
+def measured_lengths(content, format_name):
+    """Code-computed editorial facts; advisory, never model-owned verdicts."""
+    result=[]
+    for target in load_template(format_name)['editorial_guidelines']['length_targets']:
+        values=[_field(content, field) for field in target['fields']]
+        metric=target['metric']
+        if metric=='items':
+            require(len(values)==1 and type(values[0]) is list,'Invalid editorial array target')
+            actual=len(values[0])
+        else:
+            joined=' '.join(s for v in values for s in _texts(v))
+            require(metric in {'words','characters'},'Unsupported editorial metric')
+            actual=len(joined.split()) if metric=='words' else len(joined)
+        result.append({'fields':target['fields'],'metric':metric,'actual':actual,
+            'target':{k:v for k,v in target.items() if k in {'min','max'}},
+            'meets_target':target.get('min',0)<=actual<=target.get('max',float('inf'))})
+    return result
+
+
 def validate_draft(draft, *, format_name, evidence_records):
     """Check shape and reference bindings, then return advisory editorial findings.
 
@@ -253,18 +272,8 @@ def validate_draft(draft, *, format_name, evidence_records):
             require(claim in claims, "Claim reference lacks complete retrieved public evidence",
                     field_path=slot + ".claim_ids." + str(claim_index), rule="invalid_claim_reference")
     warnings = []
-    for target in template["editorial_guidelines"]["length_targets"]:
-        values = [_field(draft["content"], field) for field in target["fields"]]
-        metric = target["metric"]
-        if metric == "items":
-            require(len(values) == 1 and type(values[0]) is list, "Invalid editorial array target")
-            actual = len(values[0])
-        else:
-            joined = " ".join(s for v in values for s in _texts(v))
-            require(metric in {"words", "characters"}, "Unsupported editorial metric")
-            actual = len(joined.split()) if metric == "words" else len(joined)
-        if actual < target.get("min", 0) or actual > target.get("max", float("inf")):
-            warnings.append({"fields":target["fields"], "metric":metric, "actual":actual,
-                "target":{k:v for k,v in target.items() if k in {"min", "max"}}, "severity":"advisory"})
+    for measurement in measured_lengths(draft['content'], format_name):
+        if not measurement['meets_target']:
+            warnings.append({k:v for k,v in measurement.items() if k!='meets_target'} | {'severity':'advisory'})
     return {"structural_validation":"passed", "editorial_warnings":warnings,
             "semantic_review_required":True}

@@ -16,9 +16,17 @@ from launchlens.inventory import fetch_inventory, load_display
 
 class InventoryUITests(unittest.TestCase):
     def setUp(self):
+        self.resume=patch('launchlens.live_package.current_resume_available',return_value=False)
+        self.resume.start();self.addCleanup(self.resume.stop)
+        self.saved=patch('launchlens.review_decisions.saved_review_available',return_value=False)
+        self.saved.start();self.addCleanup(self.saved.stop)
         self.snapshot = fetch_inventory(load_display(), Reader())
         self.no_http = patch("urllib.request.OpenerDirector.open", side_effect=AssertionError("Unexpected network in offline UI test"))
         self.no_http.start(); self.addCleanup(self.no_http.stop)
+        # Inventory tests must never consume local live-spending authorization.
+        self.permission = patch("launchlens.live_package.readiness", return_value={
+            "ready":False,"request":None,"message":"Offline inventory test; live execution unavailable"})
+        self.permission.start(); self.addCleanup(self.permission.stop)
 
     def app(self):
         app = AppTest.from_file(str(ROOT / "streamlit_app.py"), default_timeout=15)

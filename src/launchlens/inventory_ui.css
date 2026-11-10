@@ -96,10 +96,45 @@
 }
 
 /* Existing harness run: one readable column, no fixed heights or inner scrolling. */
-.st-key-agent-run { max-width: 860px; width: 100%; margin: 0 auto; }
+.st-key-agent-run { max-width: 720px; width: 100%; margin: 0 auto; }
 .draft-copy { border: 1px solid #364356; background: #1b2430; border-radius: 16px; padding: 20px 24px; }
 .draft-copy p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
 .st-key-agent-run [data-testid="stJson"] { max-width: 100%; }
 /* Dark text retains contrast on the existing periwinkle primary accent. */
 .st-key-agent-run [data-testid="stFormSubmitButton"] button,
 .st-key-prepare-start button:not(:disabled) { background: #9bbaff; color: #111720; border-color: #9bbaff; }
+
+/* PMM execution view: one page, four truthful states, details disclosed on demand. */
+.st-key-run-status-card, .run-timeline, .package-progress, .st-key-run-question { background:#1b2430; border-radius:18px; padding:22px 24px; }
+.st-key-agent-run h1 { font-size:34px; font-weight:600; }
+.st-key-agent-run h3 { font-size:21px; }
+.run-step { display:flex; gap:14px; padding:18px 0; }
+.run-step + .run-step, .package-row + .package-row { border-top:1px solid #364356; }
+.run-step strong { color:#f0f4fa; font-size:16px; font-weight:600; }
+.run-step p, .run-step small, .run-muted { color:#b8c4d4; margin:6px 0 0; line-height:1.5; font-size:14px; }
+.step-icon { flex:0 0 22px; font-size:19px; }
+.step-icon.good { color:#30D158; } .step-icon.hold { color:#FF453A; }
+.readiness.working, .step-icon.working { color:#9bbaff; }
+.package-row { display:flex; justify-content:space-between; gap:20px; padding:16px 0; color:#f0f4fa; }
+.package-row span:last-child { color:#b8c4d4; }
+.st-key-run-question { border:1px solid #FF9F0A; }
+.st-key-agent-run button[kind="primary"] { background:#9bbaff; color:#111720; border:0; border-radius:999px; padding:8px 24px; }
+@media(max-width:640px) { .st-key-run-status-card,.run-timeline,.package-progress,.st-key-run-question { padding:16px; } .st-key-agent-run h1 { font-size:28px; } }
+
+.package-row span.good { color:#30D158; } .package-row span.warn { color:#FF9F0A; }
+.package-row span.working { color:#9bbaff; }
+
+/* M2-D027: grouped wording decisions, retaining the established dark palette. */
+.st-key-agent-run [class*="st-key-review-card-"] { background:#1b2430; border:1px solid #46546a; border-radius:18px; padding:20px 24px; margin-bottom:14px; }
+.st-key-agent-run [class*="st-key-review-card-"] h3 { font-size:20px; margin:0 0 6px; overflow-wrap:anywhere; }
+.st-key-agent-run mark { background:#654516; color:#fff1d6; border-bottom:2px solid #FF9F0A; border-radius:3px; padding:1px 2px; box-decoration-break:clone; }
+.st-key-agent-run .review-context { color:#f0f4fa; line-height:1.65; overflow-wrap:anywhere; }
+.st-key-agent-run .review-field-label { display:block; color:#bac7d8; font-size:14px; margin-top:18px; }
+.st-key-agent-run .draft-copy p { margin-top:5px; }
+.st-key-agent-run [data-testid="stMetricLabel"] { color:#bac7d8; }
+.st-key-agent-run [data-testid="stTabs"] { overflow-wrap:anywhere; }
+@media(max-width:640px) { .st-key-agent-run [class*="st-key-review-card-"] { padding:14px; } }
+
+.st-key-agent-run [data-testid="stMetric"] { background:#1b2430; border-radius:14px; padding:14px 18px; }
+
+.st-key-agent-run [class*="st-key-review-card-"] button { border-radius:999px; border:0; background:#2b3749; padding:8px 16px; }

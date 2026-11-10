@@ -18,7 +18,12 @@ def read_provider_keys(models, env_file=None):
     """Future live provisioning only. Read selected keys; never return/log others."""
     require(models and all(m['provider']=='nebius' and m['model_id'] in REGISTERED_MODELS.values() for m in models),
         'Only registered Nebius profiles can load credentials')
-    names={'NEBIUS_API_KEY'};values={}
+    return read_selected_keys({'NEBIUS_API_KEY'}, env_file)
+
+
+def read_selected_keys(names, env_file=None):
+    require(type(names) is set and names and names <= {'NEBIUS_API_KEY','NOTION_API_KEY','PINECONE_API_KEY'}, 'Unregistered credential scope')
+    values={}
     for name in names:
         value=os.environ.get(name)
         if value:values[name]=value
@@ -39,10 +44,14 @@ def read_provider_keys(models, env_file=None):
 
 
 class ProviderHTTP:
-    """One HTTPS request; 45-second timeout, 2MB bound, no proxy/retry/redirect."""
-    def __init__(self,model,key):
-        require(model['provider']=='nebius' and model['model_id'] in REGISTERED_MODELS.values(),'Unknown Nebius profile')
+    """One HTTPS request; default 45s timeout (bounded override), 2MB bound, no retries."""
+    def __init__(self,model,key, *, request_validator=None, timeout_seconds=45):
+        require(model['provider']=='nebius' and (model['model_id'] in REGISTERED_MODELS.values() or (model['model_id']=='openai/gpt-oss-120b' and request_validator is not None)),'Unknown Nebius profile')
         require(type(key) is str and len(key)>=12 and not any(c.isspace() for c in key),'Invalid credential')
+        require(request_validator is None or callable(request_validator),'Invalid application request validator')
+        require(type(timeout_seconds) in {int,float} and 0 < timeout_seconds <= 180,'Invalid provider timeout')
+        self.timeout_seconds=timeout_seconds
+        self.request_validator=request_validator
         self.model=dict(model);self.key=key;self.lock=Lock();self.used=False
         self.opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect(),
             urllib.request.HTTPSHandler(context=ssl.create_default_context()))
@@ -51,15 +60,18 @@ class ProviderHTTP:
         with self.lock:
             require(not self.used,'Provider attempt already consumed');self.used=True
         require(payload.get('model')==self.model['model_id'],'Model differs')
-        require(set(payload)=={'model','messages','temperature','max_tokens','stream','store'} and
-            payload['stream'] is False and payload['store'] is False and payload['temperature']==0 and
-            payload['max_tokens']==2048 and type(payload['messages']) is list and len(payload['messages'])==2 and
-            payload['messages'][0].get('role')=='system' and payload['messages'][1].get('role')=='user' and
-            all(type(v.get('content')) is str for v in payload['messages']),'Unreviewed Nebius Writer request')
+        if self.request_validator is not None:
+            require(self.request_validator(payload) is True,'Unreviewed prepared request')
+        else:
+            require(set(payload)=={'model','messages','temperature','max_tokens','stream','store'} and
+                payload['stream'] is False and payload['store'] is False and payload['temperature']==0 and
+                payload['max_tokens']==2048 and type(payload['messages']) is list and len(payload['messages'])==2 and
+                payload['messages'][0].get('role')=='system' and payload['messages'][1].get('role')=='user' and
+                all(type(v.get('content')) is str for v in payload['messages']),'Unreviewed Nebius Writer request')
         headers={'Authorization':'Bearer '+self.key,'Content-Type':'application/json','Accept':'application/json'}
         request=urllib.request.Request(ENDPOINT,data=dumps(payload).encode(),headers=headers,method='POST')
         try:
-            response=self.opener.open(request,timeout=45)
+            response=self.opener.open(request,timeout=self.timeout_seconds)
         except urllib.error.HTTPError as error:
             response=error  # Preserve the provider error body as well; never retry.
         with response:

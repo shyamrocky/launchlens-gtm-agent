@@ -195,6 +195,12 @@ class ProtectedStore:
     def __init__(self,path):
         self.path=Path(path)
         self.path.mkdir(parents=True,mode=0o700,exist_ok=False)
+    @classmethod
+    def open_existing(cls,path):
+        path=Path(path)
+        require(path.is_dir() and not path.is_symlink() and not path.stat().st_mode&0o077,'Private artifact directory unavailable')
+        result=cls.__new__(cls);result.path=path;return result
+
     def write(self,name,value, *, raw=False):
         require(re.fullmatch(r'[a-z0-9_-]+\.(?:json|bin|md)',name) is not None,'Unsafe artifact name')
         path=self.path/name

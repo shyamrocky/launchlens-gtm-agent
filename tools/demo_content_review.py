@@ -17,8 +17,12 @@ from launchlens.voice_policy import BRAND_POLICY_ID
 
 def main():
     parser=argparse.ArgumentParser(description='Offline mock review; never inference')
+    parser.add_argument('--package',action='store_true',help='Show the full five-format offline package')
     parser.add_argument('--voice-policy',choices=[BRAND_POLICY_ID],default=None)
-    policy_id=parser.parse_args().voice_policy
+    args=parser.parse_args()
+    if args.package:
+        return package_demo()
+    policy_id=args.voice_policy
     print('# Reviewer + one revision — OFFLINE SIMULATION\n')
     print('Writing policy:',policy_id or 'historical neutral policy')
     print('Scripted model choices and authored mock reviews. No live semantic-review quality is claimed.\n')
@@ -58,6 +62,39 @@ def main():
         print('Shared call budget:',after['turns'],'of 12; revision attempts:',after['revision_attempts'])
         print('Human accepted:',after['human_accepted'],'Publishing:',after['drafts']['linkedin']['publishing_allowed'])
         print('Network attempts:',network.call_count,'No sources or historical responses modified.')
+
+
+def package_demo():
+    from launchlens.offline_ui_run import OfflineUIRun, draft_identity
+    from launchlens.package_content import FORMATS, LABELS, text_fields
+    print('# Full GTM package — OFFLINE SIMULATION')
+    print('Scripted choices and authored mock outputs; no live model or semantic-quality claim.\n')
+    with patch.object(socket.socket,'connect',side_effect=AssertionError('No demo network')) as network:
+        run=OfflineUIRun(request(),voice_policy_id=BRAND_POLICY_ID,package=True)
+        first=run.execute(run.snapshot()['run_id'])
+        assert first['status']=='awaiting_human_review'
+        for name in FORMATS:
+            print('## '+LABELS[name]+' · Version 1')
+            for field,text in text_fields(first['drafts'][name]['draft']['content']):
+                print(field.replace('_',' ')+': '+text+'\n')
+            print('Claim references:',first['drafts'][name]['draft']['claim_references'])
+            print('Mock review:',first['review']['format_reviews'][name]['review_status'])
+            for finding in first['review']['assessment'][name]['findings']:
+                print('- '+finding['dimension']+': '+finding['rationale'])
+            print()
+        v,h=draft_identity(first)
+        after=run.revise(first['run_id'],'Keep optional brand voice; remove unsupported intensity and introduction implication.',v,h)
+        assert after['status']=='awaiting_human_review'
+        print('## One explicit package revision + fresh review')
+        print('Formats:',', '.join(FORMATS),'· Package version:',after['package']['version'])
+        print('Calls:',after['turns'],'of 12 · Reviews:',len(after['reviews']))
+        print('Human accepted:',after['human_accepted'],'Publishing:',after['package']['publishing_allowed'])
+        print('Actions:',' → '.join(e['action'] for e in after['events']))
+        for market in ['UK','IN']:
+            blocked=OfflineUIRun(request(market),voice_policy_id=BRAND_POLICY_ID,package=True)
+            state=blocked.execute(blocked.snapshot()['run_id'])
+            print(market+': '+state['status']+' · formats drafted: '+str(len(state['drafts'])))
+        print('Network attempts:',network.call_count)
 
 
 if __name__ == '__main__':main()
