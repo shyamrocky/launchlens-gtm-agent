@@ -134,10 +134,44 @@ def market_run(market):
     return next((r for r in saved_runs() if r['request']['market_id']==market),None)
 
 
-def executing(record):
+def execution_path(run_id):
+    return ROOT/'data/private/runs/execution'/(_id(run_id)+'.lock')
+
+
+@contextmanager
+def execution_lease(run_id):
+    """A live worker owns this OS lock, independent of browser session state."""
+    import fcntl
+    path=execution_path(run_id);path.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
+    require(not path.is_symlink(), 'Unsafe execution lock')
+    fd=os.open(path,os.O_RDWR|os.O_CREAT,0o600)
+    with os.fdopen(fd,'r+') as stream:
+        try:fcntl.flock(stream,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError:raise HarnessError('A worker is still executing this run') from None
+        try:yield
+        finally:fcntl.flock(stream,fcntl.LOCK_UN)
+
+
+def execution_active(run_id):
+    import fcntl
+    path=execution_path(run_id)
+    if not path.exists():return False
+    if path.is_symlink():return True
+    with path.open('r') as stream:
+        try:fcntl.flock(stream,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError:return True
+        fcntl.flock(stream,fcntl.LOCK_UN)
+    return False
+
+
+def executing_state(record):
     _,raw=resolve(record['pointer'].get('state',record['pointer'].get('source')))
     state=json.loads(raw)
     return state['status'] in {'created','running'} or state.get('revision_request') is not None
+
+
+def executing(record):
+    return execution_active(record['run_id']) or executing_state(record)
 
 
 def _artifacts(record):
@@ -165,8 +199,8 @@ def _artifacts(record):
 
 def archive_run(record, *, active=False, session_notes=None):
     """MOVE descriptor and matching UI pointers. Never mutate protected originals."""
-    with locked():
-        require(not active and not executing(record), 'Stop the run first')
+    with locked(), execution_lease(record['run_id']):
+        require(not active and record['state_status'] not in {'created','running'} and not executing_state(record), 'Stop the run first')
         rid=_id(record['run_id']);dest=archive_path(rid)
         require(not dest.exists(),'Package is already archived')
         current=record_from_pointer(record['pointer'])

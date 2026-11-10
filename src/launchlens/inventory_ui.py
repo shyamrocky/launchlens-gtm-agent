@@ -33,6 +33,41 @@ def checked_label(result, name="Product Brief"):
     return label
 
 
+def indexed_date():
+    """Read the existing successful corpus receipt; no provider read or mtime guess."""
+    import json
+    from launchlens.retrieval import INDEX, NAMESPACE, MODEL
+    path = Path(__file__).resolve().parents[2] / 'data/generated/m15b4-full-corpus/receipt.json'
+    try:
+        receipt = json.loads(path.read_bytes())
+        if (receipt['status'], receipt['index'], receipt['namespace'], receipt['model'], receipt['upserted_count']) != ('PASS', INDEX, NAMESPACE, MODEL, 45):
+            return None
+        stamp = datetime.fromisoformat(receipt['finished_utc'])
+        if stamp.utcoffset() is None:
+            return None
+        return date_label(stamp.astimezone(ZoneInfo('America/Los_Angeles')).date().isoformat())
+    except (OSError, UnicodeError, ValueError, TypeError, KeyError):
+        return None
+
+
+def product_evidence_status(display, snapshot):
+    """Home checksum summary, separate from live index health or launch permission."""
+    from launchlens.source_access import APPROVED_PDFS
+    checks = [(doc, snapshot.get('source_access', {}).get(doc['name'], {}))
+              for doc in display['documents'] if doc['app'] == 'Google Drive']
+    if any(c.get('status') == 'changed' or
+           (c.get('sha256') and c.get('indexed_sha256') and c['sha256'] != c['indexed_sha256'])
+           for _, c in checks):
+        return 'Product brief changed · evidence not re-indexed', 'warn'
+    indexed = indexed_date()
+    if indexed is None:
+        return 'Product evidence · index date unavailable · Not verified', 'unknown'
+    matched = (snapshot.get('data_mode') != 'offline' and len(checks) == 2 and
+               all(c.get('status') == 'accessible' and c.get('sha256') == c.get('indexed_sha256') == APPROVED_PDFS.get(doc['file_id'])
+                   for doc, c in checks))
+    return 'Product evidence · indexed ' + indexed + (' · ✓ Up to date' if matched else ' · Not checked'), 'good' if matched else 'unknown'
+
+
 def source_documents(display, snapshot):
     with st.container(border=True, key="source-documents"):
         st.subheader("Source documents")
@@ -41,6 +76,10 @@ def source_documents(display, snapshot):
             stamp=datetime.fromisoformat(snapshot['fetched_at']).astimezone(ZoneInfo('America/Los_Angeles'))
             st.caption('Fixture snapshot · No live source checks performed.' if snapshot.get('data_mode')=='offline' else
                 'Last checked '+stamp.strftime('%I:%M %p').lstrip('0')+' · '+stamp.strftime('%b %d, %Y %Z'))
+            summary, tone = product_evidence_status(display, snapshot)
+            st.html(f'<p class="product-evidence-status {tone}" title="Index date from the saved successful corpus receipt; status compares Drive checksums with indexed documents, without a Pinecone request.">{escape(summary)}</p>')
+        if st.button('Rebuild evidence (planned) ›', key='source-rebuild', type='tertiary'):
+            st.session_state['screen'] = 'rebuild'; st.rerun()
         blocked=refresh_blocked()
         if st.button('↻ Refresh',key='refresh',type='tertiary',disabled=blocked,help=REFRESH_BLOCKED_MESSAGE if blocked else 'Re-read launch data and check Drive access; keep current runs.'):
             refresh(display);st.rerun()
@@ -63,8 +102,6 @@ def source_documents(display, snapshot):
                         f'<span class="source-tooltip" id="{tooltip}" role="tooltip">{escape(detail)}</span></span></div>')
             groups.append(f'<section class="source-group" aria-label="{escape(app)}"><h4>{escape(app)}</h4>{"".join(items)}</section>')
         st.html(f'<div class="source-grid">{"".join(groups)}</div>')
-        if any(v.get('status')=='changed' for v in snapshot.get('source_access',{}).values()):
-            st.info('Rebuild evidence · Not built yet. Changed content needs approval; indexed evidence has not changed.')
 
 
 REFRESH_BLOCKED_MESSAGE = "Finish or stop the run to refresh"
@@ -75,6 +112,7 @@ def refresh_blocked():
     if st.session_state.get("run-command") is not None:
         return True
     run = st.session_state.get("offline_run")
+    if getattr(run,"watching_worker",False):return True
     if run is None:
         return False
     try:
@@ -160,6 +198,24 @@ def refresh(display):
     return True
 
 
+def rebuild_evidence_card(snapshot):
+    """Roadmap placeholder only: deliberately no confirmation or execution handler."""
+    with st.container(border=True, key="rebuild-evidence"):
+        st.subheader("Planned rebuild process")
+        st.caption("Not implemented · Preview of a future capability")
+        changed = [name for name, check in snapshot.get("source_access", {}).items()
+                   if check.get("status") == "changed"]
+        if changed:
+            st.warning("Changed source: " + ", ".join(changed) + ". The indexed evidence is unchanged.")
+        st.write("Re-download approved Drive PDFs, re-chunk, re-embed, verify claim IDs and activate replacement Pinecone evidence.")
+        st.markdown("**1. Approve changed content.** A changed checksum does not approve new claims. Preserve Product Brief facts, synthetic PRD intent and validated claim mappings.")
+        st.markdown("**2. Build and verify first.** Activate only after chunks, embeddings, claim IDs and Pinecone checks pass. A failed rebuild must leave current evidence and runs usable.")
+        st.markdown("**3. Export before replacing runs.** A future confirmation will list affected product runs and offer Download first. Remove them from active use only after successful activation; retain protected audit history.")
+        st.button("Rebuild evidence · Coming later", key="rebuild-evidence-placeholder", disabled=True,
+                  help="Not implemented. No files, embeddings, Pinecone records or runs will change.")
+        st.caption("Blocked during an active run. Requires separate approval and an embedding budget. Nothing runs from this card.")
+
+
 def inventory_page(display, snapshot):
     saved=ui_saved_runs()
     left, right = st.container(key="inventory-layout").columns([2, 1], gap="small")
@@ -183,20 +239,41 @@ def inventory_page(display, snapshot):
                 continue
             row = snapshot["markets"][market]
             with st.container(key=f"market-row-{market}"):
-                a, b, c, d = st.columns([0.5, 1.2, 1.7, 0.7], vertical_alignment="center")
+                a, b, c, d = st.columns([0.5, 1.1, 1.5, 1.3], vertical_alignment="center")
                 a.write("India" if market == "IN" else market)
                 b.write(date_label(row["planned_launch_date"]))
                 symbol = {"good": "●", "warn": "●", "hold": "●", "unknown": "○"}[row["tone"]]
                 c.html(f'<span class="readiness {row["tone"]}">{symbol}</span> {escape(row["label"])}')
-                if d.button("Open brief ›", type="tertiary", key=f"open-{market}", width="stretch", disabled=row["planned_launch_date"] is None):
+                record=next((x for x in saved if x['request']['market_id']==market),None)
+                if record:
+                    view, fresh = d.columns([1.25, 1], gap="small", vertical_alignment="center")
+                    label = "View package ›" if record['status'] == 'approved' else "View run ›"
+                    if view.button(label, type="tertiary", key=f"view-{market}", width="stretch"):
+                        attached=st.session_state.get('offline_run')
+                        if attached is None or attached.snapshot()['run_id'] != record['run_id']:
+                            if st.session_state.get('ui-mode') == 'Demo simulation':
+                                st.error('Saved simulation unavailable in this session.')
+                                st.stop()
+                            from launchlens.live_package import load_current_live_run
+                            try:
+                                attached=load_current_live_run()
+                                if attached.snapshot()['run_id'] != record['run_id']:
+                                    raise HarnessError('Different current run')
+                            except (HarnessError, ValueError, TypeError, KeyError, OSError):
+                                st.error('This saved package could not be opened. No model calls were made.')
+                                st.stop()
+                            st.session_state['offline_run']=attached
+                        st.session_state['selected_request']=record['request']
+                        st.session_state['screen']='run'
+                        st.rerun()
+                    if fresh.button('Start fresh', key='fresh-'+market, type='tertiary', width="stretch"):
+                        open_archive(record)
+                elif d.button("Open brief ›", type="tertiary", key=f"open-{market}", width="stretch", disabled=row["planned_launch_date"] is None):
                     prior=st.session_state.get('selected_request',{})
                     when=prior.get('evaluation_date') if prior.get('market_id')==market else None
                     st.session_state["selected_request"] = request_for_market(display, snapshot, market,when)
                     st.session_state["screen"] = "brief"
                     st.rerun()
-                record=next((x for x in saved if x['request']['market_id']==market),None)
-                if record and d.button('Start fresh ›',key='fresh-'+market,type='tertiary'):
-                    open_archive(record)
         archives=ui_archived_runs()
         if st.button('Archived packages ('+str(len(archives))+') ›',key='archives',type='tertiary'):
             st.session_state['screen']='archives';st.rerun()
@@ -337,7 +414,17 @@ def brief_page(display, snapshot):
                 st.rerun()
             except HarnessError:
                 st.error("Run could not start. Check the registered task, archive any existing package and verify the remaining budget.")
-        if existing is not None and st.button("View current simulation" if offline else "View current run", key="prepare-view-run", type="tertiary"):
+        if saved is not None:
+            from launchlens.run_archive import executing
+            in_progress=executing(saved) if not offline else saved['status'] in {'created','running'}
+            st.caption('A '+market_name+' run is in progress · View it' if in_progress else
+                       'A '+market_name+' package is saved · View it or archive it before starting fresh.')
+        elif existing is not None:
+            st.caption('A current run is already attached · View it before starting another run.')
+        if (existing is not None or saved is not None) and st.button("View current simulation" if offline else "View current run", key="prepare-view-run", type="tertiary"):
+            if existing is None and not offline:
+                from launchlens.live_package import load_current_live_run
+                st.session_state['offline_run']=load_current_live_run()
             st.session_state["screen"] = "run"; st.rerun()
         st.caption("Scripted offline simulation only. No model or source calls; one current run. Archive it before starting fresh."
                    if offline else ready['message'])
@@ -471,6 +558,14 @@ def main():
     default_offline = os.environ.get("LAUNCHLENS_UI_MODE") == "offline"
     st.session_state['ui-mode']=st.session_state.get('ui-mode',st.session_state.get('_data_mode','Demo simulation' if default_offline else 'Live agent'))
     mode=st.session_state['ui-mode']
+    if mode=='Live agent' and 'offline_run' not in st.session_state:
+        from launchlens.live_package import current_resume_available,load_current_live_run
+        if current_resume_available():
+            try:
+                restored=load_current_live_run()
+                st.session_state.update(offline_run=restored,selected_request=restored.snapshot()['request'],screen='run')
+            except (HarnessError,ValueError,TypeError,KeyError,OSError):
+                st.warning('Saved run could not be verified. Original artifacts are kept; no model action was replayed.')
     with st.container(key="page-header"):
         brand, nav = st.columns([2, 3], vertical_alignment="center")
         brand.html('<div class="launchlens-brand">LaunchLens</div><p class="launchlens-tagline">Your launch-aware GTM agent.</p>')
@@ -520,7 +615,11 @@ def main():
     snapshot=st.session_state['inventory']
     if snapshot["status"] != "ok":
         st.warning("Some launch data is unavailable. Missing dates/readiness do not grant permission. Refresh data after resolving source access.")
-    if st.session_state["screen"] == "archives":
+    if st.session_state["screen"] == "rebuild":
+        st.title("Rebuild evidence")
+        with st.container(key="rebuild-page"):
+            rebuild_evidence_card(snapshot)
+    elif st.session_state["screen"] == "archives":
         archived_page()
     elif st.session_state["screen"] == "empty-run":
         st.title('Current run')

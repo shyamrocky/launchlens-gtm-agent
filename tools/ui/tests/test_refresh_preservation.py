@@ -70,7 +70,7 @@ class RefreshTests(unittest.TestCase):
   self.assertIn('Synthetic PRD changed — evidence not re-indexed',html)
   self.assertNotIn('source-access good',html)
   self.assertFalse(any(b.key=='rebuild' for b in a.button))
-  self.assertTrue(any('Rebuild evidence · Not built yet' in n.value for n in a.info))
+  self.assertIn('Product brief changed · evidence not re-indexed',' '.join(x.proto.body for x in a.get('html')));self.assertTrue(a.button(key='source-rebuild'))
   self.assertNotIn('offline_run',a.session_state)
  def test_two_page_nav_preserves_run_and_does_not_fetch(self):
   a=self.app();run=a.session_state['offline_run'];before=run.snapshot();capture=deepcopy(run.capture())

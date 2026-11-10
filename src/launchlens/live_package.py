@@ -16,6 +16,7 @@ from threading import Lock
 from launchlens.content_review import ContentCall
 from launchlens.gtm_registry import HarnessError, require, supported_use_cases, validate_request
 from launchlens.linkedin_drafting import digest
+from launchlens.live_research import ResearchError
 from launchlens.live_research import (MODEL, ResearchModel, LiveResearchTools, ENDPOINT,
     MAX_REQUEST_BYTES, dumps, strict_json, tool_schemas)
 from launchlens.package_content import CONFIG_SHA256, configuration, load_package_prompt
@@ -507,6 +508,20 @@ class LiveTransport:
             raise LiveGateError('Live response or accounting unavailable; stopped without retry') from None
 
 
+def worker_command(method):
+    """Keep execution ownership and final checkpoint across UI disconnects."""
+    from functools import wraps
+    @wraps(method)
+    def call(self,run_id,*args,**kwargs):
+        if self.store is None:return method(self,run_id,*args,**kwargs)
+        from launchlens.run_archive import execution_lease
+        with execution_lease(run_id):
+            self.guard.archive_gate()
+            try:return method(self,run_id,*args,**kwargs)
+            finally:self._persist(self.snapshot())
+    return call
+
+
 class LivePackageRun:
     """Thin UI/CLI command adapter; all execution stays in FoundationSession."""
     kind = 'live'
@@ -546,6 +561,7 @@ class LivePackageRun:
         self.guard.run_id=self.session.snapshot()['run_id']
 
     def snapshot(self):return self.session.snapshot()
+    @worker_command
     def execute(self, run_id, *, on_update=None):
         def checkpoint(update,state):
             self._persist(state)
@@ -559,9 +575,11 @@ class LivePackageRun:
             raise LiveGateError('Protected execution capture unavailable; stopped without retry') from None
         return state
     def can_review_saved(self):return self.session.can_review_saved()
+    @worker_command
     def review_saved(self, run_id, *, on_update=None):
         try:return self.session.review_saved(run_id,on_update=on_update)
         finally:self._save(self.snapshot())
+    @worker_command
     def recheck_review(self, run_id, *, owner_requested=False):
         # A separate one-shot adapter is permitted for this explicit same-version
         # recheck; ordinary exact-binding replay protection stays unchanged.
@@ -587,16 +605,20 @@ class LivePackageRun:
     def revise(self, run_id, feedback, version, sha):
         self.request_revision(run_id,feedback,draft_version=version,draft_sha256=sha)
         return self.execute(run_id)
+    @worker_command
     def continue_run(self,run_id,*,on_update=None):
         state=self.session.continue_run(run_id,on_update=on_update);self._save(state);return state
+    @worker_command
     def resume(self,run_id,reply,*,on_update=None):
         state=self.session.resume(run_id,reply,on_update=on_update);self._save(state);return state
+    @worker_command
     def recover_writer_candidate(self,run_id,*,on_update=None):
         calls=self.writer.calls
         gate(len(calls)==1 and 'candidate' in calls[0],'Saved Writer candidate unavailable')
         try:return self.session.recover_writer_candidate(run_id,deepcopy(calls[0]['candidate']),on_update=on_update)
         finally:self._save(self.snapshot())
 
+    @worker_command
     def retry_writer(self,run_id,*,on_update=None):
         state=self.session.retry_writer(run_id,on_update=on_update);self._save(state);return state
     def stop(self,run_id):
@@ -689,7 +711,7 @@ def current_resume_available():
     return os.environ.get('LAUNCHLENS_UI_MODE')!='offline' and (ROOT/'data/private/current-live-run.json').is_file()
 
 
-def load_current_live_run():
+def _current_receipts():
     """Explicit UI resume from hash-bound private receipts; zero provider calls."""
     pointer=ROOT/'data/private/current-live-run.json'
     gate(pointer.is_file() and not pointer.is_symlink() and not pointer.stat().st_mode&0o077,
@@ -697,11 +719,13 @@ def load_current_live_run():
     spec=strict_json(pointer.read_bytes());loaded={}
     from launchlens.run_archive import is_archived
     gate(set(spec)=={'state','capture','authorization','store'},'Invalid current run pointer')
+    store_path=ROOT/spec['store'];gate(store_path.resolve().is_relative_to((ROOT/'data/generated').resolve()) and not store_path.is_symlink(),'Invalid current store')
     for name in ['state','capture','authorization']:
         entry=spec[name];relative=Path(entry['path'])
         gate(not relative.is_absolute() and '..' not in relative.parts,'Invalid current receipt path')
-        path=ROOT/relative;base=ROOT/('data/private' if name=='authorization' else 'data/generated')
-        gate(path.resolve().is_relative_to(base.resolve()) and path.is_file() and not path.is_symlink()
+        path=ROOT/relative
+        allowed=(path.resolve().is_relative_to((ROOT/'data/private').resolve()) or path==store_path/'authorization.json') if name=='authorization' else path.parent==store_path
+        gate(allowed and path.is_file() and not path.is_symlink()
             and not path.stat().st_mode&0o077 and path.stat().st_size<16_000_000,'Invalid private current receipt')
         raw=path.read_bytes();gate(hashlib.sha256(raw).hexdigest()==entry['sha256'],'Current receipt changed')
         loaded[name]=strict_json(raw)
@@ -711,6 +735,84 @@ def load_current_live_run():
     gate(max(store_path.glob('state-*.json'),key=lambda p:int(p.stem.rsplit('-',1)[1]))==ROOT/spec['state']['path'] and
         max(store_path.glob('capture-*.json'),key=lambda p:int(p.stem.rsplit('-',1)[1]))==ROOT/spec['capture']['path'],
         'A newer current checkpoint exists; stale counters cannot resume')
+    return loaded,store_path
+
+
+class SavedRunView:
+    """Read-only attachment while another worker owns execution or restore is unsafe."""
+    kind='live';package=True;scenario=None;read_only=True
+    def __init__(self,loaded,store,*,watching=False):
+        from types import SimpleNamespace
+        self._state=deepcopy(loaded['state']);self._capture=deepcopy(loaded['capture'])
+        self.store=ProtectedStore.open_existing(store);self.watching_worker=watching
+        permission=loaded['authorization'];summary=self._capture['spending']
+        standing=StandingBudget(ROOT/permission['budget_ledger']) if permission.get('budget_ledger') else StandingBudget() if permission.get('standing_budget') else None
+        self.guard=SimpleNamespace(standing=standing,permission=permission,cost=Decimal(summary.get('estimated_usage_cost_usd','0')),
+            summary=lambda:deepcopy(summary),can_revise=lambda:False,active=watching)
+        self.session=SimpleNamespace(can_retry_writer=lambda:False)
+    def snapshot(self):return deepcopy(self._state)
+    def capture(self):return deepcopy(self._capture)
+    def can_review_saved(self):return False
+    def reset(self):pass  # Removing a UI attachment cannot reset a protected run.
+
+
+def _write_recovery(loaded,store,state,capture):
+    """Append new receipts; never rewrite original checkpoints or spending."""
+    output=ProtectedStore.open_existing(store)
+    number=max(int(p.stem.rsplit('-',1)[1]) for p in store.glob('state-*.json'))+1
+    suffix=str(number).zfill(2)
+    output.write('state-'+suffix+'.json',state);output.write('capture-'+suffix+'.json',capture)
+    from types import SimpleNamespace
+    shell=object.__new__(LivePackageRun);shell.store=output;shell.guard=SimpleNamespace(permission=loaded['authorization'])
+    shell._advance_current_pointer(state,store/('state-'+suffix+'.json'),store/('capture-'+suffix+'.json'))
+    return dict(loaded,state=state,capture=capture)
+
+
+def _interrupt_checkpoint(loaded,store):
+    state=deepcopy(loaded['state']);capture=deepcopy(loaded['capture'])
+    complete=False
+    if state.get('package') and state.get('review'):
+        try:
+            from launchlens.package_content import authoritative_package_binding,validate_package_review
+            authoritative_package_binding(state)
+            review=state['review']
+            complete=validate_package_review(review['raw_response'],state,isolate_findings=review.get('assessment_policy')=='isolated_findings_v1',scan_additions=review.get('scan_additions',False))==review
+        except (HarnessError,ResearchError,ValueError,TypeError,KeyError):pass
+    state['status']='awaiting_human_review' if complete else 'interrupted'
+    state['pending']=None;state['revision_request']=None
+    marker=state['ledger'].get('harness-auto-refinement')
+    if marker and marker.get('status')=='scheduled':marker.update(status='interrupted',reason='browser_session_interrupted_no_automatic_replay')
+    # Keep every financial reservation in the ledger. Detach only the abandoned
+    # executable handoff, so reopening cannot spend its reservation automatically.
+    capture['spending']['pending_revision_claims']={}
+    state['continuation_notice']=('Restored Version '+str(state['package']['version'])+' and its saved review. No generation was repeated. Unfinished refinement was not resumed.' if complete else
+        'Run interrupted. Saved research and drafts are kept. Archive this package to start fresh; no model action was replayed.')
+    state['events'].append({'sequence':len(state['events'])+1,'action':'checkpoint_recovery','outcome':'restored' if complete else 'interrupted','why':state['continuation_notice']})
+    return _write_recovery(loaded,store,state,capture)
+
+
+def load_current_live_run():
+    """Reattach without inference; a live lease is never mistaken for a stale status."""
+    from launchlens.run_archive import execution_active,execution_lease
+    loaded,store=_current_receipts();rid=loaded['state']['run_id']
+    if execution_active(rid):return SavedRunView(loaded,store,watching=True)
+    with execution_lease(rid):
+        loaded,store=_current_receipts()  # Re-read after ownership; no stale recovery.
+        state=loaded['state']
+        if state['status'] in {'created','running'} or state.get('revision_request') is not None:
+            loaded=_interrupt_checkpoint(loaded,store)
+        if loaded['state']['status']=='interrupted':return SavedRunView(loaded,store)
+        try:return _restore_current(loaded,store)
+        except (HarnessError,ResearchError,ValueError,TypeError,KeyError,OSError):
+            if loaded['state']['status']!='interrupted':
+                state=deepcopy(loaded['state']);state.update(status='interrupted',pending=None,revision_request=None,
+                    continuation_notice='Run interrupted. Saved artifacts remain available; archive the package before starting fresh. No model call was made.')
+                loaded=_write_recovery(loaded,store,state,deepcopy(loaded['capture']))
+            return SavedRunView(loaded,store)
+
+
+def _restore_current(loaded,store_path):
+    from launchlens.run_archive import is_archived
     validate_authorization(loaded['authorization'])
     from launchlens.package_content import authoritative_package_binding
     state=loaded['state']

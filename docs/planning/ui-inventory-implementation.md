@@ -1,3 +1,47 @@
+## M2-D050 — Home product-evidence status and header
+
+**Owner-approved scope, November 10, 2026:** Home source card, shared header and
+routing to the unchanged planned-Rebuild explanation only. Implemented; owner UI
+review pending. No model call, evidence/source/index change or Git sync.
+
+Source documents always shows a product-evidence line below Last checked and a
+muted **Rebuild evidence (planned) ›** link. Index date reads `finished_utc` from the
+existing successful `data/generated/m15b4-full-corpus/receipt.json`, checked against
+the current index, namespace, embedding model and45-record count. Actual receipt:
+2026-11-06T06:04:00.563850+00:00 → **Nov5,2026 Pacific**. It does not use file mtime,
+current time or a fabricated configuration date. Missing/invalid/different-corpus
+metadata displays index date unavailable / Not verified; it is optional display
+metadata, not a new runtime provisioning requirement.
+
+**✓ Up to date** requires both successful Drive PDF reads with actual digests equal
+to the frozen indexed source digests, and a valid receipt. It is a source checksum
+comparison, not a new Pinecone health test or launch permission. A changed Drive
+checksum renders amber **Product brief changed · evidence not re-indexed**. Missing
+reads and fixture simulation never claim current verified access. No network call
+was added to obtain the index date; the existing source-check behavior is retained.
+
+Restored the prior explanation body exactly from its accepted implementation;
+byte-for-byte comparison PASS. It remains non-executable, outside the top nav.
+Clicking its Home link and returning does not refresh sources or mutate runs.
+The apparent header divider was the main scroll container's focus outline.
+Removed that outline only; interactive link/button focus indicators remain.
+
+**Verification:**105 offline UI tests PASS, including6 new tests for timestamp/
+timezone provenance, malformed/missing/wrong-corpus metadata, matched versus changed
+checksums, unverified/fixture states, explanation navigation with zero fetches and
+scoped focus styling. Prior archive/Refresh/run UI regressions pass. Python syntax
+and `git diff --check` PASS. All900 protected baseline files unchanged: sources,
+indexed artifacts, prompts/configs, archives, runs, ledgers, .env and MEMORY.
+
+Main8520 restarted; actual Chrome Home shows the date/status and muted link, clean
+header and unchanged two-link nav. Opened the explanation and returned to the same
+Home snapshot. Standard read-only Home source checks succeeded; no external writes
+or model/Pinecone calls. Shared demo budget remains USD1.00, no current run started.
+[Verified Home screenshot](screenshots/d050/home.jpg). No installs, Git staging,
+commit/push or MEMORY append. Stop for owner review.
+
+---
+
 ## M2-D049 publication checkpoint — November 10, 2026
 
 Owner requested Git sync. A clean canonical copy passed422 harness,99 UI and112
@@ -771,3 +815,58 @@ Primary implementation references:
 [native containers](https://docs.streamlit.io/develop/api-reference/layout/st.container),
 [AppTest](https://docs.streamlit.io/develop/api-reference/app-testing/st.testing.v1.apptest),
 [configuration](https://docs.streamlit.io/develop/api-reference/configuration/config.toml).
+
+
+## M2-D051 — Browser disconnect recovery and saved US Version 1
+
+November 10, 2026. Owner authorized offline tests for both disconnect cases and
+recovery of the current US checkpoint without new generation. Implemented locally;
+owner end-to-end retest pending. No Git publication.
+
+- Execution ownership now uses a per-run OS file lock, independent of browser
+  session state. A reopening browser attaches read-only to a still-active worker;
+  it cannot duplicate execution or archive that worker. Check progress reloads
+  its latest persisted checkpoint.
+- If execution ended, reopening validates the hash-bound saved receipts. A complete
+  package/review returns to human review. An incomplete or unsafe-to-resume run
+  becomes interrupted, retains its artifacts, releases its execution lock and can
+  be downloaded/archived before starting fresh. No paid action is replayed.
+- Worker exit/disconnect persists the latest state. Start controls explain the
+  existing run and offer navigation. Interrupted draft-only views do not assume a
+  review exists. Archive retains protected artifacts and accounting.
+
+### Actual verification
+
+428 harness tests PASS, including six focused disconnect/recovery cases. 105 UI
+regressions PASS; seven focused live-UI tests then PASS including one additional
+interrupted-draft test: 106 unique UI tests / 534 unique tests total. Network is
+blocked in the recovery tests. Both active-worker and ended-worker paths are
+covered; completed, incomplete, abandoned-refinement and unknown-accounting
+checkpoints are included. Archive download ZIP and preserved originals checked.
+
+Initial UI regressions exposed two outdated assumptions: explicit-only resume and
+an unisolated Home test seeing the real saved pointer. Updated tests to expect
+automatic attachment and isolate Home rendering. During that network-blocked
+AppTest, the authorized real checkpoint was recovered; the subsequent explicit
+recovery check confirmed the same result with zero network calls.
+
+US run c9d4db36-d900-4057-948c-ec9573619a77 is now awaiting_human_review, Version 1,
+with its complete saved review and all five formats. Package and review exactly
+match original state-10. No new Writer, Reviewer, research, approval or revision;
+revision attempts remain zero. The interrupted scheduled automatic refinement was
+not replayed. Historical state/capture files remain unchanged; recovery appends new
+receipts and updates only the active descriptor/current pointer.
+
+All 954 baseline protected files checked: only those two expected pointer/descriptor
+files changed. Sources, prompts, configs, credentials, historical receipts, archives,
+budget ledgers and MEMORY unchanged. Budget remains USD0.7997323 available
+(display USD0.80), including retained uncertain reservations; no refund/reset and
+zero new inference cost. Whitespace check PASS.
+
+Actual saved-run Streamlit AppTest: Current run automatically opens, Version 1
+and complete review render, Review package / Archive controls available, zero
+exceptions and zero network calls. Local app started on 127.0.0.1:8520; health HTTP
+200. Native browser automation was unavailable (no enabled browser surfaces), so
+no native visual screenshot or real browser-disconnect end-to-end pass is claimed.
+Owner retest: reopen app → Current run → Review/Package; test disconnect/reopen or
+archive and start fresh as desired. Reopening alone does not generate content.

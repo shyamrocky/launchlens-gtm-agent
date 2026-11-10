@@ -20,6 +20,8 @@ class InventoryUITests(unittest.TestCase):
         self.resume.start();self.addCleanup(self.resume.stop)
         self.saved=patch('launchlens.review_decisions.saved_review_available',return_value=False)
         self.saved.start();self.addCleanup(self.saved.stop)
+        self.saved_runs=patch('launchlens.inventory_ui.ui_saved_runs', return_value=[])
+        self.saved_runs.start();self.addCleanup(self.saved_runs.stop)
         self.snapshot = fetch_inventory(load_display(), Reader())
         self.no_http = patch("urllib.request.OpenerDirector.open", side_effect=AssertionError("Unexpected network in offline UI test"))
         self.no_http.start(); self.addCleanup(self.no_http.stop)

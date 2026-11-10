@@ -20,6 +20,9 @@
 .readiness.hold { color: #FF453A; }
 .readiness.unknown { color: #acb7c7; }
 [class*="st-key-market-row-"] { padding: 9px 0; border-bottom: 1px solid #364356; }
+[class*="st-key-market-row-"] [data-testid="stHorizontalBlock"] { align-items: center; }
+[class*="st-key-market-row-"] [data-testid="stButton"] { margin: 0; }
+[class*="st-key-market-row-"] [class*="st-key-fresh-"] button { font-size: 13px; color: #b8c4d4; white-space: nowrap; }
 @media(max-width: 1000px) { .launch-meta { grid-template-columns: 1fr 1fr; } .launch-meta > div:last-child { grid-column: 1/-1; } }
 @media(max-width: 640px) { .launch-meta { grid-template-columns: 1fr; } .st-key-launch-card { padding: 16px; } .stMainBlockContainer { padding-left: 1rem; padding-right: 1rem; } }
 
@@ -244,3 +247,13 @@
 /* D049: source actions belong to the source card; two stable page links. */
 .st-key-header-navigation [data-testid="stHorizontalBlock"] { gap: 1rem; }
 .st-key-source-documents .st-key-refresh button { padding-left: 0; }
+
+/* D050: the main scroll region's focus outline is not a header divider.
+   Keep focus indicators on links, buttons and other interactive controls. */
+.stApp [data-testid="stMain"]:focus,
+.stApp [data-testid="stMain"]:focus-visible { outline: none; }
+.product-evidence-status { color:#b8c4d4; font-size:13px; line-height:1.45; margin:5px 0 0; }
+.product-evidence-status.good { color:#30D158; }
+.product-evidence-status.warn { color:#FF9F0A; }
+.st-key-source-documents .st-key-source-rebuild button { color:#b8c4d4; font-size:13px; padding:0; min-height:0; }
+.st-key-source-documents .st-key-source-rebuild button:hover { color:#9bbaff; }

@@ -181,7 +181,7 @@ def _legacy_run_page(display):
             active=state['status'] in {'created','running'} or command is not None
             status='running' if active else state['status']
             ready=status=='awaiting_human_review' and bool(state.get('review'))
-            headline='Agent is working' if active else 'Waiting on you' if status=='needs_clarification' else 'Package ready for your review' if ready else 'Promotional drafts blocked' if status=='held' else 'Draft needs attention' if status=='draft_incomplete' else 'Run stopped'
+            headline='Agent is working' if active else 'Run interrupted' if state['status']=='interrupted' else 'Waiting on you' if status=='needs_clarification' else 'Package ready for your review' if ready else 'Promotional drafts blocked' if status=='held' else 'Draft needs attention' if status=='draft_incomplete' else 'Run interrupted' if state['status']=='interrupted' else 'Run stopped'
             tone='working' if active else 'warn' if status=='needs_clarification' else 'good' if ready else 'hold'
             st.html('<div class="gate-heading"><span class="readiness '+tone+'">●</span><h3>'+headline+'</h3></div>')
             if active:
@@ -327,8 +327,9 @@ def run_page(display):
         planned=(state.get('launch') or {}).get('planned_launch_date') or st.session_state.get('inventory',{}).get('markets',{}).get(request['market_id'],{}).get('planned_launch_date')
         st.caption(display['product_name']+' · Planned launch: '+(date_label(planned) if planned else 'Not verified'))
         command=st.session_state.pop('run-command',None)
-        active=state['status'] in {'created','running'} or command is not None
-        ready=not active and state['status']=='awaiting_human_review' and bool(state.get('review'))
+        read_only=getattr(run,'read_only',False)
+        active=state['status'] in {'created','running'} or command is not None or getattr(run,'watching_worker',False)
+        ready=not read_only and not active and state['status']=='awaiting_human_review' and bool(state.get('review'))
         recover=not active and callable(getattr(run,'can_review_saved',None)) and run.can_review_saved()
         tabkey='run-tabs-'+run_id
         phase=('working' if active else state['status'],(state.get('package') or {}).get('version'))
@@ -338,13 +339,18 @@ def run_page(display):
         if st.session_state.pop('run-show-package',False):st.session_state[tabkey]='Review'
         left,right=st.container(key='run-columns').columns([.65,.35],gap='small')
         with right, st.container(key='run-summary'):
-            headline='Agent is working' if active else 'Waiting on you' if state['status']=='needs_clarification' else 'Package approved for internal use' if approved else ('Version '+str(state['package']['version'])+' ready for your review' if state['package']['version']>1 else 'Package ready for your review') if ready else 'Promotional drafts blocked' if state['status']=='held' else 'Draft needs attention' if state['status']=='draft_incomplete' else 'Run stopped'
+            headline='Agent is working' if active else 'Waiting on you' if state['status']=='needs_clarification' else 'Package approved for internal use' if approved else ('Version '+str(state['package']['version'])+' ready for your review' if state['package']['version']>1 else 'Package ready for your review') if ready else 'Promotional drafts blocked' if state['status']=='held' else 'Draft needs attention' if state['status']=='draft_incomplete' else 'Run interrupted' if state['status']=='interrupted' else 'Run stopped'
             tone='working' if active else 'warn' if state['status']=='needs_clarification' else 'good' if ready else 'hold'
             st.html('<div class="gate-heading"><span class="readiness '+tone+'">●</span><h3>'+headline+'</h3></div>')
             if active:
                 st.write('The agent chooses its research actions. Every draft receives a required independent review.')
-                if st.button('Stop run',key='run-stop'):run.stop(run_id);st.rerun()
-                if not command and st.button('Continue run',key='run-continue'):command='execute'
+                if read_only:
+                    st.caption('Reattached to the saved run. Its worker is still active; no work will be started twice.')
+                    if st.button('Check progress',key='run-check-progress'):
+                        st.session_state.pop('offline_run',None);st.rerun()
+                else:
+                    if st.button('Stop run',key='run-stop'):run.stop(run_id);st.rerun()
+                    if not command and st.button('Continue run',key='run-continue'):command='execute'
             elif ready:
                 st.write(('Review incomplete · Human inspection required' if not state['review'].get('review_complete',False) else 'Approved for internal use' if approved else 'Human approval pending')+' · Nothing published')
                 if not approved and st.button('Review package',key='run-review',type='tertiary',width='stretch'):
@@ -357,6 +363,7 @@ def run_page(display):
                 if recover and a.button('Review Version '+str(state['package']['version']),key='run-recover-review',type='primary'):command='review_saved'
                 elif run.session.can_retry_writer() and a.button('Try again',key='run-retry',type='primary'):command='retry'
                 if b.button('Back to setup',key='run-setup',type='tertiary'):st.session_state['screen']='brief';st.rerun()
+            if state.get('continuation_notice'):st.caption(state['continuation_notice'])
             summary=st.empty();summary.html(run_summary_meta(state,run))
             st.markdown('**Deliverables**')
             summary_progress=st.empty();summary_progress.html(package_progress(state,approved=approved))
@@ -388,11 +395,13 @@ def run_page(display):
                             choice=st.radio('Choose the next step',['Draft without availability wording','Recheck readiness','Stop this run'],key='run-choice',index=0)
                             answered=st.form_submit_button('Continue',type='primary')
                         if answered:command={'Draft without availability wording':'draft_without_availability','Recheck readiness':'recheck_readiness','Stop this run':'stop'}[choice]
-                if state.get('review'):review_page(state,run=run,embedded=True)
+                if read_only:st.info('Saved review is read-only while execution is active or interrupted. Saved drafts remain available under Package; technical details retain the assessment.')
+                elif state.get('review'):review_page(state,run=run,embedded=True)
                 elif state['status']!='needs_clarification':st.info('Independent review will appear here when it completes. Saved drafts are under Package.')
             with package:
                 progress=st.empty()
-                if state.get('package'):package_panel(state,run,controls=False)
+                if state.get('package') and (read_only or not state.get('review')):draft_outputs(state)
+                elif state.get('package'):package_panel(state,run,controls=False)
                 else:st.info('Drafts will appear here when writing completes. Deliverable progress is shown in the run panel.')
         if command is not None:
             try:

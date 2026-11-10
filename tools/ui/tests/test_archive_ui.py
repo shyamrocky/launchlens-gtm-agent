@@ -44,12 +44,32 @@ class ArchiveUITests(unittest.TestCase):
   a.button(key='home').click().run();a.button(key='fresh-US').click().run()
   self.assertTrue(a.button(key='archive-confirm').disabled)
   self.assertTrue(any('Stop the run first' in x.value for x in a.warning))
+ def test_saved_market_opens_run_and_keeps_secondary_start_fresh(self):
+  a=self.start();run=a.session_state['offline_run'];before=run.snapshot()
+  a.button(key='home').click().run()
+  self.assertEqual(a.button(key='view-US').label,'View run ›')
+  self.assertTrue(a.button(key='fresh-US'))
+  self.assertFalse(any(b.key=='open-US' for b in a.button))
+  self.assertTrue(all(a.button(key=f'open-{market}') for market in ('UK','IN')))
+  a.button(key='view-US').click().run()
+  self.assertFalse(a.exception)
+  self.assertEqual(a.title[0].value,'US package')
+  self.assertEqual(run.snapshot(),before)
+ def test_approved_market_uses_view_package_label(self):
+  a=self.start();run=a.session_state['offline_run'];a.button(key='home').click().run()
+  from launchlens import inventory_ui
+  record=inventory_ui.simulation_record(run)
+  record['status']='approved'
+  with patch('launchlens.inventory_ui.ui_saved_runs',return_value=[record]):
+   a.run()
+  self.assertEqual(a.button(key='view-US').label,'View package ›')
+  self.assertTrue(a.button(key='fresh-US'))
  def test_source_refresh_not_in_nav_and_rebuild_notice_only_on_mismatch(self):
   a=self.app();self.assertEqual([b.label for b in a.button[:2]],['GTM launches','Current run'])
   self.assertEqual(a.button(key='refresh').label,'↻ Refresh')
   self.assertFalse(any(b.key=='rebuild' for b in a.button));self.assertFalse(any('Rebuild evidence' in x.value for x in a.info))
   snap=a.session_state['inventory'];snap['source_access']={'Product Brief':{'status':'changed'}}
   a.session_state['inventory']=snap;a.run()
-  self.assertTrue(any('Rebuild evidence · Not built yet' in n.value for n in a.info))
+  self.assertIn('Product brief changed · evidence not re-indexed',' '.join(x.proto.body for x in a.get('html')));self.assertTrue(a.button(key='source-rebuild'))
 
 if __name__=='__main__':unittest.main()

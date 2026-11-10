@@ -52,6 +52,16 @@ class LivePackageUITests(unittest.TestCase):
         if any(b.label=='Review package' for b in app.button):app.button(key='run-review').click().run()
         return app,run,wire
 
+    def test_interrupted_draft_renders_without_review_or_execution_controls(self):
+        from launchlens.live_package import SavedRunView
+        app,run,wire=self.start_live()
+        state=run.snapshot();state.update(status='interrupted',review=None,pending=None,revision_request=None)
+        view=SavedRunView({'state':state,'capture':run.capture(),'authorization':run.guard.permission},run.store.path)
+        calls=len(wire.calls);app.session_state['offline_run']=view;app.session_state['screen']='run'
+        app.run();self.assertFalse(app.exception)
+        self.assertFalse(any(b.label in ['Continue agent','Create Version 2','Review Version 2'] for b in app.button))
+        self.assertEqual(len(wire.calls),calls)
+
     def test_live_mode_and_demo_mode_labels_and_no_unapproved_start(self):
         class Reader:
             def get_launch_context(self,market):return ReviewFixtureTools().read_launch({'market_id':market})
@@ -116,13 +126,13 @@ class LivePackageUITests(unittest.TestCase):
         app.run();self.assertEqual(len(wire.calls),initial+2)
         self.assertFalse(any(b.label=='Create Version 2' for b in app.button))
 
-    def test_explicit_current_navigation_resumes_same_package_without_any_calls(self):
+    def test_reopening_automatically_resumes_same_package_without_any_calls(self):
         app,run,wire=self.start_live();before=run.snapshot();count=len(wire.calls)
         del app.session_state['offline_run']
         if 'selected_request' in app.session_state:del app.session_state['selected_request']
         app.session_state['screen']='inventory';app.session_state['run-show-package']=False
         with patch('launchlens.live_package.current_resume_available',return_value=True),patch('launchlens.live_package.load_current_live_run',return_value=run) as resume:
-            app.run();self.assertEqual(resume.call_count,0)
+            app.run();self.assertEqual(resume.call_count,1)
             app.button(key='current').click().run();self.assertEqual(resume.call_count,1)
         self.assertFalse(app.exception);self.assertEqual(run.snapshot(),before)
         self.assertEqual(len(wire.calls),count);self.assertEqual(app.title[0].value,'US package')
