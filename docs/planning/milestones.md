@@ -1,3 +1,15 @@
+## Owner-authorized run UI and approval sync — November 10, 2026
+
+Owner requested Git sync of completed M2-D040–D042: grouped Activity phases and
+recovered-step display; direct as-is current-version approval and protected receipt
+restoration; full-width65/35 Current run tabs with a shared responsive status/actions
+panel. Fresh clean canonical copy: **387 harness+81 UI+111 root=579 tests PASS**.
+Existing US Version2 owner approval is preserved; no new approval, draft, revision
+or model call was made during sync. Credentials, saved runs, budget ledgers and
+workspace remain local. No next milestone or further inference is authorized.
+[Scope and verification](repository-sync-2026-11-09.md#run-ui-and-as-is-approval-sync--m2-d042).
+Earlier checkpoint and publication records below retain their historical state.
+
 ## Owner-authorized repository sync — November 10, 2026
 
 Owner requested Git sync of the completed canonical work through M2-D039:

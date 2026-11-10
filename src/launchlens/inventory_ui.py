@@ -308,8 +308,7 @@ def main():
             with left, st.container(key="agent-run"):review_page(saved,saved=True)
     elif st.session_state["screen"] == "run" and "offline_run" in st.session_state:
         from launchlens.agent_run_ui import run_page
-        left, _ = st.container(key="detail-layout").columns([2, 1], gap="small")
-        with left:run_page(display)
+        with st.container(key="run-layout"):run_page(display)
     elif st.session_state["screen"] == "brief" and "selected_request" in st.session_state:
         left, _ = st.container(key="detail-layout").columns([2, 1], gap="small")
         with left:brief_page(display, snapshot)

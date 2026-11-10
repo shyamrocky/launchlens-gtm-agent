@@ -34,10 +34,10 @@ class CardStackTests(unittest.TestCase):
   self.assertEqual(book['replacements'][g['id']],safe_hints(g)[0]);self.assertEqual(run.snapshot(),s)
  def test_package_view_changes_compare_export_and_bound_approval(self):
   a=self.app();run=a.session_state['offline_run'];s=run.snapshot();finish_stack(a)
-  before=run.capture();key='run-approval-check-'+s['run_id']+'-1'
+  before=run.capture()
   self.assertTrue(a.button(key='approve-package').disabled)
-  a.checkbox(key=key).check().run();self.assertFalse(a.button(key='approve-package').disabled)
-  a.button(key='approve-package').click().run();self.assertTrue(any('Approved for internal use' in m.value for m in a.success))
+  next(c for c in a.checkbox if (c.key or '').startswith('run-approval-as-is-')).check().run();self.assertFalse(a.button(key='approve-package').disabled)
+  a.button(key='approve-package').click().run();self.assertTrue(any('Package approved for internal use' in x.proto.body for x in a.get('html')))
   self.assertFalse(run.snapshot()['human_accepted']);self.assertEqual(run.capture(),before)
   self.assertTrue(any('Download Markdown'==d.label for d in a.get('download_button')))
   a.button(key='package-view-linkedin').click().run();self.assertIn('LinkedIn post · Version 1',[h.value for h in a.subheader])
@@ -62,7 +62,7 @@ class CardStackTests(unittest.TestCase):
   self.assertEqual(a.button(key='create-next-version').label,'Revision limit reached')
   self.assertFalse(any('Version 5' in x.label for x in a.text_area))
   self.assertTrue(any('All 3 revisions' in x.value for x in a.info))
-  a.checkbox(key='run-approval-check-'+s['run_id']+'-4').check().run()
+  next(c for c in a.checkbox if (c.key or '').startswith('run-approval-as-is-')).check().run()
   self.assertFalse(a.button(key='approve-package').disabled)
   self.assertEqual(run.snapshot()['package']['version'],4);self.assertEqual(len(run.snapshot()['draft_history']),4)
  def test_final_cards_offer_inline_edit_and_keep_no_rewrite_actions(self):

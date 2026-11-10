@@ -1702,3 +1702,136 @@ raw review, failures, historical versions, credentials and ledger preserved.
 Canonical implementation reuses the existing review/UI/harness; no framework,
 service, dependency, prompt, model or corpus change. No Git publication. App8520:
 Current run → Review. Stop for owner inspection.
+
+
+## M2-D040 — Activity phases and recovered steps
+
+**Owner scope (November 10, 2026):** Activity UI only; no model calls. Fold a recovered
+failure into the successful action in the same run/version, retain a short recovery
+note, and collapse finished phases while expanding the current version.
+
+**Implemented:** the existing timeline now groups events under Research, Version 1,
+Version 2, etc. The actual saved run is currently Version 2. Research (3 steps) and
+Version 1 (2 steps, 1 recovered) start collapsed; Version 2 (human feedback, writing,
+and independent review) starts expanded. Expand any phase to inspect its steps.
+The original rejected Version 1 response is shown once as a successful writing step:
+“Passed after the heading-citation rule update; no rewrite.” It has a green check,
+not a red failure. Original events/failure history remain unchanged in Technical details.
+Only a later success of the same action/version folds prior failed_safely events;
+unresolved failures, unrelated failures and conflicts remain visible. A normal retry
+uses different wording and never claims that no rewrite occurred.
+
+**Verification:** all **77 UI tests PASS**, including seven focused phase/recovery
+regressions. Socket-blocked AppTest on the actual saved Version 2 verified phase
+expansion, recovery wording, no recovered red icon, zero network calls, and unchanged
+state/capture/accounting. Native Safari verified defaults and manually expanded
+Version 1 to inspect the recovery. All 736 pre-existing protected file hashes match,
+including saved drafts, reviews, events, budget/receipts, datasets, credentials and
+MEMORY. No model calls, source/dataset changes, dependency additions, owner wording
+choices, approval, Git staging/commit/push or runtime dependency on workspace.
+The normal homepage performed its existing read-only source checks on reload;
+this was not inference. Desktop screenshot QA only; no new mobile verification.
+
+Screenshots: [Default phases](screenshots/d040/phases.jpg),
+[Expanded recovered step](screenshots/d040/recovery.jpg).
+
+**Navigation:** http://127.0.0.1:8520 → Current run → Activity. App restarted with
+updated UI. Stop for owner review; package content still awaits human acceptance.
+
+
+## M2-D041 — Direct current-version approval and restored acceptance
+
+**Owner decision (November 10, 2026):** accept the version being reviewed as-is,
+record that decision and update its status. Wording choices are instructions only
+for an explicitly requested new version. Approval must not force V2→V3 or another
+wording-card pass. A later requested revision remains optional. Scope: current
+version UI, existing three-revision limit, no new history selector or model calls.
+
+**Implemented:** the Package acknowledgement explicitly accepts current wording,
+including flagged phrases. Approve package records keep-wording dispositions that
+supersede earlier rewrite intentions without changing a single draft character.
+Earlier choices remain in the decision event history; the receipt records the
+prior decision digest, accepted decisions, exact content/review binding, version,
+time and internal-only status. Previewing or checking acknowledgement does not
+persist decisions; explicit approval is the committing action. This works for
+current V1–V4. Existing authoritative evidence, launch and complete-current-review
+checks remain; approval never publishes and does not expand execution budgets.
+
+Approval stays bound to its accepted text/disposition while the owner prepares
+possible future rewrite choices. Those choices alone do not revoke approval or
+change text. A generated or manually edited version must establish its own approval.
+Protected decision/approval receipts restore the exact approved status on reload;
+stale bindings, tampered content/evidence, Hold and publicly readable receipts are
+rejected. The new acknowledgement has a distinct review-bound key, so a previously
+checked generic checkbox is not reused as new accept-as-is consent.
+
+**Actual saved run:** the owner's Version2 internal approval receipt already
+existed before this change. It was previously not restored into the visible status.
+The updated app restores that genuine receipt and shows **Package approved for
+internal use** and **Your approval of Version 2 is recorded**. Repeat approval
+controls are hidden. No new owner approval, wording decision, revision or model call
+was made by the assistant. Version3 remains available only on an explicit request.
+
+**Verification:**387 harness +79 UI=**466 tests PASS**, including6 new acceptance/
+receipt tests and2 new app regressions. All current versions, no-acknowledgement,
+prior rewrite/occurrence overrides, preservation of decision history and draft
+bytes, later revisions, approval persistence and policy failures covered offline.
+Actual saved-V2 socket-blocked AppTest restored the pre-existing receipt with
+zero network and unchanged run/capture. Native Safari verified approved status,
+all five formats, confirmation and exports; no approval/revision/export clicked.
+745 pre-existing protected file hashes match (drafts/reviews/choices/receipts,
+budget, sources, credentials, MEMORY). Diff whitespace PASS. One initial test run
+used an isolated environment missing jsonschema; the complete rerun used the
+existing UI environment with that package, with no installs. Root ingestion tests
+were not rerun for this approval-only change. No new mobile verification.
+
+Screenshots: [Approved Version2](screenshots/d041/approved.jpg),
+[Recorded approval](screenshots/d041/confirmation.jpg).
+
+App restarted on http://127.0.0.1:8520; refresh → Current run → Package.
+No Git staging/commit/push or MEMORY append. Stop for owner inspection.
+
+
+## M2-D042 — Two-column Current run and shared actions panel
+
+**Owner scope (November 10, 2026):** UI only. Current run uses the Home-style
+65%/35% grid: tabs/content left, shared status/actions right on every tab; remove
+the top status card, stack at narrow widths, supply one screenshot per tab.
+
+**Implemented:** Current run now uses the full page width rather than nesting
+inside the old detail column. The right panel holds real status, current version,
+revisions used, cents-formatted budget left, all five deliverable statuses, existing
+review/recovery controls, as-is approval, Markdown download/Copy all and optional
+next-version action. Existing UI handlers were moved/reused; no new orchestration,
+model behavior or execution policy. On approved Version2 the primary action is
+Download Markdown, with all five deliverables Approved and optional Create Version3.
+The left Package tab retains full-draft View controls. Existing Review notes/choices
+feed the same bounded revision command now placed in the right panel. Direct as-is
+approval is independent of that optional revision, as approved in D041.
+
+The old package-run top status card is absent. At <=800 CSS pixels, the columns
+stack with status/actions first and tabs below. Native responsive reflow was checked
+using a resized Safari window and increased browser zoom, then restoring normal
+zoom and the prior window size. This verifies narrow CSS reflow, not physical-device
+coverage. Dark palette and Home header alignment remain. Original non-package legacy
+views are outside the requested package-run redesign.
+
+**Verification:** **81 UI tests PASS**, including two new shared-panel/layout tests.
+Existing approval, explicit revision, retries, recovery and tab/navigation checks
+remain passing with sockets blocked. Actual saved-V2 AppTest verified the shared
+panel, five Approved statuses, $0.71 display and Download on Activity/Review/Package;
+zero network, unchanged state/capture/accounting, genuine owner approval restored.
+Native Safari verified all three desktop tabs and stacked narrow reflow. No choices,
+approval, revision, generation, downloads or exports were executed during visual QA.
+745 protected file hashes unchanged: saved run/drafts/reviews/decisions/approval,
+budget, accepted sources, credentials and MEMORY. Whitespace diff check PASS.
+No dependencies, source edits, model calls, Git staging/commit/push or workspace
+runtime dependency. Broader non-UI suites were not rerun for layout-only work.
+
+Screenshots: [Activity](screenshots/d042/activity.jpg),
+[Review](screenshots/d042/review.jpg), [Package](screenshots/d042/package.jpg),
+[narrow status panel](screenshots/d042/narrow-top.jpg),
+[tabs below the panel](screenshots/d042/narrow-tabs.jpg).
+
+App restarted on http://127.0.0.1:8520. Refresh → Current run. Current Version2
+remains approved for internal use; V3 remains optional. Stop for owner inspection.

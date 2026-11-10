@@ -195,3 +195,33 @@
 .st-key-launch-heading [data-testid="stSelectbox"] { max-width:230px; margin-left:auto; }
 .st-key-launch-heading { margin:0 0 8px; }
 .st-key-source-documents .st-key-snapshot-caption { margin:8px 0 12px; }
+
+/* Activity phases: completed history stays available without crowding the current version. */
+.activity-phase + .activity-phase { border-top:1px solid #364356; }
+.activity-phase > summary { cursor:pointer; padding:16px 0; color:#f0f4fa; }
+.activity-phase > summary strong { font-size:17px; margin-right:14px; }
+.activity-phase > summary span { color:#b8c4d4; font-size:13px; }
+.activity-phase .phase-steps { padding-left:6px; }
+.run-step small { display:block; }
+.run-step .recovery-note { color:#b8c4d4; }
+
+/* D042: full-width Current run, matching the Home 65/35 grid. */
+.st-key-run-columns > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { gap:24px; align-items:flex-start; }
+.st-key-run-summary { background:#1b2430; border:1px solid #364356; border-radius:16px; padding:20px; gap:10px; }
+.st-key-run-summary h3 { font-size:20px; line-height:1.35; }
+.st-key-run-summary .gate-heading { align-items:flex-start; }
+.run-summary-meta { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px 12px; margin:6px 0 8px; }
+
+.run-summary-meta dt { color:#b8c4d4; font-size:13px; }
+.run-summary-meta dd { color:#f0f4fa; font-size:17px; margin:3px 0 0; }
+.st-key-run-summary .package-progress { padding:0; border-radius:0; }
+.st-key-run-summary .package-row { gap:12px; padding:8px 0; font-size:14px; }
+.st-key-run-summary .package-row span:last-child { text-align:right; }
+.st-key-run-summary .st-key-package-approval { padding:0; background:transparent; border:0; }
+.st-key-run-summary .st-key-package-approval h3 { font-size:17px; }
+.st-key-run-summary label p { font-size:13px; line-height:1.4; }
+@media(max-width:800px) {
+ .st-key-run-columns > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { flex-direction:column-reverse; }
+ .st-key-run-columns > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { width:100%; flex:1 1 100%; min-width:0; }
+ .st-key-run-summary { padding:16px; }
+}

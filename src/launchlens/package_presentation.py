@@ -86,8 +86,56 @@ def approve_internal(state,book,acknowledged):
 
 
 def approval_matches(state,book,record):
-    return bool(record and record.get('binding')==review_identity(state) and
-        record.get('decisions_sha256')==digest(book) and record.get('internal_approved') is True and not approval_issues(state,book))
+    # Approval belongs to immutable content and its recorded disposition, not later
+    # instructions the owner may prepare for another version.
+    if not record or book.get('binding')!=review_identity(state):return False
+    accepted=record.get('approval_decisions',book)
+    return bool(record.get('binding')==review_identity(state) and
+        record.get('decisions_sha256')==digest(accepted) and accepted.get('binding')==review_identity(state) and
+        record.get('internal_approved') is True and record.get('publishing_allowed') is False and
+        not approval_issues(state,accepted))
+
+
+def current_wording_book(state,book):
+    """Pure preview of explicit accept-as-is; never persist a choice on rendering."""
+    from launchlens.review_decisions import record_decision
+    if book.get('binding')!=review_identity(state):raise ValueError('Review version changed')
+    accepted=deepcopy(book)
+    for group in grouped_findings(state):
+        if not group['needs_attention']:continue
+        if accepted.get('groups',{}).get(group['id'])!='keep_wording':
+            accepted=record_decision(state,accepted,group['id'],'keep_wording')
+        for occurrence in group['occurrences']:
+            if occurrence['needs_attention'] and effective_choice(accepted,group,occurrence)!='keep_wording':
+                accepted=record_decision(state,accepted,occurrence['id'],'keep_wording',occurrence=True)
+    return accepted
+
+
+def approve_current_version(state,book,acknowledged):
+    """Human approval explicitly supersedes wording requests, never evidence/policy."""
+    from datetime import datetime,timezone
+    if acknowledged is not True:raise ValueError('Explicit current-wording acceptance required')
+    accepted=current_wording_book(state,book)
+    record=approve_internal(state,accepted,True)  # Original authority/launch/review checks.
+    record.update(wording_disposition='accepted_as_is',prior_decisions_sha256=digest(book),approval_decisions=deepcopy(accepted),
+        approved_at=datetime.now(timezone.utc).isoformat())
+    return accepted,record
+
+
+def restored_approval(state,book,store):
+    """Read only: restore a protected approval receipt for this exact version/choices."""
+    if store is None:return None
+    import json
+    candidates=[]
+    for path in store.path.glob('human-internal-approval-*.json'):
+        if path.is_symlink() or path.stat().st_mode & 0o077 or path.stat().st_size>100_000:continue
+        try:
+            record=json.loads(path.read_text())
+            if approval_matches(state,book,record):
+                record.setdefault('approval_decisions',deepcopy(book))
+                candidates.append((path.stat().st_mtime_ns,record))
+        except (ValueError,KeyError,TypeError):continue
+    return max(candidates,key=lambda item:item[0])[1] if candidates else None
 
 
 def markdown_package(state,*,approved=False):

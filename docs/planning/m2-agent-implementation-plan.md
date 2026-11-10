@@ -1,3 +1,49 @@
+## Owner-authorized run UI and approval sync — November 10, 2026
+
+Owner requested Git sync of completed M2-D040–D042: grouped Activity phases and
+recovered-step display; direct as-is current-version approval and protected receipt
+restoration; full-width65/35 Current run tabs with a shared responsive status/actions
+panel. Fresh clean canonical copy: **387 harness+81 UI+111 root=579 tests PASS**.
+Existing US Version2 owner approval is preserved; no new approval, draft, revision
+or model call was made during sync. Credentials, saved runs, budget ledgers and
+workspace remain local. No next milestone or further inference is authorized.
+[Scope and verification](repository-sync-2026-11-09.md#run-ui-and-as-is-approval-sync--m2-d042).
+Earlier checkpoint and publication records below retain their historical state.
+
+## Current checkpoint — M2-D042, November 10, 2026
+
+Current run now uses a full-width65/35 layout: Activity/Review/Package left, shared
+status/version/revision/budget/deliverables/actions right. Top status card removed;
+<=800CSSpx stacks status panel then tabs. Existing approval/revision/export handlers
+reused.81UItests PASS; actual savedV2 all-tab AppTest0network; native desktop and
+narrow reflow screenshots verified.745protected file hashes preserved. No model
+calls, source/dependency changes or Git publication. Version2 stays approved; V3
+optional. [Results/screenshots](writer-run-experience-review.md#m2-d042--two-column-current-run-and-shared-actions-panel).
+Stop for owner UI review.
+
+## Current checkpoint — M2-D041, November 10, 2026
+
+Owner-approved direct acceptance: approve current text as-is, without wording-card
+completion or forced revision. Earlier rewrite intentions are superseded in an
+append-only disposition receipt; drafts unchanged. Saved approval restores across
+reload and remains tied to accepted text; a later version needs separate approval.
+Actual pre-existing owner Version2 approval now displays correctly as approved.
+466 tests PASS(387harness79UI), actualV2 socket-blocked/native QA verified;745
+protected files hash-preserved. No model calls, new approval, source changes or
+Git publication. [Results/screenshots](writer-run-experience-review.md#m2-d041--direct-current-version-approval-and-restored-acceptance).
+Stop for owner inspection; V3 optional, not required.
+
+## Current checkpoint — M2-D040, November 10, 2026
+
+Activity-only refinement complete: recovered failures fold into the successful
+same-action/version step, with recovery note and original history in Technical details.
+Research and earlier versions start collapsed; current saved Version 2 starts expanded.
+77 UI tests PASS; actual saved-V2 AppTest PASS with zero network/state mutation;
+native desktop screenshots verified. 736 protected files hash-preserved. No model
+calls, content approval, new dependencies or Git publication. App8520 → Current run
+→ Activity. [Results/screenshots](writer-run-experience-review.md#m2-d040--activity-phases-and-recovered-steps).
+Stop for owner review. Earlier checkpoint/publication receipts remain historical.
+
 ## Owner-authorized repository sync — November 10, 2026
 
 Owner requested Git sync of the completed canonical work through M2-D039:
