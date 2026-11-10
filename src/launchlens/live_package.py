@@ -1,7 +1,8 @@
 """Prepared one-run live adapters for the existing harness; disabled without approval.
 
 No credential/network/filesystem mutation at import or preflight. Same source tools,
-projection, controller and content validators. No retries, repairs or demo fallback.
+projection, controller and content validators. One bounded citation-only retry;
+no automatic evidence repairs or demo fallback.
 """
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -24,12 +25,12 @@ from launchlens.writer_comparison import ProtectedStore, money
 from launchlens.writer_providers import ProviderHTTP, read_selected_keys
 
 ROOT = Path(__file__).resolve().parents[2]
-PROFILE = ROOT/'data/templates/gtm/live_package_profile_v9.json'
-# Exact owner scope: one fresh US run, then one human-triggered revision.
+PROFILE = ROOT/'data/templates/gtm/live_package_profile_v11.json'
+# Owner scope: registered run, explicit human revision cycles within unchanged spending.
 # A fixed protected output directory consumes Start once, even with standing budget.
-AUTHORIZATION = ROOT/'data/private/d028-live-package-authorization.json'
+AUTHORIZATION = ROOT/'data/private/d037-fresh-us-authorization.json'
 BUILD_LEDGER = ROOT/'data/private/build-budget-20261109.json'
-PROFILE_SHA256 = '204f1e3813dce4f8dc80bebc89b82afb7c10267bf3f3a32292c9fe0d5a954ecf'
+PROFILE_SHA256 = 'e2606a87d3bae59e61db295a00e4c949fe189460b4eb4e5d032bf7ba5d75bae0'
 ROLES = ('controller','package_writer','package_reviewer','package_revision')
 
 
@@ -45,7 +46,7 @@ def profile():
     raw = PROFILE.read_bytes()
     gate(hashlib.sha256(raw).hexdigest() == PROFILE_SHA256, 'Live profile changed; owner review required')
     value = strict_json(raw)
-    gate(set(value['roles']) == set(ROLES) and value['max_model_calls'] == 12 and value['max_required_review_calls'] == 4 and value['max_searches'] == 4,
+    gate(set(value['roles']) == set(ROLES) and value['max_model_calls'] == 12 and value['max_required_review_calls'] is None and value['revision_policy']=='explicit_human_max_three_v1' and value['roles']['package_revision']['max_attempts']==configuration()['limits']['revision_attempts']==3 and value['max_searches'] == 4,
          'Unreviewed live execution limits')
     configuration()  # Verify package prompt/template bindings as well.
     return value
@@ -59,15 +60,15 @@ def preflight():
                Decimal(output)*money(model['output_per_million_usd']))/Decimal(1_000_000)
         amounts[role] = {'max_attempts':model['max_attempts'],'input_token_upper_bound':bound,
             'completion_token_cap':output,'per_call_reservation_usd':str(one),
-            'role_reservation_usd':str(one*model['max_attempts']),'model_id':model['model_id']}
+            'role_reservation_usd':str(one*(0 if role=='package_revision' else 1 if role=='package_reviewer' else model['max_attempts'])),'model_id':model['model_id']}
     total = sum(Decimal(v['role_reservation_usd']) for v in amounts.values())
     scope = {'profile_sha256':PROFILE_SHA256,'package_sha256':CONFIG_SHA256,
         'voice_policy_sha256':POLICY_SHA256,'projection_sha256':digest(load_policy()),
         'registry':supported_use_cases(),'request':cfg['request']}
     return {'status':'PREPARED_NOT_AUTHORIZED','scope_sha256':digest(scope),'profile_sha256':PROFILE_SHA256,
         'request':deepcopy(cfg['request']),'roles':amounts,'reservation_total_usd':str(total),
-        'proposal_ceiling_usd':cfg['proposal_ceiling_usd'],'max_model_calls':12,'max_required_review_calls':4,
-        'automatic_retries':0,'automatic_repairs':0,'generation_calls':0,'credentials_read':False,
+        'proposal_ceiling_usd':cfg['proposal_ceiling_usd'],'max_model_calls':12,'max_required_review_calls':None,
+        'automatic_retries':1,'automatic_retry_policy':'missing_citations_only_known_usage_standing_budget','automatic_repairs':0,'generation_calls':0,'credentials_read':False,
         'token_method':cfg['qualification']['token_reservation_method']}
 
 
@@ -78,7 +79,7 @@ def authorization_template():
         'scope_sha256':plan['scope_sha256'],'request':plan['request'],
         'aggregate_ceiling_usd':plan['proposal_ceiling_usd'],'source_permissions_confirmed':False,
         'acknowledge_catalog_not_entitlement':False,'acknowledge_context_reservation_and_cap_assumptions':False,
-        'allow_one_explicit_revision':True,'allow_one_explicit_writer_retry':True,'standing_budget':False,'expires_utc':'OWNER-SET-ISO-UTC'}
+        'allow_explicit_revisions':True,'allow_one_explicit_writer_retry':True,'bound_run_id':None,'standing_budget':False,'expires_utc':'OWNER-SET-ISO-UTC'}
 
 
 def validate_authorization(value, *, now=None):
@@ -93,7 +94,11 @@ def validate_authorization(value, *, now=None):
          'Authorization task or frozen profile differs')
     gate(value['source_permissions_confirmed'] is True and value['acknowledge_catalog_not_entitlement'] is True
          and value['acknowledge_context_reservation_and_cap_assumptions'] is True
-         and type(value['allow_one_explicit_revision']) is bool and type(value['allow_one_explicit_writer_retry']) is bool, 'Required source/capability acknowledgments unresolved')
+         and type(value['allow_explicit_revisions']) is bool and type(value['allow_one_explicit_writer_retry']) is bool, 'Required source/capability acknowledgments unresolved')
+    if value['bound_run_id'] is not None:
+        from uuid import UUID
+        try:gate(str(UUID(value['bound_run_id']))==value['bound_run_id'],'Invalid bound run identity')
+        except (TypeError,ValueError,AttributeError):raise LiveGateError('Invalid bound run identity') from None
     ceiling = money(value['aggregate_ceiling_usd'])
     gate(type(value['standing_budget']) is bool and
          (max(Decimal(r['per_call_reservation_usd']) for r in plan['roles'].values()) if value['standing_budget'] else Decimal(plan['reservation_total_usd'])) <= ceiling <= money(cfg['proposal_ceiling_usd']),
@@ -159,6 +164,26 @@ class StandingBudget:
             value['claims'].append({'id':identity,'role':role,'request_sha256':request_sha,'reserved_usd':reserved,'status':'reserved_unknown_until_usage'})
             return identity
         return self._update(update)
+    def reserve_revision(self,amounts,binding_sha):
+        """Atomically reserve BOTH future calls before any revision inference."""
+        from uuid import uuid4
+        ids={r:uuid4().hex for r in amounts}
+        def update(value):
+            gate(not any(e.get('cycle_binding_sha256')==binding_sha for e in value['claims']),'This version already has a revision reservation')
+            for role,amount in amounts.items():
+                value['claims'].append({'id':ids[role],'role':role,'request_sha256':'human-cycle:'+binding_sha,
+                    'reserved_usd':str(amount),'status':'reserved_unknown_until_usage','reservation_kind':'explicit_human_revision','cycle_binding_sha256':binding_sha})
+            return ids
+        return self._update(update)
+
+    def bind_revision_call(self,identity,role,request_sha):
+        def update(value):
+            entry=next(e for e in value['claims'] if e['id']==identity)
+            gate(entry['role']==role and entry['status']=='reserved_unknown_until_usage' and entry['request_sha256'].startswith('human-cycle:'),
+                'Reserved revision claim is already used or differs')
+            entry['request_sha256']=request_sha
+        self._update(update)
+
     def complete(self,identity,cost,usage):
         def update(value):
             entry=next(e for e in value['claims'] if e['id']==identity)
@@ -177,14 +202,16 @@ class RunBudget:
         self.lock = Lock(); self.armed = False; self.closed = False; self.active = False
         self.counts = {r:0 for r in ROLES}; self.events = []; self.cost = Decimal(0)
         self.standing=StandingBudget() if permission.get('standing_budget') is True else None
+        self.pending_revision_claims={}
 
-    def restore_accounting(self, summary, state, *, review_recovery=False):
-        gate(not self.armed and not self.events and (summary.get('stopped') is False or review_recovery),
+    def restore_accounting(self, summary, state, *, review_recovery=False, stopped_display=False):
+        gate(not self.armed and not self.events and (summary.get('stopped') is False or review_recovery or stopped_display),
              'Only an idle, known-accounting checkpoint can resume')
+        gate(self.permission['bound_run_id'] in {None,state['run_id']},'Authorization belongs to another run')
         counts=summary.get('attempts');events=summary.get('events')
         gate(type(counts) is dict and set(counts)==set(ROLES) and
-            all(type(n) is int and 0<=n<=self.plan['roles'][r]['max_attempts'] for r,n in counts.items()) and
-            type(events) is list and len(events)==sum(counts.values()) and sum(n for r,n in counts.items() if r!='package_reviewer')<=12 and counts['package_reviewer']<=4 and
+            all(type(n) is int and n>=0 and (self.plan['roles'][r]['max_attempts'] is None or n<=self.plan['roles'][r]['max_attempts']) for r,n in counts.items()) and
+            type(events) is list and len(events)==sum(counts.values()) and sum(n for r,n in counts.items() if r not in {'package_reviewer','package_revision'})<=12 and
             (len(events)==state['turns'] or (review_recovery and state['turns']==len(events)+1 and
                 state['events'][-1].get('action')=='model_adapter' and state['events'][-1].get('outcome')=='failed_safely')),
             'Checkpoint counters differ')
@@ -201,7 +228,12 @@ class RunBudget:
                 Decimal(ledger[e['standing_claim_id']]['estimated_usd'])==Decimal(e['estimated_cost_usd'])
                 for e in events),'Standing ledger binding differs')
         self.counts=deepcopy(counts);self.events=deepcopy(events);self.cost=total
-        self.armed=True;self.closed=summary.get('stopped') is True;self.active=False
+        self.armed=True;self.closed=stopped_display or summary.get('stopped') is True;self.active=False
+        self.pending_revision_claims=deepcopy(summary.get('pending_revision_claims',{}))
+        gate(set(self.pending_revision_claims)<={'package_revision','package_reviewer'},'Unknown pending revision claims')
+        if self.standing:
+            ledger={e['id']:e for e in self.standing.read()['claims']}
+            gate(all(v.get('id') in ledger and ledger[v['id']]['role']==r and ledger[v['id']]['status']=='reserved_unknown_until_usage' for r,v in self.pending_revision_claims.items()),'Pending revision reservation differs')
 
     def arm(self, request):
         with self.lock:
@@ -216,19 +248,27 @@ class RunBudget:
             gate(type(request_hash) is str and re.fullmatch(r'[0-9a-f]{64}',request_hash), 'Request identity required')
             gate(self.armed and not self.closed and not self.active and role in self.counts,
                  'Live request not armed, overlapping or stopped')
-            gate((role=='package_reviewer' or sum(n for r,n in self.counts.items() if r!='package_reviewer') < 12) and self.counts[role] < self.plan['roles'][role]['max_attempts'],
+            gate((role in {'package_reviewer','package_revision'} or sum(n for r,n in self.counts.items() if r not in {'package_reviewer','package_revision'}) < 12) and (self.plan['roles'][role]['max_attempts'] is None or self.counts[role] < self.plan['roles'][role]['max_attempts']),
                  'Whole-run or role attempt budget exhausted')
-            gate(role != 'package_revision' or self.permission['allow_one_explicit_revision'],
+            gate(role != 'package_revision' or self.permission['allow_explicit_revisions'],
                  'Owner did not authorize a revision')
             gate(role != 'package_writer' or self.counts[role]==0 or self.permission['allow_one_explicit_writer_retry'],
                  'Owner did not authorize a Writer retry')
+            gate(role!='package_revision' or role in self.pending_revision_claims,'Explicit current-version revision reservation required')
+            gate(not self.pending_revision_claims or role in self.pending_revision_claims,'Revision cycle is reserved for its Writer and Reviewer only')
+            reservation=self.pending_revision_claims.get(role)
+            gate(self.cost+Decimal(self.plan['roles'][role]['per_call_reservation_usd'])+sum(Decimal(v['reserved_usd']) for r,v in self.pending_revision_claims.items() if r!=role)<=money(self.permission['aggregate_ceiling_usd']),'Model spending ceiling exhausted')
             self.counts[role] += 1; self.active = True
             event = {'sequence':len(self.events)+1,'role':role,'wire_request_sha256':request_hash,
                 'reserved_usd':self.plan['roles'][role]['per_call_reservation_usd'],'status':'attempted'}
             if self.standing:
-                try:event['standing_claim_id']=self.standing.claim(role,event['reserved_usd'],request_hash)
+                try:
+                    if reservation:
+                        self.standing.bind_revision_call(reservation['id'],role,request_hash);event['standing_claim_id']=reservation['id']
+                    else:event['standing_claim_id']=self.standing.claim(role,event['reserved_usd'],request_hash)
                 except Exception:
                     self.closed=True;self.active=False;raise
+            self.pending_revision_claims.pop(role,None)
             self.events.append(event); return event
 
     def complete(self, event, value):
@@ -260,6 +300,20 @@ class RunBudget:
         with self.lock:
             self.closed = True; self.active = False
 
+    def reopen_for_saved_writer(self,state):
+        """Explicit owner-directed known-billing checkpoint; counters never reset."""
+        validate_authorization(self.permission,now=self._now)
+        with self.lock:
+            gate(self.armed and not self.active and not self.pending_revision_claims and
+                self.permission['bound_run_id']==state['run_id'] and
+                state['status']=='failed' and not state['drafts'] and state['package'] is None and
+                state['writing_attempts']==self.counts['package_writer']==1 and
+                state['retry_attempts']==0 and state['review_attempts']==self.counts['package_reviewer']==0 and
+                state['turns']==len(self.events)==sum(self.counts.values()) and
+                all(e['status']=='usage_accounted' for e in self.events),
+                'Saved Writer checkpoint lacks explicit scope or known accounting')
+            self.closed=False
+
     def can_review_saved(self, state):
         try:validate_authorization(self.permission,now=self._now)
         except Exception:return False
@@ -267,10 +321,10 @@ class RunBudget:
             count=sum(self.counts.values())
             return (self.armed and not self.active and
                 state['mode']=='live_package' and state['status'] in {'failed','stopped'} and
-                (state.get('package') or {}).get('version')==2 and state['revision_attempts']==1 and
+                (state.get('package') or {}).get('version',0)>=2 and state['revision_attempts']>=1 and
                 state['pending'] is None and not state['review'] and state['human_accepted'] is False and
-                state['review_attempts']==self.counts['package_reviewer']<self.plan['roles']['package_reviewer']['max_attempts'] and
-                self.counts['package_revision']==1 and len(self.events)==count and
+                state['review_attempts']==self.counts['package_reviewer'] and
+                self.counts['package_revision']>=1 and len(self.events)==count and
                 all(e['status']=='usage_accounted' for e in self.events) and
                 (state['turns']==count or (state['turns']==count+1 and
                     state['events'][-1].get('action')=='model_adapter' and state['events'][-1].get('outcome')=='failed_safely')))
@@ -279,14 +333,26 @@ class RunBudget:
         gate(self.can_review_saved(state), 'Saved review lacks known accounting or remaining budget')
         with self.lock:self.closed=False  # Reopen only for this explicit required review; never reset counters.
 
+    def _revision_available(self):
+        amounts={r:Decimal(self.plan['roles'][r]['per_call_reservation_usd']) for r in ('package_revision','package_reviewer')}
+        total=sum(amounts.values())
+        available=self.counts['package_revision']<self.plan['roles']['package_revision']['max_attempts'] and self.armed and not self.closed and not self.active and not self.pending_revision_claims and self.permission['allow_explicit_revisions'] and all(e['status']=='usage_accounted' for e in self.events) and self.cost+total<=money(self.permission['aggregate_ceiling_usd'])
+        if available and self.standing:available=Decimal(self.standing.read()['remaining_usd'])>=total
+        return available,amounts
+
     def can_revise(self):
-        try:validate_authorization(self.permission,now=self._now)
+        try:
+            validate_authorization(self.permission,now=self._now)
+            with self.lock:return self._revision_available()[0]
         except Exception:return False
+
+    def reserve_revision(self,binding):
+        validate_authorization(self.permission,now=self._now)
         with self.lock:
-            return (self.armed and not self.closed and not self.active and
-                self.permission['allow_one_explicit_revision'] and self.counts['controller']+1 <= self.plan['roles']['controller']['max_attempts'] and
-                self.counts['package_revision'] == 0 and self.counts['package_reviewer'] < self.plan['roles']['package_reviewer']['max_attempts'] and
-                sum(n for r,n in self.counts.items() if r!='package_reviewer')+2 <= 12)
+            available,amounts=self._revision_available()
+            gate(available,'Revision requires explicit authorization, known usage and budget for Writer plus review')
+            ids=self.standing.reserve_revision(amounts,digest(binding)) if self.standing else {r:None for r in amounts}
+            self.pending_revision_claims={r:{'id':ids[r],'reserved_usd':str(amount)} for r,amount in amounts.items()}
 
     def can_retry_writer(self):
         try:validate_authorization(self.permission,now=self._now)
@@ -295,14 +361,15 @@ class RunBudget:
             return (self.armed and not self.closed and not self.active and
                 self.permission['allow_one_explicit_writer_retry'] and self.counts['package_writer']==1
                 and all(e['status']=='usage_accounted' for e in self.events)
-                and sum(n for r,n in self.counts.items() if r!='package_reviewer')+2<=12 and self.counts['controller']<self.plan['roles']['controller']['max_attempts'])
+                and sum(n for r,n in self.counts.items() if r not in {'package_reviewer','package_revision'})+2<=12 and self.counts['controller']<self.plan['roles']['controller']['max_attempts'])
 
     def summary(self):
         return {'reserved_usd':self.plan['reservation_total_usd'],'estimated_usage_cost_usd':str(self.cost),
             'attempts':dict(self.counts),'stopped':self.closed,'events':deepcopy(self.events),
-            'call_limits':{'task_calls':12,'required_review_calls':4},
-            'call_usage':{'task_calls':sum(n for r,n in self.counts.items() if r!='package_reviewer'),
-                          'required_review_calls':self.counts['package_reviewer']},
+            'pending_revision_claims':deepcopy(self.pending_revision_claims),
+            'call_limits':{'research_task_calls':12,'human_revision_calls':3,'required_review_calls':'approved spending'},
+            'call_usage':{'research_task_calls':sum(n for r,n in self.counts.items() if r not in {'package_reviewer','package_revision'}),
+                          'human_revision_calls':self.counts['package_revision'],'required_review_calls':self.counts['package_reviewer']},
             'unknown_billing_policy':'Retain full reservation and stop; never retry',
             'standing_budget':self.standing.read() if self.standing else None}
 
@@ -390,7 +457,7 @@ class LivePackageRun:
     package = True
     scenario = None
 
-    def __init__(self, permission, keys, *, notes='', tools=None, wire_factory=None, store=None, now=None, checkpoint=None, review_recovery=False):
+    def __init__(self, permission, keys, *, notes='', tools=None, wire_factory=None, store=None, now=None, checkpoint=None, review_recovery=False, stopped_display=False):
         from launchlens.agent_foundation import FoundationSession
         from launchlens.notion_tools import NotionHTTP, NotionReader
         from launchlens.retrieval import PineconeHTTP
@@ -411,10 +478,10 @@ class LivePackageRun:
         else:
             state,capture=checkpoint
             gate(state['request']==permission['request'],'Checkpoint task differs')
-            self.guard.restore_accounting(capture['spending'],state,review_recovery=review_recovery)
+            self.guard.restore_accounting(capture['spending'],state,review_recovery=review_recovery,stopped_display=stopped_display)
             for name,adapter in [('controller',self.controller),('writer',self.writer),('review',self.reviewer),('revision',self.reviser)]:
                 adapter.calls=deepcopy(capture[name])
-            self.session.restore_review_checkpoint(state,review_recovery=review_recovery)
+            self.session.restore_review_checkpoint(state,review_recovery=review_recovery,stopped_display=stopped_display)
             if self.store:
                 for path in self.store.path.glob('state-*.json'):
                     self._saved.add(digest(strict_json(path.read_bytes())))
@@ -425,7 +492,7 @@ class LivePackageRun:
             self._persist(state)
             if on_update is not None:return on_update(update,state)
         state = self.session.run(run_id,on_update=checkpoint)
-        if self.guard.permission.get('standing_budget') and state['status']=='draft_incomplete' and self.session.can_retry_writer():
+        if self.guard.permission.get('standing_budget') and state['status']=='draft_incomplete' and (state.get('draft_failure') or {}).get('rule') in {'field_claim_coverage','objective_claim_coverage'} and self.session.can_retry_writer():
             state=self.session.retry_writer(run_id,on_update=checkpoint)
         try:self._save(state)
         except Exception:
@@ -447,8 +514,14 @@ class LivePackageRun:
             self._save(self.snapshot())
 
     def request_revision(self, run_id, feedback, *, draft_version, draft_sha256):
-        gate(self.guard.can_revise(), 'Revision lacks authorization or remaining full-cycle budget')
+        permission=self.session.check_revision(run_id,feedback,draft_version=draft_version,draft_sha256=draft_sha256)
+        self.guard.reserve_revision(permission['binding'])
         result = self.session.request_revision(run_id,feedback,draft_version=draft_version,draft_sha256=draft_sha256)
+        self._persist(result)
+        return result
+
+    def edit_current_fields(self,run_id,changes,*,draft_version,draft_sha256):
+        result=self.session.edit_current_fields(run_id,changes,draft_version=draft_version,draft_sha256=draft_sha256)
         self._persist(result)
         return result
 
@@ -459,6 +532,12 @@ class LivePackageRun:
         state=self.session.continue_run(run_id,on_update=on_update);self._save(state);return state
     def resume(self,run_id,reply,*,on_update=None):
         state=self.session.resume(run_id,reply,on_update=on_update);self._save(state);return state
+    def recover_writer_candidate(self,run_id,*,on_update=None):
+        calls=self.writer.calls
+        gate(len(calls)==1 and 'candidate' in calls[0],'Saved Writer candidate unavailable')
+        try:return self.session.recover_writer_candidate(run_id,deepcopy(calls[0]['candidate']),on_update=on_update)
+        finally:self._save(self.snapshot())
+
     def retry_writer(self,run_id,*,on_update=None):
         state=self.session.retry_writer(run_id,on_update=on_update);self._save(state);return state
     def stop(self,run_id):
@@ -481,6 +560,28 @@ class LivePackageRun:
             self.store.write('state-'+n+'.json',redact(state,self._secrets))
             self.store.write('capture-'+n+'.json',redact(self.capture(),self._secrets))
             self._saved.add(identity)
+            self._advance_current_pointer(state,self.store.path/('state-'+n+'.json'),self.store.path/('capture-'+n+'.json'))
+
+    def _advance_current_pointer(self,state,state_path,capture_path):
+        """Advance this same run only, atomically after both private receipts exist."""
+        pointer=ROOT/'data/private/current-live-run.json'
+        if not self.store.path.resolve().is_relative_to((ROOT/'data/generated').resolve()) or not pointer.is_file():return
+        gate(not pointer.is_symlink() and not pointer.stat().st_mode & 0o077,'Current pointer must remain private')
+        spec=strict_json(pointer.read_bytes())
+        if (ROOT/spec['store']).resolve()!=self.store.path.resolve():return
+        prior=strict_json((ROOT/spec['state']['path']).read_bytes())
+        gate(prior['run_id']==state['run_id'],'Current pointer belongs to another run')
+        for key,path in [('state',state_path),('capture',capture_path)]:
+            spec[key]={'path':str(path.relative_to(ROOT)),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
+        import os
+        from uuid import uuid4
+        temporary=pointer.with_name('.current-live-run-'+uuid4().hex+'.tmp')
+        fd=os.open(temporary,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+        try:
+            with os.fdopen(fd,'w') as stream:stream.write(json.dumps(spec,indent=2)+'\n');stream.flush();os.fsync(stream.fileno())
+            os.replace(temporary,pointer)
+        finally:
+            if temporary.exists():temporary.unlink()
 
 
 def redact(value, secrets):
@@ -495,6 +596,7 @@ def redact(value, secrets):
 def create_live_run(request, notes='', *, authorization_path=AUTHORIZATION):
     request = validate_request(request)
     permission = read_authorization(authorization_path)
+    gate(permission['bound_run_id'] is None,'This authorization permits revisions of the saved run only')
     gate(request == permission['request'], 'Only the separately authorized US scenario can execute')
     gate(profile().get('hosted_schema_qualified') is True or permission.get('standing_budget') is True, 'Hosted schema qualification pending')
     plan = validate_authorization(permission)  # Whole-run admission before credentials or source/model clients.
@@ -529,19 +631,24 @@ def load_current_live_run():
     store_path=ROOT/spec['store'];gate(store_path.resolve().is_relative_to((ROOT/'data/generated').resolve()),'Invalid current store')
     gate((ROOT/spec['state']['path']).parent==store_path and (ROOT/spec['capture']['path']).parent==store_path,
         'Current store differs from receipts')
-    gate(sorted(store_path.glob('state-*.json'))[-1]==ROOT/spec['state']['path'] and
-        sorted(store_path.glob('capture-*.json'))[-1]==ROOT/spec['capture']['path'],
+    gate(max(store_path.glob('state-*.json'),key=lambda p:int(p.stem.rsplit('-',1)[1]))==ROOT/spec['state']['path'] and
+        max(store_path.glob('capture-*.json'),key=lambda p:int(p.stem.rsplit('-',1)[1]))==ROOT/spec['capture']['path'],
         'A newer current checkpoint exists; stale counters cannot resume')
     validate_authorization(loaded['authorization'])
     from launchlens.package_content import authoritative_package_binding
-    state=loaded['state'];authoritative_package_binding(state)
-    recovery=state['status'] in {'failed','stopped'} and state['package']['version']==2 and not state['review']
-    gate(recovery or (state['status']=='awaiting_human_review' and bool(state.get('review')) and
-        (state['review'].get('review_complete') is True or state['package']['version']==2)),
+    state=loaded['state']
+    stopped_display=state['status']=='failed' and state.get('package') is None and not state['drafts']
+    if not stopped_display:authoritative_package_binding(state)
+    recovery=state['status'] in {'failed','stopped'} and (state.get('package') or {}).get('version',0)>=2 and not state['review']
+    gate(recovery or stopped_display or (state['status']=='awaiting_human_review' and bool(state.get('review')) and
+        (state['review'].get('review_complete') is True or state['package']['version']>=2)),
         'Current review checkpoint is unavailable')
     # Recheck the grouped raw result independently; do not trust persisted statuses.
     from launchlens.package_content import validate_package_review
-    if not recovery:gate(validate_package_review(state['review']['raw_response'],state,isolate_findings=state['review'].get('assessment_policy')=='isolated_findings_v1')==state['review'],'Current review changed')
+    if not recovery and not stopped_display and state['review'].get('assessment_policy')=='human_edit_rescan_v1':
+        from launchlens.package_content import verify_human_edit_review
+        verify_human_edit_review(state)
+    elif not recovery and not stopped_display:gate(validate_package_review(state['review']['raw_response'],state,isolate_findings=state['review'].get('assessment_policy')=='isolated_findings_v1',scan_additions=state['review'].get('scan_additions',False))==state['review'],'Current review changed')
     keys=read_selected_keys({'NEBIUS_API_KEY','NOTION_API_KEY','PINECONE_API_KEY'},ROOT/'.env')
     return LivePackageRun(loaded['authorization'],keys,checkpoint=(state,loaded['capture']),
-        store=ProtectedStore.open_existing(store_path),review_recovery=recovery)
+        store=ProtectedStore.open_existing(store_path),review_recovery=recovery,stopped_display=stopped_display)

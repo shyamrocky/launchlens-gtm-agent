@@ -56,14 +56,14 @@
 @media(max-width: 360px) { .source-grid { grid-template-columns: 1fr; } }
 
 /* One aligned desktop grid; stack cards before either column becomes cramped. */
-.st-key-inventory-layout > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { gap: 24px; align-items: flex-start; }
+:is(.st-key-inventory-layout,.st-key-detail-layout) > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { gap: 24px; align-items: flex-start; }
 .launch-section-divider { border-top: 1px solid #364356; margin: 8px 0 16px; }
 .campaign-objective p { margin: 0; }
 .campaign-objective .objective-label { color: #b8c4d4; font-size: 14px; line-height: 1.4; }
 .campaign-objective .objective-value { color: #f0f4fa; font-size: 19px; font-weight: 500; line-height: 1.4; margin-top: 4px; }
 @media(max-width: 1100px) {
-    .st-key-inventory-layout > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { flex-direction: column; }
-    .st-key-inventory-layout > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { width: 100%; flex: 1 1 100%; min-width: 0; }
+    :is(.st-key-inventory-layout,.st-key-detail-layout) > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { flex-direction: column; }
+    :is(.st-key-inventory-layout,.st-key-detail-layout) > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { width: 100%; flex: 1 1 100%; min-width: 0; }
 }
 
 /* Compact header: one grouped navigation rectangle and closely attached status. */
@@ -75,7 +75,7 @@
 @media(max-width: 640px) { .st-key-header-navigation button { font-size: 13px; } }
 
 /* Existing market route, replaced with one centered preparation screen. */
-.st-key-prepare-package { max-width: 720px; width: 100%; margin: 0 auto; gap: 18px; }
+.st-key-prepare-package { width: 100%; margin: 0; gap: 12px; }
 .st-key-prepare-back button { color: #9bbaff; padding-left: 0; }
 .st-key-prepare-package h1 { font-size: 32px; font-weight: 600; line-height: 1.2; padding: 0; }
 .st-key-prepare-summary, .st-key-prepare-gate { background: #1b2430; border-radius: 18px; padding: 20px 24px; }
@@ -96,7 +96,7 @@
 }
 
 /* Existing harness run: one readable column, no fixed heights or inner scrolling. */
-.st-key-agent-run { max-width: 720px; width: 100%; margin: 0 auto; }
+.st-key-agent-run { width: 100%; margin: 0; gap: 12px; }
 .draft-copy { border: 1px solid #364356; background: #1b2430; border-radius: 16px; padding: 20px 24px; }
 .draft-copy p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
 .st-key-agent-run [data-testid="stJson"] { max-width: 100%; }
@@ -138,3 +138,60 @@
 .st-key-agent-run [data-testid="stMetric"] { background:#1b2430; border-radius:14px; padding:14px 18px; }
 
 .st-key-agent-run [class*="st-key-review-card-"] button { border-radius:999px; border:0; background:#2b3749; padding:8px 16px; }
+
+/* D032: one-decision card stack and internal package handoff. */
+.st-key-agent-run [role="tablist"] { background:#232d3c; border-radius:12px; padding:5px; gap:4px; margin-bottom:12px; }
+.st-key-agent-run [role="tab"] { border-radius:9px; padding:8px 16px; color:#b8c4d4; }
+.st-key-agent-run [role="tab"][aria-selected="true"] { background:#34445b; color:#f0f4fa; }
+.decision-dots { display:flex; gap:7px; margin:12px 0 24px; min-height:7px; }
+.decision-dot { display:block; height:6px; flex:1; border-radius:999px; background:#465267; }
+.decision-dot.changed { background:#9bbaff; } .decision-dot.kept { background:#30D158; }
+.decision-dot.required { background:#b97720; } .decision-dot.current { outline:2px solid #d0dfff; outline-offset:3px; }
+.st-key-agent-run [class*="st-key-review-card-"] { position:relative; padding:24px; box-shadow:0 -10px 0 -5px #273345,0 -20px 0 -10px #222c3a; margin-bottom:8px; }
+.decision-card-top { display:flex; align-items:center; justify-content:space-between; gap:12px; color:#b8c4d4; font-size:13px; margin-bottom:18px; }
+.category-pill { background:#2c394d; border-radius:999px; padding:5px 10px; color:#d9e4f7; }
+.st-key-agent-run [class*="st-key-review-card-"] h3 { font-size:27px; line-height:1.25; margin-bottom:16px; }
+.decision-context { background:#121b27; padding:14px 16px; border-radius:12px; margin:4px 0 16px; }
+.decision-context small,.suggestion-box small { color:#b8c4d4; font-size:13px; }
+.decision-context p { color:#f0f4fa; line-height:1.55; margin:5px 0 0; }
+.suggestion-box { border:1px dashed #58657b; border-radius:12px; padding:12px 16px; margin:12px 0 16px; }
+.suggestion-box p { margin:6px 0 0; } .suggestion-box del { color:#acb7c7; }
+.suggestion-box ins { color:#7ae59a; text-decoration:none; background:#163b2b; padding:1px 3px; }
+.st-key-agent-run [class*="st-key-review-card-"] button[kind="primary"] { background:#9bbaff; color:#111720; }
+.st-key-review-end-card,.st-key-package-deliverables,.st-key-package-approval { background:#1b2430; border-radius:18px; padding:22px 24px; margin-bottom:18px; }
+.st-key-review-end-card [data-testid="stButton"] button[kind="tertiary"] { text-align:left; justify-content:flex-start; border-radius:0; border-bottom:1px solid #364356; padding:12px 0; }
+.st-key-package-deliverables [data-testid="stHorizontalBlock"] { align-items:center; padding:8px 0; border-bottom:1px solid #364356; }
+.st-key-package-deliverables [data-testid="stButton"] button { color:#9bbaff; }
+@media(max-width:640px) { .st-key-agent-run [class*="st-key-review-card-"],.st-key-review-end-card,.st-key-package-deliverables,.st-key-package-approval { padding:16px; } .st-key-agent-run [class*="st-key-review-card-"] h3 { font-size:24px; } }
+
+/* Run context is already explicit beside its status; keep inventory controls on home. */
+.stApp:has(.st-key-agent-run) .st-key-execution-controls,
+.stApp:has(.st-key-agent-run) .st-key-snapshot-caption { display:none; }
+.st-key-page-header { width:100%; margin:0; }
+.st-key-agent-run [data-baseweb="tab-highlight"],.st-key-agent-run [data-baseweb="tab-border"] { display:none; }
+
+.st-key-review-end-card [data-testid="stButton"] button p { width:100%; text-align:left; font-size:15px; }
+
+.st-key-review-end-card [data-testid="stButton"] button [data-testid="stMarkdownContainer"] { width:100%; text-align:left; }
+
+/* D033: full draft is an isolated modal; never stretch the Review tab. */
+[data-testid="stDialog"] [role="dialog"] { max-width:calc(100vw - 32px); }
+[data-testid="stDialog"] iframe { width:100%; border:0; }
+
+/* D034: one shared page shell; detail column follows Home's existing 2:1 grid. */
+.st-key-header-navigation button { width:100%; white-space:nowrap; padding:8px; }
+.st-key-agent-run h1 { font-size:32px; line-height:1.2; padding:0; }
+.st-key-agent-run .st-key-run-back button { padding-left:0; }
+.st-key-run-status-card { padding:18px 22px; }
+.st-key-agent-run [class*="st-key-review-card-"] { padding:20px 22px; }
+.decision-dots { margin:6px 0 16px; }
+@media(max-width:640px) {
+ .st-key-header-navigation button { padding:6px 4px; }
+ .st-key-agent-run h1 { font-size:28px; }
+ .st-key-run-status-card,.st-key-agent-run [class*="st-key-review-card-"] { padding:16px; }
+}
+
+/* D037: compact home mode selection, no top execution bar. */
+.st-key-launch-heading [data-testid="stSelectbox"] { max-width:230px; margin-left:auto; }
+.st-key-launch-heading { margin:0 0 8px; }
+.st-key-source-documents .st-key-snapshot-caption { margin:8px 0 12px; }

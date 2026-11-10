@@ -5,10 +5,10 @@ from launchlens.linkedin_drafting import digest
 PROTOCOL='phrase_groups_v1'
 DIMENSIONS=['grounding','qualifications','voice','tone','consistency','completeness']
 
-def phrase_groups(package):
+def phrase_groups(package, *, scan_additions=True):
     from launchlens.package_content import risky_phrase_scan
     groups={}
-    for hit in risky_phrase_scan(package):
+    for hit in risky_phrase_scan(package,scan_additions=scan_additions):
         key=(hit['quote'].casefold(),hit['category'])
         group=groups.setdefault(key,{'group_id':'group-'+digest(key)[:16],
             'phrase':hit['quote'].casefold(),'category':hit['category'],'locations':[]})
@@ -34,11 +34,11 @@ def group_schema(groups):
 
 def word_count(text):return len(re.findall(r'\S+',text)) if isinstance(text,str) else 10**9
 
-def expand_judgments(value,package):
+def expand_judgments(value,package, *, scan_additions=True):
     """No model-invented locations, evidence, quotes, or inherited clearance."""
     from launchlens.package_content import FORMATS,risky_phrase_scan,resolve_field
-    groups=phrase_groups(package);by_group={g['group_id']:g for g in groups}
-    hits={h['hit_id']:h for h in risky_phrase_scan(package)}
+    groups=phrase_groups(package,scan_additions=scan_additions);by_group={g['group_id']:g for g in groups}
+    hits={h['hit_id']:h for h in risky_phrase_scan(package,scan_additions=scan_additions)}
     expanded={f:{'findings':[]} for f in FORMATS};errors=[];seen=set()
     allowed={'dimension','severity','reason','suggestion','claim_ids'}
     def valid(row):
@@ -92,15 +92,15 @@ def expand_judgments(value,package):
     return expanded,list(dict.fromkeys(errors))
 
 
-def isolate_judgments(value, package):
+def isolate_judgments(value, package, *, scan_additions=True):
     """Drop one unverifiable judgment at a time; raw response stays in assessment.
 
     No obsolete quotes are repaired and no source IDs are substituted. A rejected
     occurrence exception falls back to its separately validated group judgment.
     """
     from launchlens.package_content import FORMATS, risky_phrase_scan, resolve_field
-    groups=phrase_groups(package);by_group={g['group_id']:g for g in groups}
-    hits={h['hit_id']:h for h in risky_phrase_scan(package)}
+    groups=phrase_groups(package,scan_additions=scan_additions);by_group={g['group_id']:g for g in groups}
+    hits={h['hit_id']:h for h in risky_phrase_scan(package,scan_additions=scan_additions)}
     expanded={f:{'findings':[]} for f in FORMATS};dropped=[];seen=set()
     keys={'dimension','severity','reason','suggestion','claim_ids'}
     def reject(path,rule):dropped.append({'path':path,'rule':rule})

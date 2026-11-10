@@ -15,6 +15,8 @@ from launchlens.offline_fixtures import request
 from launchlens.offline_ui_run import OfflineUIRun, draft_identity
 
 
+from ui_review_helpers import finish_stack,show_card
+
 class AgentRunUITests(unittest.TestCase):
     def setUp(self):
         self.network = patch.object(socket.socket, 'connect', side_effect=AssertionError('Offline UI must not connect'))
@@ -55,10 +57,11 @@ class AgentRunUITests(unittest.TestCase):
                          ['read_pmm_brief','check_launch','search_product_evidence','generate_package','review_package'])
         self.assertEqual(first['drafts']['linkedin']['version'], 1)
         text = '\n'.join(e.value for e in app.markdown)
-        self.assertIn('We’re bringing', ' '.join(e.proto.body for e in app.get('html')))
+        self.assertIn('We’re bringing', first['drafts']['linkedin']['draft']['content']['hook'])
         self.assertIn('PROD-002', text); self.assertIn('public_product_facts', text)
-        self.assertIn('Mock assessment', '\n'.join(e.value for e in app.caption))
-        field = next(a for a in app.text_area if a.label == 'Other notes for the revision (optional)')
+        self.assertIn('authored fixture', '\n'.join(e.value for e in app.caption))
+        finish_stack(app)
+        field = next(a for a in app.text_area if a.label == 'Anything else for Version 2? (optional)')
         field.input('Remove manufacturer voice and unsupported intensity')
         next(b for b in app.button if b.label == 'Create Version 2').click().run()
         self.assertEqual(len(app.exception), 0)
@@ -69,7 +72,7 @@ class AgentRunUITests(unittest.TestCase):
         self.assertEqual(after['review']['binding']['draft_version'], 2)
         self.assertEqual(after['review']['review_status'], 'human_clearance_required')
         self.assertFalse(after['human_accepted']); self.assertFalse(after['drafts']['linkedin']['publishing_allowed'])
-        self.assertEqual(after['turns'], 9)
+        self.assertEqual(after['turns'], 8)
         self.assertFalse(any(b.label == 'Create Version 2' for b in app.button))
         self.assertEqual(len(run.capture()['review']), 2)
         self.assertEqual(len(run.capture()['revision']), 1)
@@ -143,12 +146,14 @@ class AgentRunUITests(unittest.TestCase):
                 return ReviewFixtureTools().read_launch({'market_id':market})
         real_snapshot = fetch_inventory(load_display(), SafeReader())
         with patch('launchlens.inventory_ui.fetch_inventory', return_value=real_snapshot) as fetch:
+            app.button(key='home').click().run()
             app.selectbox(key='ui-mode').select('Live agent').run()
             self.assertEqual(fetch.call_count, 1)
             self.assertNotIn('offline_run', app.session_state); self.assertIsNone(run.snapshot())
             self.assertNotIn('data_mode', app.session_state['inventory'])
             app.button(key='open-US').click().run()
             self.assertTrue(app.button(key='prepare-start').disabled)
+            app.button(key='home').click().run()
             app.selectbox(key='ui-mode').select('Demo simulation').run()
             self.assertEqual(fetch.call_count, 1)
             self.assertEqual(app.session_state['inventory']['data_mode'], 'offline')
@@ -189,15 +194,15 @@ class AgentRunUITests(unittest.TestCase):
         self.assertEqual(state['drafts']['linkedin']['review_status'],'review_incomplete')
         self.assertFalse(state['review']['review_complete'])
         self.assertEqual(state['review']['raw_response'],{'not_a_review':True})
-        self.assertTrue(any('Review incomplete' in x.value for x in app.warning))
+        self.assertTrue(any('Review incomplete' in x.value for x in app.markdown))
         self.assertIn('response', run.capture()['review'][0])
         self.assertEqual(run.capture()['review'][0]['candidate'], {'not_a_review':True})
         app.button(key='run-review').click().run()
-        self.assertTrue(any(b.label == 'Create Version 2' for b in app.button))
+        app.button(key='review-summary').click().run();self.assertTrue(any(b.label == 'Create Version 2' for b in app.button))
 
     def test_empty_feedback_and_stale_version_do_not_consume_revision(self):
         app = self.start(); run = app.session_state['offline_run']; state = run.snapshot()
-        next(b for b in app.button if b.label == 'Create Version 2').click().run()
+        app.button(key='review-summary').click().run();self.assertTrue(app.button(key='create-next-version').disabled)
         self.assertEqual(run.snapshot(), state)
         version, sha = draft_identity(state)
         with self.assertRaises(HarnessError): run.revise(state['run_id'],'Fix voice',version+1,sha)
@@ -246,24 +251,28 @@ class AgentRunUITests(unittest.TestCase):
     def test_full_package_tabs_exact_format_reviews_and_three_ad_concepts(self):
         app=self.start();state=app.session_state['offline_run'].snapshot()
         self.assertEqual(state['mode'],'offline_package')
-        self.assertEqual([t.label.split(' · ')[0] for t in app.tabs[3:]],['Campaign brief','LinkedIn post','Promotional email','Short blog','Ad variations'])
+        self.assertEqual([t.label for t in app.tabs],['Activity','Review','Package'])
+        self.assertEqual(len([b for b in app.button if (b.key or '').startswith('package-view-')]),5)
         self.assertEqual(set(state['drafts']),{'campaign_brief','linkedin','email','blog','ads'})
         self.assertEqual(set(state['review']['format_reviews']),set(state['drafts']))
         self.assertEqual(len(state['drafts']['ads']['draft']['content']['concepts']),3)
         self.assertTrue(any('Neutral campaign brief' in c.value for c in app.caption))
         self.assertEqual(len(state['drafts']['ads']['draft']['content']['concepts']),3)
-        html=' '.join(e.proto.body for e in app.get('html'));self.assertIn('Ad 1 · Headline',html);self.assertIn('Ad 3 · Headline',html)
+        from launchlens.package_presentation import draft_markup
+        html=draft_markup(state,'ads');self.assertIn('Ad 1 · Headline',html);self.assertIn('Ad 3 · Headline',html)
 
     def test_package_feedback_rebinds_all_formats_and_campaign_anchor(self):
         app=self.start();run=app.session_state['offline_run'];before=run.snapshot()
-        next(a for a in app.text_area if a.label=='Other notes for the revision (optional)').input('Keep brand voice; remove unsupported intensity.')
+        finish_stack(app)
+        next(a for a in app.text_area if a.label=='Anything else for Version 2? (optional)').input('Keep brand voice; remove unsupported intensity.')
         next(b for b in app.button if b.label=='Create Version 2').click().run()
         after=run.snapshot();self.assertEqual(len(app.exception),0)
         self.assertEqual(set(after['review']['format_reviews']),set(after['drafts']))
         self.assertTrue(all(r['version']==2 for r in after['drafts'].values()))
         self.assertNotEqual(before['package']['creative_anchor_sha256'],after['package']['creative_anchor_sha256'])
         self.assertTrue(all(r['binding']==after['review']['binding'] for r in after['review']['format_reviews'].values()))
-        self.assertEqual([t.label.split(' · ')[0] for t in app.tabs[3:]],['Campaign brief','LinkedIn post','Promotional email','Short blog','Ad variations'])
+        self.assertEqual([t.label for t in app.tabs],['Activity','Review','Package'])
+        self.assertEqual(len([b for b in app.button if (b.key or '').startswith('package-view-')]),5)
         self.assertFalse(after['human_accepted'])
 
     def test_preparation_lists_full_scope_without_starting_generation(self):
@@ -274,9 +283,9 @@ class AgentRunUITests(unittest.TestCase):
     def test_current_run_is_labeled_and_no_human_or_publish_action(self):
         app = self.start()
         self.assertTrue(any('OFFLINE SIMULATION' in e.value for e in app.warning))
-        self.assertTrue(any('Human approval pending' in e.value for e in app.caption))
-        self.assertFalse(any('Approve' in b.label or 'Publish' in b.label for b in app.button))
-        self.assertTrue(any('Publishing disabled' in e.value for e in app.caption))
+        self.assertTrue(any('Human approval pending' in e.value for e in app.markdown))
+        self.assertTrue(app.button(key='approve-package').disabled);self.assertFalse(any('Publish' in b.label for b in app.button))
+        self.assertTrue(any('Nothing published' in e.value for e in app.markdown))
 
 
 if __name__ == '__main__': unittest.main()

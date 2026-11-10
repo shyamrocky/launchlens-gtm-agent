@@ -1,3 +1,68 @@
+## Owner-authorized repository sync — November 10, 2026
+
+Owner requested Git sync of the completed canonical work through M2-D039:
+current-version review UI, six phrase cards and sentence previews, internal
+approval/export controls, three explicit model revisions, final-version human
+editing/rescan, citation-only retry and saved-Version1 recovery. This authorizes
+scoped publication to the existing private repository; earlier no-publication
+labels describe historical checkpoint boundaries. Marketing-content acceptance,
+further inference and subsequent milestones remain separate. Current Version1
+still awaits human decisions and approval; publishing remains disabled.
+Fresh clean canonical snapshot:381 harness+70 UI+111 root=562 tests PASS, with
+root JSONL prerequisites regenerated only in that temporary snapshot. No install,
+source change or dependency on workspace/private runtime artifacts for offline
+verification. Credentials, workspace, saved live outputs and ledgers stay local.
+[Scope and verification](docs/planning/repository-sync-2026-11-09.md#package-review-and-bounded-recovery-sync--m2-d039).
+
+## Current checkpoint — M2-D039, November 10, 2026
+
+Current Version1 review regrouped offline from12 full-quote cards to6 phrase cards:
+family, guided the development, lineup, introducing, new, unique. Exact sentence
+context and findings remain; phrase-sized screened suggestions preview the full
+sentence without changing drafts. presenting, guided the development and designed
+to are new scan terms; new matches are labeled as not assessed by the saved AI
+review. Historical review/scan validation remains reproducible. Display budgets
+round to cents; the ledger retains full precision.562offlinePASS(381harness70UI111root)
+and actual saved-V1 AppTest PASS with0network, unchanged state/counters/accounting.
+No model calls, revision, content approval, source edits, dependencies, MEMORY
+append or Git publication. Remaining model budget$0.73, same precise ledger.
+App8520 → Current run → Review. Stop for owner inspection.
+[Results and limitations](docs/planning/writer-run-experience-review.md#m2-d039--phrase-span-cards-and-offline-regrouping).
+
+## Current checkpoint — M2-D038, November 9, 2026
+
+Owner-approved citation correction implemented: a blog section heading may use
+its own section body's citations; every other field still needs its own. One
+automatic Writer retry is permitted only for missing-citation-only failures,
+with the original validator diagnostic, known usage, unchanged limits and budget.
+A full inspection rejects mixed structure/evidence/policy failures without retry.
+551 offline tests PASS (372 harness, 68 UI, 111 root).
+Saved US run41a5e49a-739e-41a0-9d36-f2530348b3ee recovered: its original candidate
+passes unchanged; no new research, Controller or Writer call. One Qwen Reviewer
+call completed. All five formats are Version1 / Package ready for human review;
+Reviewer requests changes, not content approval. Publishing remains disabled.
+New usage estimate USD0.0018627; cumulative USD0.2709686/1.00. Same ledger/counters,
+original failures/receipts/old V2 preserved. No revisions, source/dependency/prompt/
+model changes, MEMORY append or Git publication. Stop for owner review.
+[Results and limitations](docs/planning/writer-run-experience-review.md#m2-d038--section-citations-and-saved-us-version-1-recovery).
+
+## Current checkpoint — M2-D037, November 9, 2026
+
+Owner-authorized UI fixes implemented: compact Home mode dropdown, source timestamp
+inside its card, concise Activity reasons, final-version Keep/Edit controls with
+validated human edits and fresh scan, and protected “stay informed” screening.
+543 offline tests PASS (364 harness, 68 UI, 111 root); native Home/stopped-run views
+verified. Current-version-only UI and three-revision cap remain.
+One fresh US run was executed. Research/Proceed passed; Hermes returned a package
+but omitted the citation for blog heading “Inspired by Classic Soda Floats”. Backend
+rejected content.sections.1.heading with field_claim_coverage. No package admitted,
+Reviewer/revision/approval calls or retry. Version1 review goal remains UNMET.
+[Results, screenshots and limits](docs/planning/writer-run-experience-review.md#m2-d037--ui-refinements-and-one-fresh-us-run).
+New estimated model cost USD0.0201168; cumulative ledger USD0.2691059/1.00. Current
+run shows this actual stopped attempt read-only; prior saved V2 remains protected.
+No new model/provider settings, dependencies, source edits, MEMORY append or Git
+publication. Stop for owner review; no further live execution in this checkpoint.
+
 ## Owner acceptance and scoped Git sync — November 9, 2026
 
 Owner approved Git sync of the completed canonical implementation through M2-D031:

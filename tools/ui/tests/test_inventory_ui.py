@@ -33,6 +33,14 @@ class InventoryUITests(unittest.TestCase):
         app.session_state["inventory"] = deepcopy(self.snapshot)
         return app.run()
 
+    def test_home_mode_is_beside_heading_and_source_timestamp_inside_card(self):
+        app=self.app();self.assertFalse(app.exception)
+        self.assertEqual(app.selectbox(key='ui-mode').label,'Mode')
+        self.assertNotIn('Execution data',[x.label for x in app.selectbox])
+        self.assertEqual(app.title[0].value,'GTM Launches')
+        self.assertIn('Source documents',[s.value for s in app.subheader])
+        self.assertTrue(any('Source checks completed' in c.value for c in app.caption))
+
     def test_real_render_contains_all_markets_and_no_generation_controls(self):
         app = self.app()
         self.assertEqual(len(app.exception), 0)

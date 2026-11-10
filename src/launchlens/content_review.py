@@ -196,8 +196,8 @@ class ContentCall:
 
     def __call__(self, state):
         package_stage = self._stage.startswith('package_')
-        maximum = __import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_attempts'] if self._stage == 'package_reviewer' else 2 if self._stage in {'linkedin_reviewer','package_writer'} else 1
-        check(len(self.calls) < maximum, 'attempt_limit')
+        maximum = __import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_attempts'] if self._stage == 'package_reviewer' else __import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['revision_attempts'] if self._stage=='package_revision' else 2 if self._stage in {'linkedin_reviewer','package_writer'} else 1
+        check(maximum is None or len(self.calls) < maximum, 'attempt_limit')
         if package_stage:
             from launchlens.package_content import prepare_call, load_package_prompt
             inputs = prepare_call(state, self._stage, projector=self._projector)

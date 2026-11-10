@@ -1230,3 +1230,475 @@ resolution of its flagged wording, permission for a third draft/re-review, or
 approval of future observability/submission work. Original technical results,
 limitations, failed attempts and pending content decisions remain intact.
 See repository-sync-2026-11-09.md for this publication's exact verification scope.
+
+
+## M2-D032 — Run-page card stack and internal package handoff
+
+Date: November 9, 2026. Status: implemented and verified; owner UI acceptance pending.
+Owner authorized the attached run-page layout, dark theme, UI-only work and four
+screenshots. No inference, source refresh, Git publication or next milestone.
+
+### Decision and implementation
+
+Replace the existing run/review page, retaining the existing harness and three tabs.
+Activity is selected during execution and Review at human handoff. The actual
+ledger supplies research, human feedback, Version 2 creation and required review
+steps; no fabricated skipped tools or model judgments. The status remains above
+the tabs. Home layout and launch policy remain unchanged.
+
+Review now presents one phrase group at a time, progress segments, Previous/Next,
+auto-advance, a screened advisory replacement, Writer-rephrase and Keep wording.
+Grouped locations and existing occurrence overrides remain available. A choice
+records a version-bound preference; it does not edit a draft or create evidence.
+The recap reopens any choice. Create Version 2 retains the existing single-revision
+and budget guards and stays locked until must-decide groups are resolved.
+Current Version 2 cannot create Version 3.
+
+Package shows current per-format attention, View controls, actual changed-text-field
+counts, preserved V1/V2 comparison, internal-use approval and labeled Markdown/copy.
+Approval requires acknowledgement, complete matching review, authoritative binding,
+resolved required choices and no pending rewrites. It is a separate UI-owned record;
+it neither sets the harness's human_accepted flag nor grants publishing permission.
+Any change to content, review or decisions invalidates it. Explicit live approval
+writes an existing protected receipt; restoration of that UI approval after restart
+is not implemented. Suggestions remain advisory and are not semantic guarantees.
+
+Rationale: reduce PMM review to a manageable decision stack and a clear handoff.
+Alternative retained in history: the long phrase-card list and full draft dump.
+No new agent, pipeline, provider, dependency or workspace runtime requirement.
+
+### Verification and preservation
+
+- 347 harness + 59 UI + 111 root tests PASS: 517 total. UI socket connections
+  blocked. Tests cover navigation, grouped/occurrence choices, must-decide locking,
+  one explicit revision, V2 comparison, independent authoritative binding, approval
+  invalidation, simulation-labeled exports and no network activity.
+- Native Safari checked the four fixture views at normal/reduced zoom, with no
+  horizontal clipping. Verified actual V1/V2 diff expansion and Copy all -> Copied.
+  Screenshot captures use the existing offline simulation, not newly generated
+  live content or owner approval. Current live V2 was not altered.
+- All 743 pre-existing protected/generated/source/continuity files matched the
+  checkpoint hashes before documentation updates. Only BUILD_CONTEXT and
+  IMPLEMENTATION_PROGRESS receive this checkpoint afterward. MEMORY, saved V2,
+  current-live pointer, authorization, credentials, budget and receipts preserved.
+- Zero model or external source calls; zero installs, Git staging, commits or pushes.
+
+Screenshots: [Activity](screenshots/d032/activity.png),
+[Review card stack](screenshots/d032/review.png),
+[Review recap](screenshots/d032/summary.png),
+[Package and exports](screenshots/d032/package.png).
+
+Open the app at http://127.0.0.1:8520 -> Current run -> Review or Package.
+Optional offline visual fixture: run the maintained tools/preview_run_states.py
+with Streamlit on port 8522; cases activity, review, summary and package.
+Use the existing tools/ui environment. No private workspace inputs are required.
+Clipboard success depends on browser permission; a failure is displayed with a
+Download Markdown alternative. Approval and export never publish.
+
+Stop for owner review. No new live run, revision, content acceptance or Git sync.
+
+
+## M2-D033 — Compact current-version Review and full-draft modal
+
+Date: November 9, 2026. Status: implemented, verified; owner UI review pending.
+Owner authorized five UI refinements only; no model execution or Git publication.
+
+Review now contains the card stack and end screen only. The full-draft section and
+cleared-findings list are removed from that tab. Each card's See full draft opens
+its format in a dismissible modal, with the exact current-version phrase highlighted
+and the modal's own text viewport scrolled to it. Closing preserves the selected
+card, decisions and run. Package's five View actions open the same full-draft
+viewer, with all current highlights. Original text is escaped and preserved, not
+summarized. Format-level findings without a quote open the draft at its beginning.
+
+One status description remains in the status card. Duplicate pending/mock captions
+are removed. Fixture origin and raw authored explanations remain under Technical
+details. Demo card Why text is phrased as a contextual check; live rationale is
+retained unless it is a fixture/debug explanation. This presentation change neither
+clears findings nor alters their severity. Advisory suggestions remain advisory.
+
+Review takes the current run snapshot and requires matching review-version/hash
+bindings before showing decisions. Version 2 resets the V1 card position/decisions;
+no V1 findings or obsolete Create Version 2 form are shown in the V2 recap. A pending
+V2 review displays a pending message instead of reusing V1. Historical text remains
+available through Package comparison; no Version 3 is introduced.
+
+Rationale: keep the PMM focused on one decision, with full context available on demand.
+Alternative: the previous inline full-draft section made every Review visit long.
+No new pipeline, model, dependency, source, launch policy or budget behavior.
+
+Verification: 349 harness + 63 UI + 111 root tests PASS (523 total). Focused tests
+cover no appended drafts, exact phrase focus/escaping, current V2 selection, stale
+review rejection, unchanged calls/state and fixture explanations kept technical.
+Native Safari verified See full draft at the selected V2 blog phrase, closing and
+returning, Package View from the beginning with highlights, recap and single status.
+An initial browser check exposed outer-page scrolling; corrected the viewer to
+scroll its own iframe window only. The corrected behavior was visually verified.
+Screenshots use existing offline fixtures, not a newly generated live package:
+[Review](screenshots/d033/review.png), [focused full draft](screenshots/d033/full-draft.png),
+[recap](screenshots/d033/summary.png), [Package](screenshots/d033/package.png).
+
+All 743 prior protected/source/continuity files hash-identical before the two
+continuity-note updates. Saved live V2, findings, pointer, receipts, credentials,
+spending ledger and MEMORY unchanged. No model calls, installs, staging, commits
+or pushes. Existing app refreshed on port 8520; open Current run -> Review/Package.
+Stop for owner inspection; no new live run or content acceptance.
+
+
+## M2-D034 — Shared header and Home-aligned detail layout
+
+Date: November 9, 2026. Status: implemented and verified; owner UI inspection pending.
+Owner approved one shared header across Home, Setup and Current run, evenly spaced
+navigation and detail content aligned with Home's main product card. Layout only.
+
+Removed the run-only 720px header restriction. Brand/tagline and the navigation
+box now use the same full-page header columns on every route. Navigation controls
+share equal widths; Current setup is retained before a run exists and Current run
+when one is available. Preparation, active run and saved review use Home's existing
+2:1 column proportions and responsive stacking. Detail content aligns at Home's
+left margin instead of floating in a centered narrow frame. Reduced detail gaps,
+heading spacing and status/review-card padding; dark palette/interactions unchanged.
+Rationale: consistent application shell, with readable task content. Alternative:
+the former centered run-only frame created different header widths and cramped nav.
+
+Verification: existing 63 UI regression tests PASS with network connections blocked.
+Native Safari compared Home, Setup and Current run at the same desktop width:
+header/navigation edges match and both primary cards occupy the same left column.
+Screenshots are existing offline fixtures: [Home](screenshots/d034/home.png),
+[Setup](screenshots/d034/setup.png), [Current run](screenshots/d034/current-run.png).
+No new mobile-browser verification claimed. No new tests or dependencies needed for
+this presentation-only change; agent/harness behavior unchanged.
+
+All 743 earlier source/private/generated/continuity files hash-identical before
+the two continuity updates. Saved live V2, decisions, receipts, pointer, credentials,
+budget and MEMORY preserved. No model calls, installs or Git publication. App8520
+refreshed for owner review; no further run, content approval or milestone inferred.
+
+
+## M2-D035 — Human-triggered revisions without a version ceiling
+
+**Owner direction:** Remove the full-package one-revision limit. The PM/PMM decides
+whether to request another revision or accept the current wording. Implementation
+is complete; further live revision behavior and content acceptance await owner use.
+
+The existing harness now accepts V2→V3 and subsequent explicit human revisions.
+Each request binds the current version, digest and selected decisions; the controller
+cannot initiate the revision. The harness always reviews the new version and waits
+for the human. Duplicate/stale requests remain rejected. A recommendation alone
+never launches a rewrite, marks content approved or publishes it. Approval requires
+the current applied version, human acknowledgement and resolution of must-decide
+items; requested rewrites cannot be approved as if already applied. Evidence and
+launch restrictions cannot be overridden by keeping wording.
+
+Versioned package execution v9, live profile v10 and controller prompt v4 preserve
+older configurations. The arbitrary package revision/required-review caps are
+replaced by explicit human commands and cost admission. The research-controller
+limit remains 12; each extra revision reserves its Writer and mandatory Reviewer
+cost together before dispatch. Standing-budget reservations are locked and bound
+to the run/current version; repeated clicks or concurrent processes cannot duplicate
+a cycle or reset accounting. Unknown usage remains reserved. Provider model IDs,
+prices, token limits, original qualification expiry and evidence validators remain
+unchanged: controller/Reviewer Qwen3-30B-A3B-Instruct-2507, Writer/revision Hermes-4-405B.
+
+The protected D035 authorization is restricted to the existing saved run; it cannot
+start a new run or raise the USD1 ceiling. The original pointer is backed up; only
+its authorization binding changed. Saved V1/V2 drafts, review/call receipts, previous
+authorizations and the spending ledger remain unchanged. Subsequent successful
+checkpoints atomically advance the pointer after state/capture receipts exist.
+The UI restores exact-version decision receipts, offers dynamic Create Version N
+controls, and compares each current version with its predecessor.
+
+**Verification:** 358 harness + 64 UI + 111 root = **533 passing offline tests**.
+Coverage includes V2→V3→V4, mandatory fresh review, stale/replayed requests, parallel
+cost admission, same-version reservation deduplication, preservation of history and
+current-version human approval. Actual saved V2 UI check: Create Version 3 enabled,
+six of six decisions restored, zero must-decide left; socket connections blocked,
+zero network, unchanged state/counters/ledger. No real V3 or provider call was made.
+
+**Handoff:** Refresh http://127.0.0.1:8520 → Current run → Review. The six V2 rewrite
+choices are retained. Create Version 3 is an explicit paid action, subject to the
+existing grant and available reservation. Current cumulative accounted spending
+remains USD0.2489891/1.00 (remaining USD0.7510109, including the previously held
+unknown-charge reserve); these are ledger estimates, not console charge attribution.
+No new model reliability or semantic-quality result is claimed. No Git publication.
+
+
+## M2-D036 — MVP current package, three revisions and optional advisories
+
+**Decision D036 — owner approved, November 9, 2026; implemented, owner use/review
+pending.** The owner replaces the earlier unlimited-revision/history UI direction
+with a smaller MVP: current version only, three revisions per run, and advisory
+Reviewer notes that never block approval. Rationale: keep the PMM experience simple.
+The previous uncapped revision approach and Versions/Compare UI are superseded;
+protected historical data is retained rather than deleted or rebound.
+
+- Removed the Package Versions row, Compare control and change counts. Current
+  draft View links, highlights, approval and labeled exports remain. Activity is
+  still the actual action log; no prior-version selector/draft comparison is shown.
+- Three revisions means the initial V1 plus at most V2, V3 and V4. The harness,
+  content adapter and live guard enforce the cap before further paid execution.
+  Attempted revisions count toward it. At the limit the UI shows Revision limit
+  reached; no editable next-version note suggests an executable fourth revision.
+  Every admitted revision still gets a fresh required review and human handoff.
+- Approval ignores optional advisories whether undecided, kept, or marked for a
+  possible rewrite. Must-decide status is occurrence-specific, including mixed
+  groups: optional occurrences do not keep a required occurrence unresolved after
+  the PMM has decided it. A required requested rewrite remains unresolved until
+  applied; explicit Keep resolves that wording decision, without changing evidence
+  or launch permission. Invalid content, mismatched/incomplete current review and
+  launch restrictions remain independent integrity controls.
+- Package execution v10 and live profile v11 preserve old policies and all prompts,
+  model routes, frozen evidence, prices/token caps and previous qualification dates.
+  The D036 private authorization is bound to the existing run, with unchanged USD1
+  ceiling and expiry; only the current pointer's authorization binding was updated,
+  with a protected original-pointer backup. No new-run permission or budget reset.
+
+**Actual offline verification:** 361 harness + 65 UI + 111 root = **537 PASS**.
+New coverage checks three successful revisions then refusal of the fourth without
+new Writer/cost reservation, live mock guard refusal, optional-advisory approval,
+mixed mandatory/advisory occurrences, current-only UI and approval at the revision
+limit. Final focused seven-test UI rerun passed after copy clarification. The first
+harness run used the minimal harness environment and failed because jsonschema was
+absent (five other skips); rerunning in the existing UI environment, which already
+contains the dependency, passed all 361 without skips. No package installation.
+
+**Saved-run check:** socket connections blocked; actual saved V2 loads with six
+choices intact, current draft View links, no Versions/Compare, 1 of 3 revisions used,
+and Create Version 3 enabled. Draft state, all call counters and ledger unchanged.
+No actual V3, provider inference or new semantic-quality result is claimed. Accounted
+spending remains USD0.2489891/1.00, remaining USD0.7510109 including the old held
+unknown-charge reserve; these are ledger estimates, not console attribution.
+
+**Handoff:** refresh http://127.0.0.1:8520 → Current run → Review or Package. Existing
+six V2 rewrite choices remain available to apply to V3. No Git staging/commit/push,
+source/dependency changes or MEMORY append. Build/progress notes updated.
+
+
+## M2-D037 — UI refinements and one fresh US run
+
+**Status: UI implemented and verified; fresh live Version1 acceptance not reached.**
+Owner approved these UI fixes and one fresh US run under the standing USD1 ceiling.
+No second run, regeneration, validation weakening or content acceptance is claimed.
+
+### UI and harness behavior
+
+- Home has no top Execution data bar. Mode: Live agent/Simulation is a compact
+  dropdown beside GTM Launches. Source-check timestamp is inside Source documents.
+  The existing shared header, dark palette and current-only package remain.
+- Activity uses plain fallback reasons, caps displayed reasons at20 words, and labels
+  owner-triggered review rechecks “Re-check (requested by you)”. Raw reasons stay in
+  protected captures/Technical details; no fabricated skipped actions are introduced.
+- At the three-revision limit, cards offer Keep wording or Edit it myself. Inline
+  full-field edits go through the existing harness's authoritative content/evidence/
+  launch checks; accepted text replaces the current version, preserves prior receipts,
+  and gets a fresh deterministic scan. No paid Writer/Reviewer call is made on save.
+  UI/export explicitly says human-edited, re-scanned, no new AI review. Findings on
+  changed fields are not inherited; unchanged-field decisions transfer only when
+  exact context, location and category match. New scan hits require fresh decisions.
+  Approval acknowledgement resets after edits; stale edits and tampering fail.
+- Final-version must-decide items resolve by explicit Keep or valid edits that remove
+  the concern. The old requested-rewrite dead-end text is replaced with the actual
+  Keep/Edit choices. Optional advisories remain nonblocking. Evidence, launch rules,
+  current binding and complete review prerequisites remain; human editing cannot
+  manufacture evidence or publishing rights. Manual-rescan derivations are verified
+  on private checkpoint restore rather than presented as new Reviewer judgments.
+- Suggestions use the risk scan; “stay informed” is protected availability language
+  and is hidden as a suggested replacement. The three-model-revision cap remains.
+
+### Exact live execution and observed failure
+
+Controller and independent Reviewer adapters remain
+`Qwen/Qwen3-30B-A3B-Instruct-2507`; Writer/revision remain
+`NousResearch/Hermes-4-405B`. Original prompts, model settings, qualification/expiry,
+content contract and evidence validation stayed unchanged. The fresh authorization
+consumed one unique output directory, using the existing standing ledger.
+
+| Observed step | Result |
+| --- | --- |
+| PMM read | Completed against Notion |
+| Launch check | Proceed for US / December14,2026; publishing disabled |
+| Product evidence search | Completed against Pinecone |
+| Writer | HTTP200; complete candidate retained; 10,116 input +1,597 output tokens |
+| Package admission | Rejected: blog `content.sections.1.heading`, rule `field_claim_coverage` |
+| Reviewer/revision/approval | Not invoked; no package admitted |
+
+The exact rejected heading is **“Inspired by Classic Soda Floats”**. The candidate
+has **zero claim_references entries for `sections.1.heading`**. This is the narrow
+existing per-field citation rule, not a JSON-shape rejection, source outage or proof
+that every generated sentence is wrong. References on other fields do not satisfy
+this heading. No automatic reference was added, no rule relaxed and no paid retry
+was performed. This evidence failure intentionally does not qualify for the existing
+harmless-format retry path.
+
+Actual counts:4 controller calls,1 Writer,0 Reviewer,0 revision. New usage estimate
+**USD0.0201168** (WriterUSD0.014907); cumulative ledger **USD0.2691059/1.00**, remaining
+USD0.7308941, retaining earlier unknown-charge reserve. These are usage-based ledger
+estimates, not attributable console billing. No new unknown charge occurred.
+
+Protected raw candidate, original request/response, diagnostics, usage and state/
+capture receipts: `data/generated/live-package-d037-fresh-us-v1/`. A labeled readable
+rejected-candidate Markdown is there for private inspection. Current-run pointer is
+now bound to this failed attempt; previous V2 pointer is backed up privately, not
+lost. Failed first-draft receipts restore read-only with the execution guard closed;
+no Try again or implicit generation is enabled for this evidence failure.
+
+### Verification and handoff
+
+**543 offline tests PASS:**364 harness,68 UI,111 root; final13-test focused persistence/
+stopped-restore rerun also passed. Added coverage for stale/invalid manual edits,
+unchanged counters/cost on save, new protected scan matches, suggestion filtering,
+manual-edited approval provenance, mocked live persistence/restore, Home mode
+navigation, short Activity text and read-only evidence-failure restore. No packages
+installed. Early test-only issues (Home-only mode expectations and mock transport
+response type) were corrected; final suites passed without ignored failures.
+
+Actual saved failed-run AppTest: proper stopped message, no draft/approval/retry,
+no execution bar, closed guard, zero socket calls and unchanged state/counters.
+Native Safari verified actual Home and stopped/Activity layouts at desktop width;
+all five source documents were freshly read as accessible by the homepage. No new
+mobile-layout claim. Screenshots:
+[Home](screenshots/d037/home.png), [stopped run](screenshots/d037/stopped.png),
+[Activity](screenshots/d037/activity.png).
+
+Open http://127.0.0.1:8520 → Current run to inspect the actual failure. The requested
+Version1 human-review handoff remains incomplete; the rejected candidate is not an
+approved draft or a reviewed package. Further paid execution is stopped for owner
+review. No datasets, credentials, dependencies, MEMORY or Git publication changed.
+
+
+## M2-D038 — Section citations and saved US Version 1 recovery
+
+**Result: Package ready / Version 1 / owner content review pending.**
+
+Owner direction supersedes D037's strict heading coverage and citation-stop rule
+only as follows. For blog `sections.N.heading`, citations on **that same**
+`sections.N.body` satisfy structural reference coverage. Other sections, the blog
+title, introductions, headlines, subjects, hooks and CTAs retain their own checks.
+Reference validity, authority, qualifications, launch constraints and semantic
+Reviewer checks remain. This is citation coverage, not proof of entailment.
+
+The standing-budget live adapter automatically retries the Writer at most once
+**only** when a complete candidate inspection finds missing citations and no
+other structural, invalid-ID, CTA, link, wording or evidence failure. It reuses
+saved research and supplies the exact validator diagnostic; it never adds a
+citation, edits text, resets counters, extends authorization or repeats research.
+Unknown transport/billing and mixed failures stop. Existing explicit technical
+retry controls remain distinct; format-only failures do not automatically retry.
+The automatic retry shares the two-Writer-attempt limit and existing USD1 ledger.
+
+**Actual saved-run outcome.** Run `41a5e49a-739e-41a0-9d36-f2530348b3ee` retained
+US / December14,2026 / flavor_discovery, PMM, launch Proceed and Pinecone evidence.
+Original Hermes candidate revalidated successfully under the new heading rule;
+its content and references are byte-equivalent under canonical serialization
+(SHA256 `68a2d1e9bad0c568105776f12ca0ff5817507cc7795bb287b8abbb35174e3c42`).
+No new Writer call or automatic retry was necessary. Original rejection and raw
+response remain preserved; a separate revalidation event records the change.
+The existing graph then ran its required independent Reviewer and returned to
+the human at Version1, with no revision or content acceptance.
+
+| Actual new work | Result |
+|---|---|
+| Research / Controller / Writer calls | 0 / 0 / 0 |
+| Reviewer | 1, `Qwen/Qwen3-30B-A3B-Instruct-2507` |
+| Writer remains | `NousResearch/Hermes-4-405B` |
+| Five formats | Admitted, Version1, complete independent review |
+| Reviewer outcome | Changes requested; 12 grouped phrases for human attention |
+| Reviewer input / output tokens | 13,779 / 1,616 |
+| Reviewer latency | 39.235887 seconds |
+| New usage-based cost estimate | USD0.0018627 |
+| Cumulative accounted / remaining | USD0.2709686 / USD0.7290314 of USD1 |
+| Actual aggregate calls | 4 Controller, 1 Writer, 1 Reviewer, 0 revisions |
+| Human acceptance / publishing | False / disabled |
+
+**Offline verification:**372 harness +68 UI +111 root tests PASS (551 total).
+Eight focused cases cover own-section inheritance, isolation of all other fields,
+missing-only vs mixed failures, exact diagnostic delivery, single retry/replay,
+known accounting, bound saved-run recovery and required review without new writing.
+An old stopped-display fixture now uses an independent prohibited-link failure;
+its former heading error is intentionally accepted by the owner-approved rule.
+Mocks establish retry wiring, not live retry reliability. The actual live result
+establishes saved-candidate admission and completed review, not a Writer retry.
+
+Protected receipts remain in the original ignored
+`data/generated/live-package-d037-fresh-us-v1/` directory, including new call06,
+state/capture files and `d038-result.json`. A new private owner-bound resume receipt
+and pointer backup preserve old approvals and the same spending ledger. No runtime
+workspace dependency, new integration, model/prompt/template/dependency/source
+change, MEMORY append, staging, commit or push. App: localhost8520, Current run →
+Review (decisions) or Package (full drafts). Stop for owner inspection.
+
+Native Safari verified Current run → Review defaults to Version1,12cards/3must-decide, and Package shows all five View controls. No decisions, approval or revision clicked. [Review screenshot](screenshots/d038/review.png) · [Package screenshot](screenshots/d038/package.png). Reloading Home performed its ordinary source-access reads; saved-run recovery itself made zero research calls.
+
+
+## M2-D039 — Phrase-span cards and offline regrouping
+
+**Date:**November10,2026. **Authority:**latest explicit owner instruction.
+**Status:**implemented/verified; owner review pending, no content acceptance.
+**Decision:**group on exact scan terms or a short Reviewer key phrase; keep full
+sentences as context, not group titles. **Rationale:**the previous overlap merge
+inflated a phrase into a whole quote and duplicated the same decision across
+formats. **Alternatives:**retain12 sentence cards or make another model call;
+neither is needed for this presentation correction.
+
+The unchanged saved US Version1 now has6 cards across15 phrase occurrences:
+
+| Phrase | Places |
+|---|---:|
+| family |2|
+| guided the development |1|
+| lineup |1|
+| introducing |3|
+| new |4|
+| unique |4|
+
+The card keeps exact text offsets, full original context, raw findings, category
+union and human-clearance protection. Reviewer sentences are attached to their
+short scan spans instead of swallowing the sentence. For unlinked long quotes,
+a short exact term from the Reviewer's rationale or a recognized key phrase is
+used; no quotation or location is invented. Group choices and occurrence overrides
+remain exact-version bound. Old receipts are preserved; the new card-policy
+identity prevents replaying choices made against obsolete group IDs.
+
+Suggestions now replace **only** the selected phrase. A larger Reviewer replacement
+can be narrowed only if all surrounding text is retained exactly. Every proposed
+replacement is scan-screened and must pass span/lexical checks for every grouped
+occurrence; stale spans, full-sentence substitutions and duplicate boundary or
+sentence phrases are rejected. The card previews the complete sentence after the
+change; the occurrence expander also shows each preview. This does not apply edits.
+For example, Introducing → Meet previews the full original hook with only that
+word changed. The old lineup → distinct option hint is hidden because it produced
+“a distinct option within the Coca-Cola distinct option”. Where no candidate fits,
+the explicit Writer-rephrase option remains. Hints remain advisory; deterministic
+fit checks do not establish semantic support or perfect grammar.
+
+New configured scan terms: presenting (novelty/launch language), guided the
+development and designed to (invented product/company facts, human clearance).
+The saved package contains guided the development; it is freshly flagged and
+explicitly labeled **not assessed in the saved AI review**. The saved AI review is
+not rewritten or presented as a new assessment. Scan provenance permits legacy
+raw reviews, groups and hidden-hint results to revalidate under their original
+scan; future assessments carry the new scan marker. Current cards use the fresh
+scan and retain original AI dispositions where they actually exist.
+
+The end-screen remaining budget shows **$0.73**. Technical display copies round
+USD fields to two decimals; original accounting, receipts and cost calculations
+retain USD0.7290314 remaining and USD0.2709686 accounted. No model calls or charge.
+
+**Verification:**381 harness +70 UI +111 root=562 offline tests PASS. Nine new
+phrase/span cases and two UI cases cover6-card grouping, exact offsets, sentence
+previews, rejecting ill-fitting hints, applying suggestions to every occurrence,
+new scan protection, legacy reproducibility and display-only rounding. An actual
+saved-V1 AppTest verified6cards, sentence preview and$0.73 with zero socket calls,
+no changed state, no counters or ledger changes. Native Safari verified6cards,
+new-match labeling and the real sentence preview on the unchanged saved package.
+No human choice, revision, approval, export or model execution was triggered.
+
+[Phrase card](screenshots/d039/phrase-card.png) ·
+[Sentence preview](screenshots/d039/sentence-preview.png).
+
+All prior protected source/data/generated/private files and MEMORY.md were
+hash-identical before continuity updates. Same current-run pointer, V1 draft,
+raw review, failures, historical versions, credentials and ledger preserved.
+Canonical implementation reuses the existing review/UI/harness; no framework,
+service, dependency, prompt, model or corpus change. No Git publication. App8520:
+Current run → Review. Stop for owner inspection.

@@ -8,6 +8,8 @@ from launchlens.offline_ui_run import OfflineUIRun
 from launchlens.offline_fixtures import request
 from launchlens.voice_policy import BRAND_POLICY_ID
 
+from ui_review_helpers import finish_stack,show_card
+
 class RunScreenTests(unittest.TestCase):
     def setUp(self):
         p=patch.object(socket.socket,'connect',side_effect=AssertionError('No network'));self.net=p.start();self.addCleanup(p.stop)
@@ -23,9 +25,9 @@ class RunScreenTests(unittest.TestCase):
         app,run=self.start();html=' '.join(x.proto.body for x in app.get('html'))
         self.assertIn('Package ready for your review',html);self.assertIn('What the agent did',[s.value for s in app.subheader])
         self.assertNotIn('Skipped public research',html);self.assertNotIn('Source documents',html)
-        self.assertEqual([t.label for t in app.tabs[:3]],['Activity','Review','Package']);self.assertTrue(any(e.label=='Technical details' and not e.proto.expanded for e in app.expander))
+        self.assertEqual([t.label for t in app.tabs if t.label in {'Activity','Review','Package'}],['Activity','Review','Package']);self.assertTrue(any(e.label=='Technical details' and not e.proto.expanded for e in app.expander))
         self.assertTrue(all(e['why'] for e in run.snapshot()['events']))
-        app.button(key='run-review').click().run();self.assertEqual(len(app.tabs),8)
+        app.button(key='run-review').click().run();self.assertEqual(len(app.tabs),3)
         self.assertFalse(app.exception)
     def test_waiting_inline_continue_same_run_without_approval(self):
         app,run=self.start('UK');before=run.snapshot()

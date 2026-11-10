@@ -26,7 +26,7 @@ from launchlens.notion_tools import PMM_PAGE, PRODUCT
 from launchlens.retrieval import checked_packet
 from launchlens.voice_policy import BRAND_POLICY_ID, voice_brief
 from launchlens.package_content import (PackageError, admit_package, prepare_package_input,
-    authoritative_package_binding, validate_package_review, prepare_call)
+    authoritative_package_binding, validate_package_review, prepare_call, configuration)
 
 
 class State(TypedDict):
@@ -225,19 +225,21 @@ class FoundationSession:
                 "Clarification reply must contain 1–2000 characters")
         return self._execute(run_id, reply=reply, on_update=on_update)
 
-    def restore_review_checkpoint(self, state, *, review_recovery=False):
+    def restore_review_checkpoint(self, state, *, review_recovery=False, stopped_display=False):
         """Trusted protected-receipt restore only; no model-supplied state or calls."""
         require(self._mode=='live_package' and self._run_id is None, 'No current run may be overwritten')
         require(type(state) is dict and set(state)==set(State.__annotations__) and
             state['mode']=='live_package' and
-            ((not review_recovery and state['status']=='awaiting_human_review' and state['package']['version'] in {1,2}) or
-             (review_recovery and state['status'] in {'failed','stopped'} and state['package']['version']==2 and state['revision_attempts']==1 and not state['review'])) and
+            ((stopped_display and state['status']=='failed' and state['package'] is None and not state['drafts']) or
+             (not review_recovery and state['status']=='awaiting_human_review' and type(state['package']['version']) is int and state['package']['version']>=1) or
+             (review_recovery and state['status'] in {'failed','stopped'} and state['package']['version']>=2 and state['revision_attempts']>=1 and not state['review'])) and
             state['revision_request'] is None and state['pending'] is None and
             state['human_accepted'] is False, 'Only the current review checkpoint can resume')
+        require(not stopped_display or (state['status']=='failed' and state['package'] is None and not state['drafts']),'Stopped restore is display-only')
         from uuid import UUID
         require(str(UUID(state['run_id']))==state['run_id'], 'Invalid checkpoint identity')
-        authoritative_package_binding(state)
-        require(self._execution_guard.armed and (not self._execution_guard.closed or review_recovery) and
+        if not stopped_display:authoritative_package_binding(state)
+        require(self._execution_guard.armed and (not self._execution_guard.closed or review_recovery or stopped_display) and
             (sum(self._execution_guard.counts.values())==state['turns'] or
              (review_recovery and self._execution_guard.can_review_saved(state))), 'Checkpoint budget differs')
         self._run_id=state['run_id'];self._initial=None
@@ -254,7 +256,7 @@ class FoundationSession:
                 ((state['package']['version']==1 and state['review_attempts']==1 and state['revision_attempts']==0) or
                  (state['package']['version']==2 and state['review_attempts']==3 and state['revision_attempts']==1)) and
                 not state['review'].get('review_complete') and
-                state['review_attempts']<__import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_attempts'], 'Reviewer-only recheck unavailable')
+                (__import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_attempts'] is None or state['review_attempts']<__import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_attempts']), 'Reviewer-only recheck unavailable')
             authoritative_package_binding(state)
             state['turns']+=1;state['review_attempts']+=1
             try:candidate=reviewer(deepcopy(state))
@@ -273,30 +275,79 @@ class FoundationSession:
             return self._snapshot()
         finally:self._lock.release()
 
-    def request_revision(self, run_id, feedback, *, draft_version, draft_sha256):
-        """Explicit owner command, never a registered model action or automatic loop."""
-        require(self._lock.acquire(blocking=False), "Execution is running")
+    def edit_current_fields(self,run_id,changes,*,draft_version,draft_sha256):
+        """Owner-only final-version edits; validate and rescan without inference."""
+        require(self._lock.acquire(blocking=False),'Execution is running')
+        try:
+            self._check_id(run_id);state=self._snapshot()
+            require(self._mode in {'offline_package','live_package'} and state['status']=='awaiting_human_review'
+                and state['revision_attempts']>=configuration()['limits']['revision_attempts']
+                and state['revision_request'] is None and state.get('review',{}).get('review_complete') is True,
+                'Manual editing requires the final reviewed version')
+            inputs,_,binding=authoritative_package_binding(state)
+            require(state['review'].get('binding')==binding,'Current review binding required')
+            require(draft_version==binding['draft_version'] and draft_sha256==binding['draft_sha256'], 'Edit targets an outdated draft')
+            require(type(changes) is list and 0<len(changes)<=30,'Bounded field edits required')
+            from launchlens.package_content import package_value,text_fields,human_edit_review
+            value=package_value(state);changed=[];seen=set()
+            for edit in changes:
+                require(type(edit) is dict and set(edit)=={'format','content_field','text'},'Invalid edit fields')
+                name,path,text=edit['format'],edit['content_field'],edit['text']
+                require(type(name) is str and name in value and type(path) is str and type(text) is str and text.strip() and len(text)<=20000,'Invalid edit value')
+                fields=dict(text_fields(value[name]['content']))
+                require(path in fields and (name,path) not in seen,'Unknown or duplicate edit field')
+                seen.add((name,path))
+                if fields[path]==text:continue
+                target=value[name]['content'];parts=path.split('.')
+                for part in parts[:-1]:target=target[int(part)] if isinstance(target,list) else target[part]
+                leaf=int(parts[-1]) if isinstance(target,list) else parts[-1];target[leaf]=text
+                changed.append({'format':name,'content_field':path})
+            require(changed,'No text changes to save')
+            drafts,metadata=admit_package(value,inputs,version=draft_version)
+            source=deepcopy(state['review']);old_sha=state['package']['package_sha256']
+            state['drafts']=drafts;state['package']=metadata
+            checked=human_edit_review(state,source,changed)
+            state['review']=checked;state['reviews'].append(deepcopy(checked));state['human_accepted']=False
+            for name,item in checked['format_reviews'].items():state['drafts'][name]['review_status']=item['review_status']
+            state['events'].append({'sequence':len(state['events'])+1,'action':'human_edit','origin':'owner_command',
+                'outcome':'completed','why':'Your text edits were validated and scanned again. No new AI review was requested.',
+                'before_sha256':old_sha,'after_sha256':metadata['package_sha256'],'fields':changed})
+            with tracing_context(enabled=False):self._graph.update_state(self._config(),state,as_node='dispatch')
+            return self._snapshot()
+        finally:self._lock.release()
+
+    def _revision_permission(self,state,feedback,draft_version,draft_sha256):
+        require(self._mode in {"offline_review","offline_package","live_package"} and state['status']=='awaiting_human_review',
+                'Current reviewed draft required before revision')
+        package=self._mode in {'offline_package','live_package'}
+        _,_,binding=authoritative_package_binding(state) if package else authoritative_binding(state)
+        require(type(draft_version) is int and draft_version==binding['draft_version'] and draft_sha256==binding['draft_sha256'],
+                'Feedback targets an outdated draft')
+        from launchlens.package_content import MAX_PACKAGE_FEEDBACK
+        require(type(feedback) is str and feedback.strip() and len(feedback)<=(MAX_PACKAGE_FEEDBACK if package else 2000),
+                'Feedback exceeds the bounded revision limit')
+        require(state['revision_attempts']<(configuration()['limits']['revision_attempts'] if package else 1) and state['revision_request'] is None and state['review'].get('binding')==binding,
+                'Revision is unavailable or already requested')
+        return {'binding':binding,'review_sha256':digest(state['review']),'feedback':feedback}
+
+    def check_revision(self,run_id,feedback,*,draft_version,draft_sha256):
+        require(self._lock.acquire(blocking=False),'Execution is running')
         try:
             self._check_id(run_id)
-            state = self._snapshot()
-            require(self._mode in {"offline_review", "offline_package", "live_package"} and state["status"] == "awaiting_human_review",
-                    "Current reviewed draft required before revision")
-            _, _, binding = (authoritative_package_binding(state) if self._mode in {"offline_package", "live_package"} else authoritative_binding(state))
-            require(type(draft_version) is int and draft_version == binding["draft_version"] and
-                    draft_sha256 == binding["draft_sha256"], "Feedback targets an outdated draft")
-            from launchlens.package_content import MAX_PACKAGE_FEEDBACK
-            limit = MAX_PACKAGE_FEEDBACK if self._mode in {'offline_package','live_package'} else 2000
-            require(type(feedback) is str and feedback.strip() and len(feedback) <= limit,
-                    'Feedback exceeds the bounded revision limit')
-            require(state["revision_attempts"] == 0 and state["revision_request"] is None and
-                    state["review"].get("binding") == binding, "Revision is unavailable or already requested")
-            permission = {"binding":binding, "review_sha256":digest(state["review"]), "feedback":feedback}
+            return self._revision_permission(self._snapshot(),feedback,draft_version,draft_sha256)
+        finally:self._lock.release()
+
+    def request_revision(self,run_id,feedback,*,draft_version,draft_sha256):
+        """One explicit human command per bound version; never an automatic loop."""
+        require(self._lock.acquire(blocking=False),'Execution is running')
+        try:
+            self._check_id(run_id)
+            permission=self._revision_permission(self._snapshot(),feedback,draft_version,draft_sha256)
             with tracing_context(enabled=False):
-                self._graph.update_state(self._config(), {"revision_request":permission,
-                    "human_accepted":False, "revision_feedback":feedback, "status":"created"})
-            return self._snapshot()  # Does not execute or call any model.
-        finally:
-            self._lock.release()
+                self._graph.update_state(self._config(),{'revision_request':permission,
+                    'human_accepted':False,'revision_feedback':feedback,'status':'created'})
+            return self._snapshot()
+        finally:self._lock.release()
 
     def _execute(self, run_id, reply=None, on_update=None, continue_checkpoint=False):
         require(self._lock.acquire(blocking=False), "Execution is already running")
@@ -358,20 +409,20 @@ class FoundationSession:
     def can_review_saved(self):
         state=self._snapshot()
         if state is None or state['mode'] not in {'offline_package','live_package'}:return False
-        if state['status'] not in {'failed','stopped'} or (state.get('package') or {}).get('version')!=2:return False
-        if state['revision_attempts']!=1 or state.get('review') or state['human_accepted']:return False
-        if 'harness-review-v2' in state['ledger'] or any(r.get('binding',{}).get('draft_version')==2 for r in state['reviews']):return False
+        if state['status'] not in {'failed','stopped'} or (state.get('package') or {}).get('version',0)<2:return False
+        if state['revision_attempts']<1 or state.get('review') or state['human_accepted']:return False
+        if 'harness-review-v'+str(state['package']['version']) in state['ledger'] or any(r.get('binding',{}).get('draft_version')==state['package']['version'] for r in state['reviews']):return False
         try:authoritative_package_binding(state)
         except Exception:return False
         guard=self._execution_guard
-        return (state['review_attempts']<__import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_attempts']
-            and (guard.can_review_saved(state) if guard is not None else state['review_attempts']<4))
+        return ((__import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_attempts'] is None or state['review_attempts']<__import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_attempts'])
+            and (guard.can_review_saved(state) if guard is not None else True))
 
     def review_saved(self, run_id, *, on_update=None):
         """Explicit recovery of the admitted V2 only; no Controller or Writer call."""
         require(self._lock.acquire(blocking=False), 'Execution is running')
         try:
-            self._check_id(run_id);require(self.can_review_saved(), 'Saved Version 2 review unavailable')
+            self._check_id(run_id);require(self.can_review_saved(), 'Saved current-version review unavailable')
             state=self._snapshot();guard=self._execution_guard
             if guard is not None:
                 paid=sum(guard.counts.values())
@@ -392,10 +443,15 @@ class FoundationSession:
         finally:self._lock.release()
 
     def _task_turns(self, state):
-        return state['turns']-state['review_attempts'] if self._mode in {'offline_package','live_package'} else state['turns']
+        return state['turns']-state['review_attempts']-state['revision_attempts'] if self._mode in {'offline_package','live_package'} else state['turns']
 
     def _decide(self, state):
         state = deepcopy(state)
+        if self._mode in {'offline_package','live_package'} and state.get('revision_request'):
+            binding=state['revision_request']['binding']
+            state['pending']={'id':'human-revision-v'+str(binding['draft_version']+1)+'-'+binding['draft_sha256'][:12],
+                'name':'revise_package','arguments':{},'why':'Apply your explicit changes to the current version, then obtain a fresh review.'}
+            return state  # Human selected the task; no extra controller inference.
         if self._task_turns(state) >= self._max_turns:
             state["status"] = "failed"
             state["events"].append({"action": "budget", "outcome": "turn_limit"})
@@ -533,7 +589,7 @@ class FoundationSession:
                     if state["review"].get("binding") == binding:
                         outcome = "duplicate_suppressed"
                     else:
-                        require(state["review_attempts"] < __import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_attempts'],
+                        require(__import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_attempts'] is None or state["review_attempts"] < __import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_attempts'],
                                 "No model-call budget for review")
                         state["review_attempts"] += 1; state["turns"] += 1
                         failure_stage = "review_model"
@@ -555,24 +611,18 @@ class FoundationSession:
                     # The model cannot grant approval or initiate an extra revision.
                     state["status"] = "awaiting_human_review"
                 else:
-                    if state["revision_attempts"]:
-                        require(state["revision_attempts"] == 1 and state["package"]["version"] == 2,
-                                "Revision already attempted; no retry")
-                        authoritative_package_binding(state)
-                        outcome = "duplicate_suppressed"
-                    else:
-                        prepare_call(state, "package_revision")
-                        require(self._task_turns(state) < self._max_turns, "No model-call budget for revision")
-                        state["revision_attempts"] = 1; state["turns"] += 1
-                        failure_stage = "revision_model"
-                        candidate = self._revision_writer(deepcopy(state))
-                        calls=getattr(self._revision_writer,'calls',[])
-                        if calls:state['normalizations'].extend(deepcopy(calls[-1].get('normalizations',[])))
-                        failure_stage = "revision_validation"
-                        drafts, metadata = admit_package(candidate, prepare_package_input(state), version=2)
-                        state["drafts"], state["package"] = drafts, metadata
-                        state["draft_history"].append({"version":2, "drafts":deepcopy(drafts), "package":deepcopy(metadata)})
-                        state["review"] = {}; state["revision_request"] = None; state["human_accepted"] = False
+                    prepare_call(state,'package_revision')  # Exact current-version human permission.
+                    target_version=state['package']['version']+1
+                    state['revision_attempts']+=1;state['turns']+=1
+                    failure_stage='revision_model'
+                    candidate=self._revision_writer(deepcopy(state))
+                    calls=getattr(self._revision_writer,'calls',[])
+                    if calls:state['normalizations'].extend(deepcopy(calls[-1].get('normalizations',[])))
+                    failure_stage='revision_validation'
+                    drafts,metadata=admit_package(candidate,prepare_package_input(state),version=target_version)
+                    state['drafts'],state['package']=drafts,metadata
+                    state['draft_history'].append({'version':target_version,'drafts':deepcopy(drafts),'package':deepcopy(metadata)})
+                    state['review']={};state['revision_request']=None;state['human_accepted']=False
                 value = {"draft_version":state["package"]["version"], "formats":list(state["drafts"]),
                          "status":state["review"].get("review_status", "unreviewed")}
             elif name == "generate_linkedin":
@@ -602,7 +652,7 @@ class FoundationSession:
                 if state["review"].get("binding") == binding:
                     outcome = "duplicate_suppressed"
                 else:
-                    require(state["review_attempts"] < __import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_attempts'] and state["turns"] < self._max_turns,
+                    require(state["review_attempts"] < 2 and state["turns"] < self._max_turns,
                             "No model-call budget for review")
                     state["review_attempts"] += 1; state["turns"] += 1
                     failure_stage = "review_model"
@@ -683,6 +733,12 @@ class FoundationSession:
                 technical={'invalid_type','required_field_missing','unexpected_field','array_length_invalid','nonempty_text_required','unknown_validation_failure'}
                 rule=(state.get('draft_failure') or {}).get('rule')
                 code=(state.get('draft_failure') or {}).get('code')
+                from launchlens.package_content import citation_only_failures
+                calls=getattr(self._writer,'calls',[])
+                missing_only=(failure_stage=='draft_validation' and code in {'field_claim_coverage','objective_claim_coverage'} and
+                    calls and bool(citation_only_failures(calls[-1].get('candidate'),prepare_package_input(state))))
+                if missing_only and (self._execution_guard is None or not self._execution_guard.closed):
+                    state['status']='draft_incomplete'
                 if failure_stage in {'draft_writing','draft_validation'} and rule in technical and code not in {'objective_claim_coverage','field_claim_coverage','prohibited_wording','prohibited_link','cta_mismatch'}:
                     if self._execution_guard is None or not self._execution_guard.closed:
                         state['status']='draft_incomplete'  # Recoverable format handoff, not policy stop.
@@ -716,11 +772,43 @@ class FoundationSession:
         return {'feedback': reply, 'status': 'running', 'clarification': ''}
 
 
+    def _writer_failure_retryable(self,state):
+        failure=state.get('draft_failure') or {}
+        if failure.get('rule') in {'field_claim_coverage','objective_claim_coverage'}:
+            from launchlens.package_content import citation_only_failures
+            calls=getattr(self._writer,'calls',[])
+            try:return bool(calls and citation_only_failures(calls[-1].get('candidate'),prepare_package_input(state)))
+            except Exception:return False
+        return failure.get('rule') not in {'invalid_claim_reference','evidence_validation_failed','prohibited_wording','prohibited_link','cta_mismatch'}
+
+    def recover_writer_candidate(self,run_id,candidate,*,on_update=None):
+        """Explicit saved-response revalidation; no research/Controller/Writer call."""
+        require(self._lock.acquire(blocking=False),'Execution is running')
+        try:
+            self._check_id(run_id);state=self._snapshot()
+            require(self._mode=='live_package' and state['status']=='failed' and not state['drafts'] and
+                state['package'] is None and state['writing_attempts']==1 and state['retry_attempts']==0 and
+                (state.get('draft_failure') or {}).get('rule') in {'field_claim_coverage','objective_claim_coverage'},
+                'Saved Writer recovery unavailable')
+            inputs=prepare_package_input(state);calls=getattr(self._writer,'calls',[])
+            require(len(calls)==1 and calls[0].get('candidate')==candidate and
+                calls[0]['binding']=={'run_id':run_id,'draft_version':0,'draft_sha256':None,
+                    'authoritative_input_sha256':digest(inputs)},'Saved Writer binding differs')
+            drafts,metadata=admit_package(candidate,inputs)
+            self._execution_guard.reopen_for_saved_writer(state)
+            state['drafts']=drafts;state['package']=metadata;state['status']='running'
+            state['draft_history'].append({'version':1,'drafts':deepcopy(drafts),'package':deepcopy(metadata)})
+            self._event(state,'generate_package','revalidated_saved_candidate',time.monotonic(),
+                why='Revalidated the saved response using the approved section-heading citation rule; no new writing.')
+            with tracing_context(enabled=False):self._graph.update_state(self._config(),state,as_node='dispatch')
+        finally:self._lock.release()
+        return self._execute(run_id,on_update=on_update,continue_checkpoint=True)
+
     def can_retry_writer(self):
         state=self.snapshot()
         return bool(state and self._mode in {'offline_package','live_package'} and state['status'] in {'failed','draft_incomplete'}
             and (state.get('draft_failure') or {}).get('stage')=='draft_validation' and not state['drafts']
-            and (state.get('draft_failure') or {}).get('rule') not in {'invalid_claim_reference','evidence_validation_failed','objective_claim_coverage','field_claim_coverage','prohibited_wording','prohibited_link','cta_mismatch'}
+            and self._writer_failure_retryable(state)
             and state['writing_attempts']==1 and state['retry_attempts']==0 and self._task_turns(state)+2<=self._max_turns
             and (self._execution_guard is None or self._execution_guard.can_retry_writer()))
 

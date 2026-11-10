@@ -16,6 +16,8 @@ from launchlens.inventory import fetch_inventory,load_display
 from launchlens.writer_comparison import WireResponse
 
 
+from ui_review_helpers import finish_stack,show_card
+
 class LivePackageUITests(unittest.TestCase):
     def setUp(self):
         self.block=patch.object(socket.socket,'connect',side_effect=AssertionError('No UI network'))
@@ -75,12 +77,13 @@ class LivePackageUITests(unittest.TestCase):
 
     def test_live_feedback_uses_same_guard_and_fresh_all_format_review(self):
         app,run,wire=self.start_live()
-        next(x for x in app.text_area if x.label=='Other notes for the revision (optional)').input('Remove unsupported intensity.')
+        finish_stack(app)
+        next(x for x in app.text_area if x.label=='Anything else for Version 2? (optional)').input('Remove unsupported intensity.')
         next(b for b in app.button if b.label=='Create Version 2').click().run()
         self.assertEqual(len(app.exception),0);self.assertEqual(run.snapshot()['package']['version'],2)
-        self.assertEqual(len(wire.calls),9);self.assertEqual(run.guard.counts['package_revision'],1)
+        self.assertEqual(len(wire.calls),8);self.assertEqual(run.guard.counts['package_revision'],1)
         self.assertEqual(run.guard.counts['package_reviewer'],2)
-        app.run();self.assertEqual(len(wire.calls),9)
+        app.run();self.assertEqual(len(wire.calls),8)
         next(b for b in app.button if b.label=='Reset current run').click().run()
         self.assertEqual(len(app.exception),0);self.assertTrue(run.guard.closed)
         self.assertNotIn('offline_run',app.session_state)
@@ -90,11 +93,13 @@ class LivePackageUITests(unittest.TestCase):
         app,run,wire=self.start_live();before=run.snapshot();groups=grouped_findings(before)
         group=groups[0];occurrence=group['occurrences'][0]
         app.button(key='changes-'+group['id']).click().run()
+        show_card(app,group)
         if len(group['occurrences'])>1:app.button(key='keep-'+occurrence['id']).click().run()
         else:app.button(key='keep-'+group['id']).click().run()
         other=next((g for g in groups[1:] if g['needs_attention']),None)
-        if other:app.button(key='changes-'+other['id']).click().run()
-        next(x for x in app.text_area if x.label=='Other notes for the revision (optional)').input('Retain brand voice, no invented availability.')
+        if other:show_card(app,other);app.button(key='changes-'+other['id']).click().run()
+        finish_stack(app)
+        next(x for x in app.text_area if x.label=='Anything else for Version 2? (optional)').input('Retain brand voice, no invented availability.')
         initial=len(wire.calls)
         next(b for b in app.button if b.label=='Create Version 2').click().run()
         self.assertFalse(app.exception);after=run.snapshot()
@@ -104,9 +109,9 @@ class LivePackageUITests(unittest.TestCase):
         self.assertIn('Human prefers keeping ',after['revision_feedback'])
         self.assertIn('Retain brand voice',after['revision_feedback'])
         self.assertEqual(after['review']['binding']['draft_version'],2)
-        self.assertEqual(len(wire.calls),initial+3);self.assertEqual(len(after['reviews']),2)
+        self.assertEqual(len(wire.calls),initial+2);self.assertEqual(len(after['reviews']),2)
         self.assertFalse(app.session_state['run-review-decisions-'+after['run_id']]['events'])
-        app.run();self.assertEqual(len(wire.calls),initial+3)
+        app.run();self.assertEqual(len(wire.calls),initial+2)
         self.assertFalse(any(b.label=='Create Version 2' for b in app.button))
 
     def test_explicit_current_navigation_resumes_same_package_without_any_calls(self):
@@ -126,7 +131,7 @@ class LivePackageUITests(unittest.TestCase):
         wire=Wire(lambda p:WireResponse(429,b'{"error":"MOCK"}',{}))
         app,run,wire=self.start_live(wire)
         self.assertEqual(run.snapshot()['status'],'failed');self.assertFalse(run.snapshot()['drafts'])
-        self.assertEqual(app.selectbox(key='ui-mode').value,'Live agent')
+        self.assertEqual(app.session_state['_data_mode'],'Live agent')
         self.assertNotEqual(app.session_state['inventory'].get('data_mode'),'offline')
         self.assertTrue(run.guard.closed);app.run();self.assertEqual(len(wire.calls),1)
         self.assertFalse(any('Generate again' in b.label for b in app.button))

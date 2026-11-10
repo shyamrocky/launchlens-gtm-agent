@@ -1,0 +1,52 @@
+{
+  "contract_id": "gtm_package_v1",
+  "version": 10,
+  "scope": "M2-D036 MVP: current-version UI, three explicit revisions per run",
+  "formats": [
+    "campaign_brief",
+    "linkedin",
+    "email",
+    "blog",
+    "ads"
+  ],
+  "voice_policy_id": "simulated_brand_v1",
+  "prompts": {
+    "package_writer": {
+      "file": "package_writer_v2.txt",
+      "sha256": "57f678231ddb30eb0037e757dfd1a2dd81098ff1dbc4c585dcad383d70f84a57"
+    },
+    "package_reviewer": {
+      "file": "package_reviewer_v6.txt",
+      "sha256": "ec480a48843edf0f78b959f7e0306a17fbf17e07246b853e618d9325c8f15696"
+    },
+    "package_revision": {
+      "file": "package_revision_v3.txt",
+      "sha256": "db930b1e095a20a96fea6c2a80a42d2c28c03138a1ea9a20899015036f01d578"
+    },
+    "package_controller": {
+      "file": "package_controller_v4.txt",
+      "sha256": "3af3f5b5e501146cbced9a381b6d6d4ac946c2a9b0eecc7d24a3c5bc2e261489"
+    }
+  },
+  "template_sha256": {
+    "campaign_brief": "0e106b276716dee6d9020b774ebe4b1b12cb20140f6cdd6bdf39417f852a9637",
+    "linkedin": "a3329e911086702c1d853e7875b7ccef5a5561ed9d6c3aabbab95ac032d24bf8",
+    "email": "c5853dcea7e207a4e94cb070331790ebd475e7f9c5c5e24ca2aa0cada77a3695",
+    "blog": "bf21047baca5146aa0a29657d7107564abde23f6af3748e76da123658209d2b0",
+    "ads": "052dfacbc723801d37a594c87ae60ef5cadc22eb63a0a748c4edb4fe77e75401"
+  },
+  "limits": {
+    "shared_model_calls": 12,
+    "searches": 4,
+    "writer_attempts": 2,
+    "review_attempts": null,
+    "revision_attempts": 3,
+    "writer_output_tokens": 8192,
+    "review_output_tokens": 16384,
+    "revision_output_tokens": 8192,
+    "writer_retry": "One explicit failed-Writer-only retry, within original shared limits",
+    "required_review_calls": null,
+    "controller_task_calls": 12,
+    "revision_policy": "At most three explicit human revisions per run, each with fresh review and approved spending"
+  }
+}

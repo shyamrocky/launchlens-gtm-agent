@@ -9,6 +9,8 @@ from launchlens.review_decisions import grouped_findings,decision_book,unresolve
 from launchlens.offline_ui_run import OfflineUIRun
 from launchlens.offline_fixtures import request
 from launchlens.voice_policy import BRAND_POLICY_ID
+from ui_review_helpers import finish_stack,show_card
+
 class GroupedReviewUITests(unittest.TestCase):
  def setUp(self):
   p=patch.object(socket.socket,'connect',side_effect=AssertionError('No network'));self.net=p.start();self.addCleanup(p.stop)
@@ -20,17 +22,18 @@ class GroupedReviewUITests(unittest.TestCase):
   self.assertFalse(a.exception);return a
  def test_replaces_run_page_and_groups_before_highlighted_drafts(self):
   a=self.app();s=a.session_state['offline_run'].snapshot();g=grouped_findings(s)
-  self.assertEqual(a.title[0].value,'US package');self.assertEqual([t.label for t in a.tabs[:3]],['Activity','Review','Package']);self.assertEqual(len(a.tabs),8)
-  self.assertEqual(a.metric[0].value,str(len(unresolved_groups(g,decision_book(s)))))
+  self.assertEqual(a.title[0].value,'US package');self.assertEqual([t.label for t in a.tabs if t.label in {'Activity','Review','Package'}],['Activity','Review','Package']);self.assertEqual(len(a.tabs),3)
+  self.assertTrue(any(str(len(unresolved_groups(g,decision_book(s))))+' must-decide' in c.value or 'must-decide left' in c.value for c in a.caption))
   self.assertIn('What the agent did',[h.value for h in a.subheader])
   self.assertNotIn('Reviewer findings · Independent assessment',[h.value for h in a.subheader])
-  self.assertTrue(any('Cleared by Reviewer' in e.label and not e.proto.expanded for e in a.expander))
+  self.assertFalse(any('Cleared by Reviewer' in e.label for e in a.expander))
   html=' '.join(x.proto.body for x in a.get('html'));self.assertIn('<mark>',html)
   self.assertTrue(any(e.label=='Technical details' and not e.proto.expanded for e in a.expander))
  def test_group_decision_occurrence_override_and_refresh_do_not_execute(self):
   a=self.app();run=a.session_state['offline_run'];before=run.snapshot();calls=deepcopy(run.capture())
   g=next(x for x in grouped_findings(before) if x['needs_attention']);o=g['occurrences'][0]
   a.button(key='changes-'+g['id']).click().run()
+  show_card(a,g)
   if len(g['occurrences'])>1:a.button(key='keep-'+o['id']).click().run()
   else:a.button(key='keep-'+g['id']).click().run()
   book=a.session_state['run-review-decisions-'+before['run_id']]
@@ -41,10 +44,11 @@ class GroupedReviewUITests(unittest.TestCase):
  def test_revision_includes_bound_human_choices_and_gets_fresh_review(self):
   a=self.app();run=a.session_state['offline_run'];before=run.snapshot();g=next(x for x in grouped_findings(before) if x['needs_attention'])
   a.button(key='changes-'+g['id']).click().run()
+  finish_stack(a)
   a.text_area[0].input('Retain simulated brand voice.');next(b for b in a.button if b.label=='Create Version 2').click().run()
   self.assertFalse(a.exception);after=run.snapshot()
   self.assertEqual(after['revision_attempts'],1);self.assertEqual(after['review']['binding']['draft_version'],2)
-  self.assertIn('Retain simulated brand voice.',after['revision_feedback']);self.assertIn('Change ',after['revision_feedback'])
+  self.assertIn('Retain simulated brand voice.',after['revision_feedback']);self.assertIn('Human prefers keeping ',after['revision_feedback'])
   self.assertFalse(a.session_state['run-review-decisions-'+before['run_id']]['events'])
   self.assertFalse(after['human_accepted']);self.assertFalse(any(b.label=='Create Version 2' for b in a.button))
  def test_saved_review_navigation_is_explicit_and_never_restores_an_agent(self):

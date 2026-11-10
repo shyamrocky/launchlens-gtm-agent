@@ -119,7 +119,7 @@ class ActionPurposeNormalizationTests(unittest.TestCase):
    'tool_calls':[{'id':'safe-missing-purpose','type':'function','function':{'name':'read_pmm_brief','arguments':'{}'}}]}}]}
   model=ResearchModel(lambda payload:response,mode='live_package');action=model(state)
   self.assertEqual(action['name'],'read_pmm_brief');self.assertEqual(action['arguments'],{})
-  self.assertTrue(action['why'].startswith('Registry purpose (agent omitted explanation):'))
+  self.assertNotIn('Registry purpose',action['why']);self.assertTrue(action['why'].strip())
   self.assertEqual(model.calls[0]['normalizations'][0]['rule'],'missing_action_purpose_labeled_registry_fallback')
   response['choices'][0]['message']['tool_calls'][0]['function']['arguments']='{"approval":"fabricated"}'
   with self.assertRaises(Exception):model(state)

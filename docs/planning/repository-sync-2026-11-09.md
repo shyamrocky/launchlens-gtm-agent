@@ -84,3 +84,47 @@ Fresh prepublication verification:
   are checked before committing. Repository visibility and exact remote/local
   commit equality are checked after pushing. This record authorizes only the
   current scoped publication; completion does not grant permission for inference.
+
+
+## Package review and bounded recovery sync — M2-D039
+
+**November10,2026 · Owner instruction: “sync git”.** This is scoped publication
+of the canonical work completed since commit4e998d34e77f6ebc20281212ac045bcfae9d2eb5,
+through M2-D039. It preserves the engineering result; it does not approve the
+current marketing drafts, authorize another model call or advance a milestone.
+
+Included:run Activity/Review/Package tabs, card-stack/end-screen workflow, current-
+version draft modals, internal approval and labeled exports; shared Home/Setup/run
+layout; three explicit human revisions with atomic Writer+Reviewer reservation;
+final-version validated manual edits and rescan; same-section citation coverage,
+one missing-citation-only retry and saved-response revalidation/review recovery;
+six phrase cards with exact spans and sentence previews, new scan terms and
+historical-review reproducibility; versioned prompts/configuration, safe fixtures,
+regressions and canonical review history/screenshots through D039. Superseded
+configuration files remain as provenance, without activating obsolete policies.
+
+Prepublication evidence:
+
+- GitHub API:shyamrocky/launchlens-gtm-agent PRIVATE, isPrivate=true; default main.
+  Remote main matched local parent4e998d34e77f6ebc20281212ac045bcfae9d2eb5.
+- Clean canonical copy:259files, no .git, credentials, local environments, workspace,
+  private/generated outputs or caches. Shared existing interpreters only;
+  **381 harness+70 UI+111 root=562 tests PASS**. Recreated required page/chunk JSONL
+  via the documented prepare_documents→prepare_chunks process inside the temporary
+  copy only. No install or provider/source calls during verification.
+- Python AST and JSON parsing PASS. Exact local credential values and common
+  private-key/token patterns absent from publication candidates. Ignore rules
+  exclude .env, workspace, authorizations, saved states/responses and budget ledger.
+- Working source datasets, frozen inputs, accepted evidence, live run/drafts,
+  historical receipts and MEMORY remain protected. Screenshots show project UI
+  and independently authored simulation content; no credentials/internal employer
+  documents are included. They are dated engineering evidence, not content approval.
+- Explicit staged path/hash inspection, whitespace check and protected-path
+  exclusion precede commit. No Git configuration or repository visibility change.
+  After push, verify exact remote/local commit equality and PRIVATE visibility;
+  keep the final publication receipt in ignored continuity notes and report SHA.
+
+Current Version1 remains available locally for owner review; protected local
+execution artifacts are intentionally not provisioned by cloning. Offline fixtures
+and documented setup remain the reproducible substitute. Live execution requires
+explicit scoped authorization, private credentials and remaining qualified budget.

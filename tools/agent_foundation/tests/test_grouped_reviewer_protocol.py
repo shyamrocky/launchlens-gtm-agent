@@ -113,7 +113,7 @@ class GroupedProtocolTests(unittest.TestCase):
   self.assertEqual(len(wire.calls),before)
   revised=resumed.revise(s['run_id'],'Keep brand voice, remove unsupported assertions.',1,final['package']['package_sha256'])
   self.assertEqual(revised['package']['version'],2);self.assertTrue(revised['review']['review_complete'])
-  self.assertEqual(revised['turns'],10);self.assertEqual(sum(resumed.guard.counts.values()),10)
+  self.assertEqual(revised['turns'],9);self.assertEqual(sum(resumed.guard.counts.values()),9)
   self.assertEqual(resumed.guard.counts['package_reviewer'],3);self.assertFalse(revised['human_accepted'])
  def test_restored_budget_rejects_counter_billing_and_state_tampering(self):
   wire=CompactWire();r=LivePackageRun(permission(),KEYS,tools=ReviewFixtureTools(),wire_factory=wire,now=NOW)

@@ -35,6 +35,7 @@ class RequiredReviewTests(unittest.TestCase):
   budget=RunBudget(permission(),now=NOW);budget.arm(request())
   roles=['controller']*4+['package_writer','package_reviewer','package_reviewer','controller','package_revision','controller','controller']
   for role in roles:
+   if role=='package_revision':budget.pending_revision_claims={'package_revision':{'id':None,'reserved_usd':budget.plan['roles'][role]['per_call_reservation_usd']}} # Authored historical accounting, not a new live grant.
    event=budget.claim(role,'0'*64)
    budget.complete(event,{'model':budget.plan['roles'][role]['model_id'],'usage':{'prompt_tokens':100,'completion_tokens':50,'total_tokens':150}})
   budget.stop();capture['spending']=budget.summary()
@@ -43,8 +44,8 @@ class RequiredReviewTests(unittest.TestCase):
   r,w,s=self.run_case();self.assertEqual(len(r.controller.calls),4)
   self.assertEqual(s['events'][-1]['origin'],'harness_required')
   initial=len(w.calls);s=r.revise(s['run_id'],'Keep supported facts.',1,s['package']['package_sha256'])
-  self.assertEqual(len(w.calls),initial+3) # controller -> revision -> required Reviewer
-  self.assertEqual(len(r.controller.calls),5);self.assertEqual(s['review']['binding']['draft_version'],2)
+  self.assertEqual(len(w.calls),initial+2) # controller -> revision -> required Reviewer
+  self.assertEqual(len(r.controller.calls),4);self.assertEqual(s['review']['binding']['draft_version'],2)
   self.assertEqual(s['status'],'awaiting_human_review');self.assertEqual(s['events'][-1]['origin'],'harness_required')
   self.assertNotIn('revise_package',eligible_actions(s));self.assertNotIn('review_package',eligible_actions(s))
   self.assertNotIn('generate_package',eligible_actions(s));self.assertFalse(s['human_accepted'])

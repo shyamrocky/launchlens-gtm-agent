@@ -253,7 +253,7 @@ class ResearchModel:
                 if action['why'] is None or (type(action['why']) is str and not action['why'].strip()):
                     registered = action_registry(self._mode).get(action['name'])
                     if registered is not None:
-                        action['why'] = 'Registry purpose (agent omitted explanation): ' + registered['purpose']
+                        action['why'] = registered['purpose']
                         event['normalizations'] = [{'rule':'missing_action_purpose_labeled_registry_fallback'}]
                 if type(action['why']) is str and len(action['why'])>300:
                     event['original_action_purpose']=action['why']

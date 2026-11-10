@@ -63,15 +63,16 @@ class PackageTests(unittest.TestCase):
         session,s=self.run_case();version,h=draft_identity(s)
         session.request_revision(s['run_id'],'Remove unsupported intensity, retain brand voice.',draft_version=version,draft_sha256=h)
         after=session.run(s['run_id'])
-        self.assertEqual(after['status'],'awaiting_human_review');self.assertEqual(after['turns'],9)
+        self.assertEqual(after['status'],'awaiting_human_review');self.assertEqual(after['turns'],8)
         self.assertEqual(len(after['draft_history']),2);self.assertEqual(len(after['reviews']),2)
         self.assertEqual(after['review']['review_status'],'human_clearance_required')
         self.assertTrue(all(r['version']==2 for r in after['drafts'].values()))
         self.assertNotEqual(s['package']['creative_anchor_sha256'],after['package']['creative_anchor_sha256'])
         self.assertTrue(all(r['binding']==after['review']['binding'] for r in after['review']['format_reviews'].values()))
         self.assertFalse(after['human_accepted']);self.assertFalse(after['package']['publishing_allowed'])
-        with self.assertRaises(HarnessError):
-            session.request_revision(after['run_id'],'Again',draft_version=2,draft_sha256=after['package']['package_sha256'])
+        session.request_revision(after['run_id'],'Again',draft_version=2,draft_sha256=after['package']['package_sha256'])
+        third=session.run(after['run_id']);self.assertEqual(third['package']['version'],3)
+        self.assertEqual(third['review']['binding']['draft_version'],3)
 
     def test_feedback_requires_current_package_hash_and_does_not_call_model(self):
         session,s=self.run_case();calls=len(session._model.calls)

@@ -108,6 +108,10 @@ class OfflineUIRun:
     def stop(self,run_id):
         self.session.stop(run_id)
 
+    def edit_current_fields(self,run_id,changes,*,draft_version,draft_sha256):
+        result=self.session.edit_current_fields(run_id,changes,draft_version=draft_version,draft_sha256=draft_sha256)
+        return result
+
     def revise(self, run_id, feedback, version, draft_hash):
         # Permission and exact version checked by the existing owner-only command.
         self.session.request_revision(run_id, feedback,

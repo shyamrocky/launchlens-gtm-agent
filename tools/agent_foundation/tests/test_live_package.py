@@ -98,9 +98,9 @@ class LivePreparationTests(unittest.TestCase):
     def test_default_preflight_and_authorization_template_cannot_spend(self):
         plan=preflight();self.assertEqual(plan['generation_calls'],0);self.assertFalse(plan['credentials_read'])
         self.assertFalse(authorization_template()['owner_authorized'])
-        self.assertEqual(plan['reservation_total_usd'],'0.8761344')
-        self.assertEqual(sum(v['max_attempts'] for v in plan['roles'].values()),19)
-        self.assertEqual(plan['max_model_calls'],12);self.assertEqual(plan['max_required_review_calls'],4) # Separate required reviews; no USD reset.
+        self.assertEqual(plan['reservation_total_usd'],'0.6402048')
+        self.assertEqual(sum(v['max_attempts'] for v in plan['roles'].values() if v['max_attempts'] is not None),17)
+        self.assertEqual(plan['max_model_calls'],12);self.assertIsNone(plan['max_required_review_calls']) # Separate required reviews; no USD reset.
         with self.assertRaises(LiveGateError):validate_authorization(authorization_template(),now=NOW)
 
     def test_missing_invalid_scope_and_lower_ceiling_fail_before_credentials(self):
@@ -134,8 +134,8 @@ class LivePreparationTests(unittest.TestCase):
         self.assertEqual(run.guard.counts,{'controller':4,'package_writer':1,'package_reviewer':1,'package_revision':0})
         after=run.revise(state['run_id'],'Remove unsupported intensity.',1,state['package']['package_sha256'])
         self.assertEqual(after['status'],'awaiting_human_review');self.assertEqual(after['package']['version'],2)
-        self.assertEqual(len(wire.calls),9);self.assertEqual(after['turns'],9)
-        self.assertEqual(run.guard.counts,{'controller':5,'package_writer':1,'package_reviewer':2,'package_revision':1})
+        self.assertEqual(len(wire.calls),8);self.assertEqual(after['turns'],8)
+        self.assertEqual(run.guard.counts,{'controller':4,'package_writer':1,'package_reviewer':2,'package_revision':1})
         self.assertFalse(after['human_accepted']);self.assertFalse(after['package']['publishing_allowed'])
         self.assertLess(run.guard.cost,Decimal(run.guard.plan['reservation_total_usd']))
 
@@ -176,7 +176,7 @@ class LivePreparationTests(unittest.TestCase):
         self.assertEqual(len(wire.calls),6)
 
     def test_revision_requires_both_owner_permission_and_feedback(self):
-        approval=permission();approval['allow_one_explicit_revision']=False
+        approval=permission();approval['allow_explicit_revisions']=False
         run,wire,state=self.run_case(permission_value=approval)
         with self.assertRaises(LiveGateError):run.revise(state['run_id'],'Fix',1,state['package']['package_sha256'])
         self.assertEqual(len(wire.calls),6)
@@ -248,6 +248,8 @@ class LivePreparationTests(unittest.TestCase):
         value={'model':profile()['roles']['controller']['model_id'],'usage':{'prompt_tokens':1,'completion_tokens':1,'total_tokens':2}}
         # Consume task-call capacity while retaining the separate review reservation.
         for _ in range(7):run.guard.complete(run.guard.claim('controller','3'*64),value)
+        self.assertTrue(run.guard.can_revise()) # Human commands do not need another controller call.
+        run.guard.cost=Decimal(run.guard.permission['aggregate_ceiling_usd'])-Decimal('0.01')
         self.assertFalse(run.guard.can_revise());before=run.snapshot()
         with self.assertRaises(LiveGateError):run.revise(state['run_id'],'Fix',1,state['package']['package_sha256'])
         self.assertEqual(run.snapshot(),before);self.assertEqual(len(wire.calls),6)
@@ -328,8 +330,8 @@ class LiveRecoveryTests(unittest.TestCase):
         with self.assertRaises(HarnessError):run.retry_writer(state['run_id'])
         version=after['package']['version'];sha=after['package']['package_sha256']
         final=run.revise(state['run_id'],'Remove unsupported intensity',version,sha)
-        self.assertEqual(final['turns'],10);self.assertEqual(final['review']['review_status'],'human_clearance_required')
-        self.assertEqual(run.guard.counts['controller'],5);self.assertFalse(final['human_accepted'])
+        self.assertEqual(final['turns'],9);self.assertEqual(final['review']['review_status'],'human_clearance_required')
+        self.assertEqual(run.guard.counts['controller'],4);self.assertFalse(final['human_accepted'])
     def test_retry_requires_explicit_permission_and_known_billing(self):
         p=permission();p['allow_one_explicit_writer_retry']=False
         budget=RunBudget(p,now=NOW);budget.arm(request())

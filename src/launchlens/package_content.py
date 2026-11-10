@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 FORMATS = ('campaign_brief', 'linkedin', 'email', 'blog', 'ads')
 LABELS = {'campaign_brief':'Campaign brief', 'linkedin':'LinkedIn post', 'email':'Promotional email',
           'blog':'Short blog', 'ads':'Ad variations'}
-CONFIG_SHA256 = '96f9292431f661fc233f2eea40f2054974b8788459dead1f2b84cd104488d1f8'
+CONFIG_SHA256 = 'a6e796afa2949c064042d7e14604e6a2ce72bdfa08ac2612ef18661508dab6e6'
 
 
 class PackageError(ValueError):
@@ -37,6 +37,8 @@ HISTORICAL_CONFIG_SHA256 = '856921f61001f0b66d53df745ea5794c29ba7d1f2fe710e22bea
 
 
 HISTORICAL_CONFIGS = {
+    'cd407d68252a5bcea6f3872049238dace8370551ce2b26d659f4a2f0c6e22a56': 'package_execution_v9.json',
+    '96f9292431f661fc233f2eea40f2054974b8788459dead1f2b84cd104488d1f8': 'package_execution_v8.json',
     '6f7d4640e846bdf71dee06eaf9862b62291062d06eeb38f8991cc9aa64c91358': 'package_execution_v7.json',
     '3204c24116c5924bf49bae687f1b83327913a16dfca95fc2959fe511ac0453b4': 'package_execution_v6.json',
     HISTORICAL_CONFIG_SHA256: 'package_execution_v4.json',
@@ -48,7 +50,7 @@ MAX_PACKAGE_FEEDBACK = 12000
 def configuration(expected_hash=None):
     expected_hash = expected_hash or CONFIG_SHA256
     check(expected_hash == CONFIG_SHA256 or expected_hash in HISTORICAL_CONFIGS, 'stale_binding')
-    filename = 'package_execution_v8.json' if expected_hash == CONFIG_SHA256 else HISTORICAL_CONFIGS[expected_hash]
+    filename = 'package_execution_v10.json' if expected_hash == CONFIG_SHA256 else HISTORICAL_CONFIGS[expected_hash]
     raw = (ROOT/'data/templates/gtm'/filename).read_bytes()
     check(hashlib.sha256(raw).hexdigest() == expected_hash, 'stale_binding')
     spec = json.loads(raw)
@@ -163,7 +165,7 @@ def authoritative_package_binding(state):
     inputs = prepare_package_input(state); metadata = state.get('package')
     check(type(metadata) is dict and set(state['drafts']) == set(FORMATS), 'stale_binding', 'binding')
     version = metadata.get('version')
-    check(type(version) is int and version in {1,2}, 'stale_binding', 'binding')
+    check(type(version) is int and version >= 1, 'stale_binding', 'binding')
     expected, expected_meta = admit_package(package_value(state), inputs, version=version)
     check(metadata == expected_meta, 'stale_binding', 'binding')
     for name in FORMATS:
@@ -175,9 +177,9 @@ def authoritative_package_binding(state):
     return inputs, metadata, binding
 
 
-def validate_package_review(value, state, *, isolate_findings=True):
+def validate_package_review(value, state, *, isolate_findings=True, scan_additions=True):
     inputs, _, binding = authoritative_package_binding(state)
-    return assess_package_review(value, package_value(state), inputs, binding, isolate_findings=isolate_findings)
+    return assess_package_review(value, package_value(state), inputs, binding, isolate_findings=isolate_findings,scan_additions=scan_additions)
 
 
 def prepare_call(state, stage, *, projector=None):
@@ -218,7 +220,7 @@ def prepare_call(state, stage, *, projector=None):
     return result
 
 
-def check_field_claims(draft, format_name):
+def field_claim_gaps(draft, format_name):
     """Narrow deterministic coverage, not entailment or general factuality detection."""
     refs={v['content_field']:set(v['claim_ids']) for v in draft['claim_references']}
     for path,text in text_fields(draft['content']):
@@ -228,8 +230,39 @@ def check_field_claims(draft, format_name):
         historical_hook=(path=='hook' and 'bringing' in lower and 'cherry experience' in lower)
         clear_flavor=bool(re.search(r"(?:cherry float|this (?:product|flavor)) (?:combines|contains|is made with|has)\b",lower))
         clear_inspiration=bool(re.search(r"(?:is |takes |draws )?inspir(?:ed|ation) (?:by|from) (?:classic )?soda[ -]floats?",lower))
-        if (historical_hook or clear_flavor or clear_inspiration) and not refs.get(path):
-            raise PackageError(format_name,'field_claim_coverage','content.'+path,'field_claim_coverage')
+        # Only a blog section heading can inherit its OWN section body's refs.
+        # Titles, introductions, CTAs and other sections remain independent.
+        body_path=path[:-7]+'body' if format_name=='blog' and re.fullmatch(r'sections\.[0-9]+\.heading',path) else None
+        if (historical_hook or clear_flavor or clear_inspiration) and not (refs.get(path) or (body_path and refs.get(body_path))):
+            yield PackageError(format_name,'field_claim_coverage','content.'+path,'field_claim_coverage').diagnostic
+
+
+def check_field_claims(draft, format_name):
+    for gap in field_claim_gaps(draft,format_name):
+        raise PackageError(format_name,**{k:v for k,v in gap.items() if k!='format'})
+
+
+def citation_only_failures(value, inputs):
+    """Return missing-citation diagnostics ONLY after all other checks pass.
+
+    Inspection never changes text/references or admits a candidate. This full pass
+    prevents an early citation error from masking a later policy/structure error.
+    """
+    try:
+        if type(value) is not dict or set(value)!=set(FORMATS):return []
+        records=evidence_records(inputs);gaps=[]
+        for name in FORMATS:
+            validate_draft(value[name],format_name=name,evidence_records=records)
+            if name=='linkedin' and value[name]['content']['cta']!=CTA:return []
+            for path,text in text_fields(value[name]['content']):
+                if LINK.search(text):return []
+                if not (name=='campaign_brief' and path.startswith('restrictions_and_unknowns.')) and FORBIDDEN.search(text):return []
+            referenced={c for ref in value[name]['claim_references'] for c in ref['claim_ids']}
+            if referenced!=set(inputs['draft_constraints']['allowed_claim_ids']):
+                gaps.append(PackageError(name,'objective_claim_coverage','claim_references','objective_claim_coverage').diagnostic)
+            gaps.extend(field_claim_gaps(value[name],name))
+        return gaps
+    except (ContractError,DraftValidationError,PackageError):return []
 
 
 def project_package_context(inputs):
@@ -286,7 +319,7 @@ def normalize_package(value):
 
 
 RISK_PATTERNS = {
- 'availability_urgency':r"\b(?:announce the launch|stay tuned|where you can find|is here|try it(?: today)?|available(?: now| today)?|now|buy now|shop now|in stores|limited[ -]time|hurry|today only|can['’]t wait)\b",
+ 'availability_urgency':r"\b(?:announce the launch|stay tuned|stay informed|where you can find|is here|try it(?: today)?|available(?: now| today)?|now|buy now|shop now|in stores|limited[ -]time|hurry|today only|can['’]t wait)\b",
  'novelty':r"\b(?:announce|launch|latest|introducing|new (?:flavou?r|way|twist|experience)|innovative|innovation|first[ -]ever)\b",
  'preference_prediction':r"\b(?:fondly remember|sure to|will (?:love|become)|new favou?rite|favou?rite|consumers prefer|everyone loves)\b",
  'differentiation':r"\b(?:stands out|the difference|unique(?: twist| taste| combination)?|sets? [^.]*?apart|better than|unlike|one[ -]of[ -]a[ -]kind|superior)\b",
@@ -304,7 +337,7 @@ def claims_length_compliance(text):
     return False
 
 
-def risky_phrase_scan(package, *, suggestion=False):
+def risky_phrase_scan(package, *, suggestion=False, scan_additions=True):
     hits=[]
     for name in FORMATS:
         if name not in package:continue
@@ -312,6 +345,9 @@ def risky_phrase_scan(package, *, suggestion=False):
             if name=='campaign_brief' and path.startswith('restrictions_and_unknowns.'):
                 continue  # Policy warnings are not promotional copy; retained in context.
             patterns=dict(RISK_PATTERNS)
+            if scan_additions:
+                patterns['novelty'] += r'|\bpresenting\b'
+                patterns['invented_product_facts'] += r'|\b(?:guided the development|designed to)\b'
             if suggestion:
                 # Hints have no surrounding sentence: screen bare novelty, inferred
                 # consumer memory and replacement texture assertions conservatively.
@@ -332,7 +368,7 @@ def risky_phrase_scan(package, *, suggestion=False):
         for a in hits))]
 
 
-def reviewer_hint(finding):
+def reviewer_hint(finding, *, scan_additions=True):
     """Filter advisory replacements; absence of a scan hit is NOT semantic proof."""
     value=finding.get('suggested_change');original=finding.get('quote')
     if not isinstance(value,str) or not isinstance(original,str):return None,'not_wording_hint'
@@ -342,7 +378,7 @@ def reviewer_hint(finding):
     if norm(original) and norm(original) in norm(value):return None,'repeats_original'
     if re.match(r"(?:no replacement|no changes?|replace|remove|revise|avoid|keep|use |drop |otherwise|consider|rewrite|describe|retain|do not|delete)\b",value,re.I):
         return None,'editing_instruction_or_no_hint'
-    if risky_phrase_scan({'linkedin':{'content':{'body':value}}},suggestion=True):return None,'risky_replacement'
+    if risky_phrase_scan({'linkedin':{'content':{'body':value}}},suggestion=True,scan_additions=scan_additions):return None,'risky_replacement'
     return value,None
 
 
@@ -358,7 +394,7 @@ def package_review_schema():
     return obj({'findings':{'type':'array','maxItems':80,'items':finding}})
 
 
-def assess_package_review(value, package, inputs, binding, *, isolate_findings=True):
+def assess_package_review(value, package, inputs, binding, *, isolate_findings=True, scan_additions=True):
     """Findings-only review; malformed output stays visible and never marks reviewed."""
     from launchlens.content_review import DIMENSIONS
     from launchlens.live_research import strict_json
@@ -371,12 +407,12 @@ def assess_package_review(value, package, inputs, binding, *, isolate_findings=T
         group_count=len(value['group_judgments']) if isinstance(value['group_judgments'],list) else 0
         if isolate_findings:
             from launchlens.reviewer_groups import isolate_judgments
-            value,dropped,coverage_errors=isolate_judgments(value,package)
-        else:value,group_errors=expand_judgments(value,package)
+            value,dropped,coverage_errors=isolate_judgments(value,package,scan_additions=scan_additions)
+        else:value,group_errors=expand_judgments(value,package,scan_additions=scan_additions)
         log.append({'rule':'group_judgments_expanded','group_count':group_count})
     from launchlens.content_contracts import measured_lengths
     lengths={f:measured_lengths(package[f]['content'],f) for f in FORMATS}
-    hits=risky_phrase_scan(package);by_id={h['hit_id']:h for h in hits};formats={};all_findings={};issues=[]
+    hits=risky_phrase_scan(package,scan_additions=scan_additions);by_id={h['hit_id']:h for h in hits};formats={};all_findings={};issues=[]
     for name in FORMATS:
         raw=value.get(name) if type(value) is dict else None
         if type(raw) is str:
@@ -416,7 +452,7 @@ def assess_package_review(value, package, inputs, binding, *, isolate_findings=T
             identity=digest(f)
             if identity in seen:log.append({'rule':'duplicate_finding_ignored','path':name});continue
             seen.add(identity)
-            f['reviewer_hint'],f['hint_hidden_reason']=reviewer_hint(f)
+            f['reviewer_hint'],f['hint_hidden_reason']=reviewer_hint(f,scan_additions=scan_additions)
             findings.append(f)
             for i in linked:judged[i]=f['severity']
         # High-risk matches always require a human, even if omitted or cleared by the model.
@@ -453,7 +489,37 @@ def assess_package_review(value, package, inputs, binding, *, isolate_findings=T
     result = {'binding':binding,'assessment':all_findings,'format_reviews':formats,'review_status':status,
         'review_complete':complete,'computed_lengths':lengths,'human_clearance_required':any(f['human_clearance_required'] for f in formats.values()),'raw_response':original,'risk_scan':hits,'normalizations':log,
         'human_accepted':False,'publishing_allowed':False}
+    if scan_additions:result['scan_additions']=True
     if isolate_findings:
         result.update(assessment_policy='isolated_findings_v1',unverified_finding_count=len(dropped),
             dropped_findings=dropped,coverage_issues=coverage_errors)
     return result
+
+
+def human_edit_review(state, source_review, edited_fields, *, scan_additions=True):
+    """Deterministic rescan after a human edit; never represents a new AI review."""
+    inputs,_,binding=authoritative_package_binding(state)
+    check(source_review.get('review_complete') is True and source_review.get('binding',{}).get('run_id')==binding['run_id'] and source_review['binding'].get('draft_version')==binding['draft_version'],'permission_denied')
+    package=package_value(state);changed={(e['format'],e['content_field']) for e in edited_fields}
+    check(changed and all(name in FORMATS and path in dict(text_fields(package[name]['content'])) for name,path in changed),'permission_denied')
+    raw={name:{'findings':[]} for name in FORMATS}
+    for name in FORMATS:
+        for finding in source_review['format_reviews'][name]['assessment']['findings']:
+            path=finding['content_field']
+            if (name,path) in changed or (path=='$format' and any(n==name for n,_ in changed)):continue
+            # Unchanged fields retain their prior independent findings. Changed
+            # fields get fresh scan hits, never stale AI quotations or clearances.
+            raw[name]['findings'].append(deepcopy(finding))
+    result=assess_package_review(raw,package,inputs,binding,isolate_findings=True,scan_additions=scan_additions)
+    result.update(assessment_policy='human_edit_rescan_v1',source_review_sha256=digest(source_review),
+        human_edited_fields=deepcopy(edited_fields),no_new_model_review=True)
+    return result
+
+
+def verify_human_edit_review(state):
+    review=state.get('review') or {}
+    check(review.get('assessment_policy')=='human_edit_rescan_v1','stale_binding')
+    source=next((r for r in state['reviews'] if digest(r)==review.get('source_review_sha256')),None)
+    check(source is not None,'stale_binding')
+    check(human_edit_review(state,source,review.get('human_edited_fields',[]),scan_additions=review.get('scan_additions',False))==review,'stale_binding')
+    return review

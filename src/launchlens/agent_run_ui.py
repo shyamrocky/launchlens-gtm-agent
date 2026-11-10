@@ -9,9 +9,24 @@ LABELS={'read_pmm_brief':'Read your PMM positioning','check_launch':'Checked the
  'search_product_evidence':'Pulled product evidence','generate_package':'Wrote the GTM package',
  'generate_linkedin':'Wrote the LinkedIn draft','review_package':'Independent Reviewer checked the package',
  'review_linkedin':'Independent Reviewer checked the draft','revise_package':'Revised the package',
- 'revise_linkedin':'Revised the draft','request_clarification':'Paused for your input','finish':'Checked completion'}
+ 'human_edit':'Saved your edits and re-scanned','revise_linkedin':'Revised the draft','request_clarification':'Paused for your input','finish':'Checked completion'}
 SOURCES={'read_pmm_brief':'PMM / GTM brief · Notion','check_launch':'Launch calendar and readiness tracker · Notion',
  'search_product_evidence':'Product Brief · Pinecone evidence'}
+
+
+def rounded_budget_display(value):
+    """Format display copies only; accounting/receipts retain exact precision."""
+    from decimal import Decimal, InvalidOperation
+    if isinstance(value,dict):
+        result={}
+        for key,item in value.items():
+            if isinstance(key,str) and key.endswith('_usd') and isinstance(item,(str,int,float)):
+                try:result[key]=format(Decimal(str(item)),'.2f');continue
+                except InvalidOperation:pass
+            result[key]=rounded_budget_display(item)
+        return result
+    if isinstance(value,list):return [rounded_budget_display(v) for v in value]
+    return value
 
 
 def clear_run():
@@ -21,25 +36,49 @@ def clear_run():
         if key.startswith('run-'):del st.session_state[key]
 
 
+def short_why(value,name):
+    defaults={'read_pmm_brief':'Use the campaign audience, positioning and tone.',
+        'check_launch':'Check whether this market is ready for drafting.',
+        'search_product_evidence':'Find supported product claims before writing.',
+        'generate_package':'Write the campaign brief and channel drafts.',
+        'review_package':'Check the current drafts before human review.',
+        'revise_package':'Apply your wording choices and notes.'}
+    if not value or 'agent omitted explanation' in value or value.startswith('Registry purpose'):
+        value=defaults.get(name,'Complete the next permitted step for this package.')
+    words=value.split()
+    return ' '.join(words[:20])+('…' if len(words)>20 else '')
+
+
 def timeline(state):
-    rows=[]
+    rows=[];review_index=0;revision_index=0
     for event in state['events']:
         name=event['action'];outcome=event['outcome'];failed=outcome in {'failed_safely','replay_conflict','turn_limit'}
         title=LABELS.get(name,'Checked the next action')
+        if name=='generate_package' and outcome=='completed':title='Wrote Version 1'
+        if name=='revise_package' and outcome=='completed':
+            revision_index+=1;title='Wrote Version '+str(state.get('draft_history',[{},{}])[revision_index].get('version',revision_index+1))
+        if name=='revise_package' and outcome=='duplicate_suppressed':title='Skipped an already-used revision request'
+        if name=='review_package' and outcome=='completed':
+            reviews=state.get('reviews',[])
+            if review_index<len(reviews):title='Reviewer checked Version '+str(reviews[review_index]['binding']['draft_version'])
+            review_index+=1
+            if event.get('origin')=='owner_command':title='Re-check (requested by you)'
+        if name=='revise_package' and outcome=='completed' and state.get('revision_feedback'):
+            rows.append('<div class="run-step"><span class="step-icon good">✓</span><div><strong>You reviewed and asked for changes</strong><p>Your recorded feedback was sent to the revision Writer. The source evidence and launch rules stayed in force.</p></div></div>')
         if failed:
             title="Couldn’t draft the package" if name=='generate_package' else 'A required action could not finish'
-            why=("The Writer returned a format LaunchLens couldn’t accept. No package was admitted; the research is kept."
+            why=("A factual heading was missing its evidence reference. Research is saved; no package was admitted." if (state.get('draft_failure') or {}).get('code')=='field_claim_coverage' else "The Writer returned a format LaunchLens couldn’t accept. No package was admitted; the research is kept."
                  if name=='generate_package' and (state.get('draft_failure') or {}).get('stage')=='draft_validation'
                  else 'This action failed. Completed research is kept; missing information does not grant permission.')
         else:
-            why=event.get('why') or 'Completed this recorded action. No business-purpose explanation was supplied.'
+            why=event.get('why')
         icon='!' if failed else '?' if name=='request_clarification' else '✓'
         source=SOURCES.get(name)
-        rows.append('<div class="run-step"><span class="step-icon '+('hold' if failed else 'good')+'">'+icon+'</span><div><strong>'+escape(title)+'</strong><p>'+escape(why)+'</p>'+
+        rows.append('<div class="run-step"><span class="step-icon '+('hold' if failed else 'good')+'">'+icon+'</span><div><strong>'+escape(title)+'</strong><p>'+escape(short_why(why,name))+'</p>'+
             ('<small>Source: '+escape(source)+'</small>' if source else '')+'</div></div>')
     pending=state.get('pending')
     if state['status']=='running' and pending:
-        rows.append('<div class="run-step"><span class="step-icon working">…</span><div><strong>'+escape({'generate_package':'Writing the GTM package','review_package':'Reviewing the package','revise_package':'Revising the package'}.get(pending['name'],'Preparing the next action'))+'</strong><p>'+escape(pending.get('why') or 'The agent selected this action.')+'</p></div></div>')
+        rows.append('<div class="run-step"><span class="step-icon working">…</span><div><strong>'+escape({'generate_package':'Writing the GTM package','review_package':'Reviewing the package','revise_package':'Revising the package'}.get(pending['name'],'Preparing the next action'))+'</strong><p>'+escape(short_why(pending.get('why'),pending['name']))+'</p></div></div>')
     if not rows:return '<p class="run-muted">The agent has not executed an action yet.</p>'
     return '<div class="run-timeline">'+''.join(rows)+'</div>'
 
@@ -179,9 +218,9 @@ def _legacy_run_page(display):
             st.json({'request':state['request'],'notes_data_only':state['user_notes'],'launch':state['launch'],
                 'draft_failure':state['draft_failure'],'failure_history':state.get('failure_history',[]),'normalizations':state.get('normalizations',[]),
                 'review_failure':state['review_failure'],'events':state['events'],'ledger':state['ledger'],
-                'draft_history':state['draft_history'],'reviews':state['reviews'],'responses':run.capture()})
+                'draft_history':state['draft_history'],'reviews':state['reviews'],'responses':rounded_budget_display(run.capture())})
             st.caption('No LangSmith trace is available for this checkpoint.')
-            if live:st.json(run.guard.summary())
+            if live:st.json(rounded_budget_display(run.guard.summary()))
         with st.expander('Supporting claims, citations and qualifications',expanded=False):
             for result in state['evidence']:
                 for item in result['records']:
@@ -200,6 +239,13 @@ def run_page(display):
     if run is None or not getattr(run,'package',False):return _legacy_run_page(display)
     state=run.snapshot();request=state['request'];run_id=state['run_id'];live=getattr(run,'kind','demo')=='live'
     market='India' if request['market_id']=='IN' else request['market_id']
+    from launchlens.package_presentation import approval_matches,restored_decisions
+    from launchlens.review_decisions import decision_book
+    decision_key='run-review-decisions-'+run_id
+    if decision_key not in st.session_state and state.get('review'):
+        recovered=restored_decisions(state,getattr(run,'store',None))
+        if recovered is not None:st.session_state[decision_key]=recovered
+    approved=approval_matches(state,decision_book(state,st.session_state.get('run-review-decisions-'+run_id)),st.session_state.get('run-internal-approval-'+run_id)) if state.get('package') and state.get('review') else False
     with st.container(key='agent-run'):
         if st.button(f'‹ {market} package setup',key='run-back',type='tertiary'):
             st.session_state['selected_request']=deepcopy(request);st.session_state['screen']='brief';st.rerun()
@@ -207,7 +253,6 @@ def run_page(display):
         from launchlens.inventory_ui import date_label
         planned=(state.get('launch') or {}).get('planned_launch_date') or st.session_state.get('inventory',{}).get('markets',{}).get(request['market_id'],{}).get('planned_launch_date')
         st.caption(display['product_name']+' · Planned launch: '+(date_label(planned) if planned else 'Not verified'))
-        st.caption('Live agent · Human approval pending · Nothing published' if live else 'Demo simulation · Scripted actions and authored fixture drafts/reviews · No live calls')
         command=st.session_state.pop('run-command',None)
         active=state['status'] in {'created','running'} or command is not None
         ready=not active and state['status']=='awaiting_human_review' and bool(state.get('review'))
@@ -219,7 +264,7 @@ def run_page(display):
             st.session_state['run-tab-phase']=phase
         if st.session_state.pop('run-show-package',False):st.session_state[tabkey]='Review'
         with st.container(key='run-status-card'):
-            headline='Agent is working' if active else 'Waiting on you' if state['status']=='needs_clarification' else 'Package ready for your review' if ready else 'Promotional drafts blocked' if state['status']=='held' else 'Draft needs attention' if state['status']=='draft_incomplete' else 'Run stopped'
+            headline='Agent is working' if active else 'Waiting on you' if state['status']=='needs_clarification' else 'Package approved for internal use' if approved else ('Version '+str(state['package']['version'])+' ready for your review' if state['package']['version']>1 else 'Package ready for your review') if ready else 'Promotional drafts blocked' if state['status']=='held' else 'Draft needs attention' if state['status']=='draft_incomplete' else 'Run stopped'
             tone='working' if active else 'warn' if state['status']=='needs_clarification' else 'good' if ready else 'hold'
             st.html('<div class="gate-heading"><span class="readiness '+tone+'">●</span><h3>'+headline+'</h3></div>')
             if active:
@@ -227,16 +272,15 @@ def run_page(display):
                 if st.button('Stop run',key='run-stop'):run.stop(run_id);st.rerun()
                 if not command and st.button('Continue run',key='run-continue'):command='execute'
             elif ready:
-                if not state['review'].get('review_complete',False):st.warning('Review incomplete. Drafts remain available for human inspection.')
-                st.write('Version '+str(state['package']['version'])+' · 5 drafts · Human approval pending · Nothing published')
+                st.write(('Live agent' if live else 'Demo simulation')+' · Version '+str(state['package']['version'])+' · 5 drafts · '+('Review incomplete · Human inspection required' if not state['review'].get('review_complete',False) else 'Approved for internal use' if approved else 'Human approval pending')+' · Nothing published')
                 if st.button('Review package',key='run-review',type='primary'):
                     st.session_state[tabkey]='Review';st.rerun()
             elif state['status']=='needs_clarification':st.write('Answer the question in Review to continue this same run.')
             elif state['status']=='held':st.write('Marketing authorization is pending. No promotional drafts were created.')
             else:
-                st.write('Version 2 is saved. Its independent review has not completed; your research and both draft versions are kept.' if recover else 'The run stopped. Completed research and any admitted drafts are kept.')
+                st.write('A factual heading had no supporting citation. Research is saved; no package was admitted.' if (state.get('draft_failure') or {}).get('code')=='field_claim_coverage' else 'The current version is saved. Its independent review has not completed; your research and earlier versions are kept.' if recover else 'The run stopped. Completed research and any admitted drafts are kept.')
                 a,b=st.columns(2)
-                if recover and a.button('Review Version 2',key='run-recover-review',type='primary'):command='review_saved'
+                if recover and a.button('Review Version '+str(state['package']['version']),key='run-recover-review',type='primary'):command='review_saved'
                 elif run.session.can_retry_writer() and a.button('Try again',key='run-retry',type='primary'):command='retry'
                 if b.button('Back to setup',key='run-setup',type='tertiary'):st.session_state['screen']='brief';st.rerun()
         activity,review,package=st.tabs(['Activity','Review','Package'],key=tabkey,default=st.session_state[tabkey],on_change='rerun')
@@ -255,8 +299,9 @@ def run_page(display):
             if state.get('review'):review_page(state,run=run,embedded=True)
             elif state['status']!='needs_clarification':st.info('Independent review will appear here when it completes. Saved drafts are under Package.')
         with package:
-            st.subheader('Package');progress=st.empty();progress.html(package_progress(state))
-            if state.get('package'):draft_outputs(state)
+            progress=st.empty()
+            if state.get('package'):package_panel(state,run)
+            else:progress.html(package_progress(state))
         if command is not None:
             try:
                 with activity,st.status('Agent is working',expanded=True) as status:
@@ -272,11 +317,12 @@ def run_page(display):
                 st.rerun()
             except HarnessError:st.error('This action is unavailable for the current run, permission or remaining budget.')
         with st.expander('Technical details',expanded=False):
+            st.caption('Live agent · Independent assessment' if live else 'Demo simulation · Scripted actions, authored fixture drafts and mock assessments · No live calls')
             st.caption('Writing voice: simulated brand channels · Neutral campaign brief · Policy v1')
-            st.caption('Run '+run_id+' · Task calls '+str(state['turns']-state['review_attempts'])+'/12 · Required reviews '+str(state['review_attempts'])+'/4 · Evidence searches '+str(state['searches'])+'/4')
+            st.caption('Run '+run_id+' · Task calls '+str(state['turns']-state['review_attempts']-state['revision_attempts'])+'/12 · Human revisions '+str(state['revision_attempts'])+'/3 · Required reviews '+str(state['review_attempts'])+' · Evidence searches '+str(state['searches'])+'/4')
             st.json({'events':state['events'],'review':state.get('review'),'failure_history':state.get('failure_history'),
-                'normalizations':state.get('normalizations'),'responses':run.capture()})
-            if live:st.json(run.guard.summary())
+                'normalizations':state.get('normalizations'),'responses':rounded_budget_display(run.capture())})
+            if live:st.json(rounded_budget_display(run.guard.summary()))
             for result in state['evidence']:
                 for item in result['records']:
                     p=item['evidence_payload'];st.markdown('**'+item['unit_id']+' · '+item['authority']+'**');st.text(p['primary_text'])
@@ -290,19 +336,25 @@ def run_page(display):
             clear_run();st.session_state['screen']='inventory';st.rerun()
 
 
-def draft_outputs(state):
-    from launchlens.package_content import FORMATS,LABELS,text_fields
-    from launchlens.review_decisions import grouped_findings,highlighted,field_label
-    groups=grouped_findings(state)
-    tabs=st.tabs([LABELS[f] for f in FORMATS])
-    for name,tab in zip(FORMATS,tabs):
+@st.dialog('Full draft',width='large',on_dismiss='rerun')
+def full_draft_dialog(state,name,focus=None):
+    from launchlens.package_content import LABELS
+    from launchlens.package_presentation import draft_modal_document
+    record=state['drafts'][name]
+    st.subheader(LABELS[name]+' · Version '+str(record['version']))
+    st.caption('Highlighted wording is shown in context. Close this preview to return to your review.')
+    st.iframe(draft_modal_document(state,name,focus=focus),height=520,alt=LABELS[name]+' full draft with highlights')
+
+
+def draft_outputs(state, *, selected=None):
+    from launchlens.package_content import FORMATS,LABELS
+    from launchlens.package_presentation import draft_markup
+    names=FORMATS if selected is None else (selected,)
+    tabs=st.tabs([LABELS[f] for f in names]) if selected is None else [st.container()]
+    for name,tab in zip(names,tabs):
         with tab:
             record=state['drafts'][name];st.subheader(LABELS[name]+' · Version '+str(record['version']))
-            parts=[]
-            for path,text in text_fields(record['draft']['content']):
-                occurrences=[o for g in groups for o in g['occurrences'] if o['format']==name and o['content_field']==path]
-                parts.extend(['<small class="review-field-label">'+escape(field_label(path))+'</small>','<p>'+highlighted(text,occurrences)+'</p>'])
-            st.html('<article class="draft-copy">'+''.join(parts)+'</article>')
+            st.html(draft_markup(state,name))
             for warning in record['validation']['editorial_warnings']:
                 target=warning['target'];low=target.get('min');high=target.get('max')
                 expected=f"{low}–{high}" if low is not None and high is not None else f"up to {high}" if high is not None else f"at least {low}"
@@ -315,130 +367,210 @@ def package_outputs(state):
 
 
 def review_page(state, *, run=None, saved=False, embedded=False):
-    from launchlens.package_content import FORMATS, LABELS, text_fields
+    from launchlens.package_content import FORMATS,LABELS
     from launchlens.review_decisions import (grouped_findings,decision_book,record_decision,
-        effective_choice,unresolved_groups,safe_hints,highlighted,revision_feedback,CATEGORY_LABELS,field_label)
-    groups=grouped_findings(state)
-    key='run-review-decisions-'+state['run_id']
-    book=decision_book(state,st.session_state.get(key));st.session_state[key]=book
-    pending=unresolved_groups(groups,book)
-    market='India' if state['request']['market_id']=='IN' else state['request']['market_id']
-    if not embedded and st.button('‹ '+market+' run',key='review-back',type='tertiary'):
-        if saved:st.session_state['screen']='inventory'
-        else:st.session_state['run-show-package']=False
-        st.rerun()
-    if not embedded:st.title('Review '+market+' package')
-    st.caption('Version '+str(state['package']['version'])+' · Independent review of this exact version')
-    st.caption(f"{len(state['drafts'])} drafts · {len(pending)} need your attention · nothing published")
-    st.caption('Live agent · Independent assessment · Human approval pending · Publishing disabled' if state['mode']=='live_package' else 'Mock assessment · Authored fixture drafts · Human approval pending · Publishing disabled')
-    if saved:st.caption('Saved Reviewer assessment · No live call is running')
-    stats=st.columns(3)
-    stats[0].metric('Decisions left',len(pending))
-    stats[1].metric('Need your clearance',sum(g['human_clearance_required'] for g in pending))
-    stats[2].metric('Changes requested',sum(any(effective_choice(book,g,o)=='request_changes' for o in g['occurrences']) for g in groups))
-    if not (state.get('review') or {}).get('review_complete',False):
-        st.warning('Review incomplete. The drafts and scan matches remain available for human inspection.')
-    unverified=(state.get('review') or {}).get('unverified_finding_count',0)
+        effective_choice,safe_hints,highlighted,revision_feedback,CATEGORY_LABELS,field_label)
+    from launchlens.package_presentation import progress,must_decide,choice_label,current_review_matches,card_reason
+    if run is not None:state=run.snapshot()
+    if not current_review_matches(state):
+        st.info('Version '+str(state['package']['version'])+' is current. Its review is not ready yet; no earlier-version decisions are shown.')
+        return
+    all_groups=grouped_findings(state);groups=[g for g in all_groups if g['needs_attention']]
+    key='run-review-decisions-'+state['run_id'];book=decision_book(state,st.session_state.get(key));st.session_state[key]=book
+    position='run-review-position-'+state['run_id'];identity='run-review-position-binding-'+state['run_id']
+    if st.session_state.get(identity)!=book['binding']:
+        st.session_state[position]=next((i for i,g in enumerate(groups) if any(o['needs_attention'] and not effective_choice(book,g,o) for o in g['occurrences'])),len(groups));st.session_state[identity]=book['binding']
+    index=min(max(st.session_state.get(position,0),0),len(groups));stats=progress(groups,book)
+    if not embedded:
+        market='India' if state['request']['market_id']=='IN' else state['request']['market_id']
+        if st.button('‹ '+market+' run',key='review-back',type='tertiary'):
+            if saved:st.session_state['screen']='inventory'
+            else:st.session_state['run-show-package']=False
+            st.rerun()
+        st.title('Review '+market+' package')
+    st.caption(f"Version {state['package']['version']} · {stats['decided']} of {stats['total']} decided · {stats['must_left']} must-decide left")
+    if saved:st.caption('Saved assessment · No agent execution connected')
+    unverified=state['review'].get('unverified_finding_count',0)
+    if state['review'].get('no_new_model_review'):st.caption('Human edits saved · Re-scanned; no new AI review.')
     if unverified:st.warning(f"{unverified} findings couldn't be verified. Valid findings are shown below.")
-    unassessed=sum(len(f.get('unassessed_scan_hit_ids',[])) for f in (state.get('review') or {}).get('format_reviews',{}).values())
-    if unassessed:st.info(f'{unassessed} scan matches still need human assessment.')
-    st.subheader('Decide on flagged wording')
-    st.caption('One phrase decision applies across the package. Open occurrences to treat a particular use differently. Keeping wording records your choice; it does not approve the package or override launch rules.')
-    def choose(group,choice,occurrence=None):
-        changed=record_decision(state,book,occurrence['id'] if occurrence else group['id'],choice,occurrence=occurrence is not None)
-        # Protected local audit receipt only on explicit human interaction; never inference.
+    dots=[]
+    for i,g in enumerate(groups):
+        label=choice_label(g,book);tone='kept' if label=='Kept as is' else 'changed' if label!='Not decided' else 'required' if must_decide(g) else 'pending'
+        dots.append('<span class="decision-dot '+tone+(' current' if i==index else '')+'" title="'+escape(g['phrase']+': '+label,quote=True)+'"></span>')
+    st.html('<div class="decision-dots" role="img" aria-label="'+str(stats['decided'])+' of '+str(stats['total'])+' decided">'+''.join(dots)+'</div>')
+    def move(n):st.session_state[position]=n;st.rerun()
+    def choose(group,choice,occurrence=None,suggestion=None):
+        changed=record_decision(state,book,occurrence['id'] if occurrence else group['id'],choice,occurrence=occurrence is not None,suggestion=suggestion)
         from uuid import uuid4
-        from launchlens.writer_comparison import ProtectedStore
-        from launchlens.package_content import ROOT
         store=getattr(run,'store',None)
         if store is None and (saved or state['mode']=='live_package'):
+            from launchlens.writer_comparison import ProtectedStore
+            from launchlens.package_content import ROOT
             store=ProtectedStore(ROOT/'data/generated'/('human-review-'+uuid4().hex))
         if store is not None:store.write('human-decision-'+uuid4().hex+'.json',changed)
-        st.session_state[key]=changed;st.rerun()
-    for group in groups:
-        if not group['needs_attention']:continue
-        occurrences=group['occurrences'];formats=list(dict.fromkeys(LABELS[o['format']] for o in occurrences))
-        with st.container(border=True,key='review-card-'+group['id']):
+        st.session_state[key]=changed
+        if occurrence is None:st.session_state[position]=index+1
+        st.rerun()
+    if index<len(groups):
+        group=groups[index];occurrences=group['occurrences'];first=occurrences[0]
+        with st.container(key='review-card-'+group['id']):
+            st.html('<div class="decision-card-top"><span class="category-pill">'+escape(' / '.join(CATEGORY_LABELS.get(c,c) for c in group.get('categories',[group['category']])))+'</span><span>Card '+str(index+1)+' of '+str(len(groups))+'</span></div>')
             st.markdown('### “'+group['phrase']+'”')
-            st.caption(' / '.join(CATEGORY_LABELS.get(c,c) for c in group.get('categories',[group['category']]))+' · '+str(len(occurrences))+' '+('place' if len(occurrences)==1 else 'places')+' · '+', '.join(formats)+(' · Only you can clear this' if group['human_clearance_required'] else ''))
-            reasons=list(dict.fromkeys(f['rationale'] for o in occurrences for f in o['findings']))
-            st.write(reasons[0] if reasons else 'The scan found this wording. Its meaning and support need human inspection.')
-            hints=safe_hints(group)
-            from launchlens.package_content import reviewer_hint
-            original_hints={reviewer_hint(f)[0] for o in occurrences for f in o['findings']}
-            for hint in hints:st.write(('Reviewer hint (advisory): ' if hint in original_hints else 'Alternative wording (advisory): ')+hint)
-            if not hints:st.caption('The Writer will rephrase it')
-            with st.expander('Show '+str(len(occurrences))+' '+('occurrence' if len(occurrences)==1 else 'occurrences'),expanded=False):
-                for occurrence in occurrences:
-                    st.markdown('**'+LABELS[occurrence['format']]+' · '+field_label(occurrence['content_field'])+'**')
-                    if occurrence['quote'] is not None:
-                        st.html('<p class="review-context">'+highlighted(occurrence['context'],[occurrence])+'</p>')
-                    for reason in list(dict.fromkeys(f['rationale'] for f in occurrence['findings'])):st.caption(reason)
-                    choice=effective_choice(book,group,occurrence)
-                    st.caption(('Will be rewritten in Version '+str(state['package']['version']+1)) if choice=='request_changes' and state['revision_attempts']==0 else 'Kept as is' if choice=='keep_wording' else 'Needs your decision')
-                    if len(occurrences)>1:
-                        a,b,_=st.columns([1,1,2])
-                        if a.button('Change here only',key='change-'+occurrence['id']):choose(group,'request_changes',occurrence)
-                        if b.button('Keep here only',key='keep-'+occurrence['id']):choose(group,'keep_wording',occurrence)
-            a,b,_=st.columns([1,1,2])
-            if a.button('Request changes',key='changes-'+group['id']):choose(group,'request_changes')
-            if b.button('Keep wording',key='keep-'+group['id']):choose(group,'keep_wording')
-            choices={effective_choice(book,group,o) for o in occurrences if o['needs_attention']}
-            if choices=={'keep_wording'}:st.caption('Kept as is')
-            elif choices=={'request_changes'}:st.caption('Will be rewritten in Version 2' if state['revision_attempts']==0 else 'Change requested; this run’s revision is already used')
-            elif any(choices):st.caption('Your decisions: Mixed across occurrences; open the list to inspect.')
-    cleared=[g for g in groups if not g['needs_attention']]
-    with st.expander('Cleared by Reviewer ('+str(len(cleared))+')',expanded=False):
-        for group in cleared:
-            st.write('“'+group['phrase']+'” · '+str(len(group['occurrences']))+' places')
-            for o in group['occurrences']:
-                for f in o['findings']:st.caption(LABELS[o['format']]+' · '+f['rationale'])
-        if not cleared:st.caption('No phrase groups were cleared in this assessment.')
+            if must_decide(group):st.caption('Must decide · Your choice does not change evidence or launch permission')
+            context=first['context'];start=first['start'];end=first['end']
+            if isinstance(start,int):
+                from launchlens.review_decisions import sentence_bounds
+                lo,hi=sentence_bounds(context,start,end);excerpt=context[lo:hi]
+                marked=highlighted(excerpt,[dict(first,start=start-lo,end=end-lo)])
+                st.html('<div class="decision-context"><small>'+escape(LABELS[first['format']]+' · '+field_label(first['content_field']))+'</small><p>'+marked+'</p></div>')
+            if len(occurrences)>1:
+                st.caption('Also in '+str(len(occurrences)-1)+' other '+('place' if len(occurrences)==2 else 'places')+' · Your choice applies to all '+str(len(occurrences)))
+            if st.button('See full draft ›',key='full-draft-'+group['id'],type='tertiary'):full_draft_dialog(state,first['format'],first)
+            st.write('**Why:** '+card_reason(group,demo=state['mode']!='live_package'))
+            hints=safe_hints(group);hint=hints[0] if hints else None
+            if first.get('new_scan_match'):st.caption('New scan match · Not assessed in the saved AI review')
+            if hint:
+                from launchlens.review_decisions import replacement_preview
+                preview=replacement_preview(first,hint)
+                st.html('<div class="suggestion-box"><small>Phrase replacement · advisory</small><p><del>'+escape(first['quote'] or group['phrase'])+'</del> → <ins>'+escape(hint)+'</ins></p><small>Sentence after the change</small><p>'+escape(preview)+'</p></div>')
+            else:st.caption('No scan-safe suggestion is available. Edit the wording yourself.' if state['revision_attempts']>=3 else 'No scan-safe suggestion is available. The Writer can rephrase it within the existing evidence restrictions.')
+            final=state['revision_attempts']>=3
+            if final:
+                edit_key='manual-edit-'+group['id']
+                keep,edit=st.columns(2)
+                if keep.button('Keep wording',key='keep-'+group['id']):choose(group,'keep_wording')
+                if edit.button('Edit it myself',key=edit_key,disabled=run is None or saved):st.session_state[edit_key+'-open']=True
+                if st.session_state.get(edit_key+'-open'):
+                    changes=[];seen=set()
+                    for occurrence in occurrences:
+                        field=(occurrence['format'],occurrence['content_field'])
+                        if field in seen or field[1]=='$format':continue
+                        seen.add(field)
+                        text=st.text_area(LABELS[field[0]]+' · '+field_label(field[1]),value=occurrence['context'],
+                            key='human-edit-text-'+book['binding']+'-'+field[0]+'-'+field[1],max_chars=20000)
+                        if text!=occurrence['context']:changes.append({'format':field[0],'content_field':field[1],'text':text})
+                    st.caption('Save updates the current version and scans it again. New scan matches still need your decision; no AI review is implied.')
+                    if st.button('Save edits and re-scan',key='save-'+group['id'],type='primary',disabled=not changes):
+                        try:
+                            after=run.edit_current_fields(state['run_id'],changes,draft_version=state['package']['version'],draft_sha256=state['package']['package_sha256'])
+                            from launchlens.review_decisions import carry_unchanged_decisions
+                            changed_book=carry_unchanged_decisions(state,after,book)
+                            store=getattr(run,'store',None)
+                            if store is not None:
+                                from uuid import uuid4
+                                store.write('human-decision-'+uuid4().hex+'.json',changed_book)
+                            st.session_state[key]=changed_book
+                            st.session_state['run-approval-check-'+state['run_id']+'-'+str(state['package']['version'])]=False
+                            st.session_state.pop('run-internal-approval-'+state['run_id'],None)
+                            st.session_state[edit_key+'-open']=False;st.rerun()
+                        except (ValueError,HarnessError):st.error('Edit not saved. Preserve required evidence, citations, CTA and launch restrictions; then try again.')
+            else:
+                cols=st.columns([1.15,1.6,1])
+                if cols[0].button('Use “'+hint+'”' if hint else 'Use suggestion',key='use-'+group['id'],type='primary',disabled=hint is None):choose(group,'request_changes',suggestion=hint)
+                if cols[1].button('Let the Writer rephrase',key='changes-'+group['id']):choose(group,'request_changes')
+                if cols[2].button('Keep wording',key='keep-'+group['id']):choose(group,'keep_wording')
+                if choice_label(group,book)!='Not decided':st.caption('Your choice: '+choice_label(group,book))
+                if len(occurrences)>1:
+                    with st.expander('Inspect '+str(len(occurrences))+' places / override one occurrence',expanded=False):
+                        for occurrence in occurrences:
+                            st.markdown('**'+LABELS[occurrence['format']]+' · '+field_label(occurrence['content_field'])+'**')
+                            st.html('<p class="review-context">'+highlighted(occurrence['context'],[occurrence])+'</p>')
+                            if hint:st.caption('After the phrase replacement: '+replacement_preview(occurrence,hint))
+                            a,b=st.columns(2)
+                            if a.button('Change here only',key='change-'+occurrence['id']):choose(group,'request_changes',occurrence)
+                            if b.button('Keep here only',key='keep-'+occurrence['id']):choose(group,'keep_wording',occurrence)
+        a,b,c=st.columns([1,2,1])
+        if a.button('‹ Previous',key='review-previous',disabled=index==0):move(index-1)
+        b.caption('Card '+str(index+1)+' of '+str(len(groups)))
+        if c.button('Next ›',key='review-next'):move(index+1)
+        if st.button('Review choices',key='review-summary',type='tertiary'):move(len(groups))
+        st.caption('Keep wording moves to the next card. Saved edits update the current draft; nothing is published.' if state['revision_attempts']>=3 else 'Choosing an option moves to the next card. Requested changes apply when you create the next version; nothing is published.')
+    else:
+        with st.container(key='review-end-card'):
+            st.subheader("You’re through the stack")
+            st.write(f"{stats['rewrite']} to rewrite · {stats['kept']} kept · {stats['skipped']} not decided")
+            for i,group in enumerate(groups):
+                if st.button('“'+group['phrase']+'” · '+choice_label(group,book),key='recap-'+group['id'],type='tertiary',width='stretch'):move(i)
+            if not groups:st.write('No phrase decisions are required by the current assessment.')
+            version,sha=draft_identity(state)
+            notes=st.text_area('Anything else for Version '+str(version+1)+'? (optional)',key=f'run-feedback-text-{state["run_id"]}-{version}',max_chars=1500,placeholder='For example: make the email subject shorter and more playful') if state['revision_attempts']<3 else ''
+            eligible=run is not None and not saved and state['status']=='awaiting_human_review' and state.get('revision_request') is None and state['revision_attempts']<3
+            if eligible and getattr(run,'kind','demo')=='live':eligible=run.guard.can_revise()
+            if stats['must_left']:st.warning('Choose an option for all '+str(stats['must_left'])+' must-decide phrases before creating the next version or approving this package.')
+            a,b=st.columns(2)
+            submitted=a.button('Create Version '+str(version+1) if state['revision_attempts']<3 else 'Revision limit reached',key='create-next-version',type='primary',disabled=not eligible or stats['must_left']>0)
+            if b.button('Back to cards',key='review-back-cards',disabled=not groups):move(0)
+            if submitted:
+                try:
+                    feedback=revision_feedback(state,book,notes)
+                    if not feedback:st.error('Add a wording choice or note before creating the next version.')
+                    else:
+                        request_revision=getattr(run,'request_revision',run.session.request_revision)
+                        request_revision(state['run_id'],feedback,draft_version=version,draft_sha256=sha)
+                        history=st.session_state.setdefault('run-review-history-'+state['run_id'],{})
+                        history[version]={'book':deepcopy(book),'stats':stats,'notes':notes}
+                        store=getattr(run,'store',None)
+                        if store is not None:
+                            from uuid import uuid4
+                            store.write('human-revision-choices-'+uuid4().hex+'.json',history[version])
+                        st.session_state['run-command']='execute';st.session_state['run-show-package']=False;st.rerun()
+                except ValueError as error:st.error(str(error))
+                except HarnessError:st.error('Revision is unavailable for this run or version.')
+            st.caption(str(state['revision_attempts'])+' of 3 revisions used. Each requested version gets a fresh review. Advisory notes do not block approval.')
+            if state['revision_attempts']>=3:st.info('All 3 revisions have been used. Resolve any remaining must-decide items to approve the current package.')
+            if run is not None and getattr(run,'kind','demo')=='live':
+                remaining=run.guard.standing.read()['remaining_usd'] if run.guard.standing else str(__import__('decimal').Decimal(run.guard.permission['aggregate_ceiling_usd'])-run.guard.cost)
+                st.caption('Remaining approved model budget: $'+format(__import__('decimal').Decimal(remaining),'.2f')+'. A revision needs budget for both writing and review.')
+                if not eligible and state['revision_attempts']<3:st.info('Another version is unavailable until spending, authorization or current-run conditions permit a complete revision and review.')
     if not embedded:
-        st.subheader('Drafts');draft_outputs(state)
-    can_revise=run is not None and state['status']=='awaiting_human_review' and state['revision_attempts']==0 and state['turns']-state['review_attempts']+2<=12 and (getattr(run,'kind','demo')!='live' or run.guard.can_revise())
-    if can_revise:
-        version,sha=draft_identity(state)
-        with st.form(f'run-feedback-{state["run_id"]}-{version}'):
-            notes=st.text_area('Other notes for the revision (optional)',key=f'run-feedback-text-{state["run_id"]}-{version}',max_chars=1500)
-            submitted=st.form_submit_button('Create Version 2',type='primary')
-        st.caption('Your choices and notes apply across all five drafts. One revision per run, followed by a fresh review; hints are never applied automatically.')
-        if submitted:
-            try:
-                feedback=revision_feedback(state,book,notes)
-                if not feedback:st.error('Request changes on a phrase or enter feedback before requesting a revision.')
-                else:
-                    request_revision=getattr(run,'request_revision',run.session.request_revision)
-                    request_revision(state['run_id'],feedback,draft_version=version,draft_sha256=sha)
-                    st.session_state['run-command']='execute';st.session_state['run-show-package']=False;st.session_state['run-open-review-after-command']=True;st.rerun()
-            except ValueError as e:st.error(str(e))
-            except HarnessError:st.error('Revision is unavailable for this run or version.')
-    elif saved:st.info('This saved assessment is available for wording decisions and inspection. Resuming its agent or making a paid revision is not connected here.')
-    if embedded:return
-    with st.expander('Technical details',expanded=False):
-        st.caption('Writing voice: simulated brand channels · Neutral campaign brief · Policy v1')
-        st.json({'run_id':state['run_id'],'review':state.get('review'),'human_wording_choices':book,
-            'events':state.get('events'), 'failure_history':state.get('failure_history',[])})
-        risk_scan_view(state)
-        st.caption('No LangSmith trace is available for this checkpoint.')
-    with st.expander('Supporting claims, citations and qualifications',expanded=False):
-        for result in state['evidence']:
-            for item in result['records']:
-                p=item['evidence_payload'];st.markdown('**'+item['unit_id']+' · '+item['authority']+'**');st.text(p['primary_text'])
-                st.json({'source_references':p['source_references'],'qualifications':p['segments']})
-    if run is not None:
-        if getattr(run,'kind','demo')!='live' and st.button('Generate again · simulation',key='run-again-'+state['run_id']):
-            from launchlens.offline_ui_run import OfflineUIRun
-            clear_run();st.session_state['offline_run']=OfflineUIRun(state['request'],state['user_notes'],run.scenario,voice_policy_id=state.get('voice_policy_id'),package=True)
-            st.session_state['run-command']='execute';st.rerun()
-        if st.button('Reset current run' if getattr(run,'kind','demo')=='live' else 'Reset demo',key='run-reset-'+state['run_id']):
-            clear_run();st.session_state['screen']='inventory';st.rerun()
+        with st.expander('Technical details',expanded=False):st.json({'review':state['review'],'wording_choices':book})
 
+
+def package_panel(state,run):
+    from launchlens.package_content import FORMATS,LABELS,text_fields
+    from launchlens.package_presentation import (approval_issues,
+        approve_internal,approval_matches,markdown_package,SIMULATION_LABEL)
+    from launchlens.review_decisions import grouped_findings,decision_book,effective_choice
+    from launchlens.linkedin_drafting import digest
+    run_id=state['run_id'];version=state['package']['version'];book=decision_book(state,st.session_state.get('run-review-decisions-'+run_id))
+    groups=grouped_findings(state);approval_key='run-internal-approval-'+run_id
+    approved=approval_matches(state,book,st.session_state.get(approval_key))
+    with st.container(key='package-deliverables'):
+        st.subheader('Deliverables · Version '+str(version))
+        st.caption('Human-edited current version · Re-scanned; no new AI review.' if state['review'].get('no_new_model_review') else 'Reviewer checked Version '+str(version) if state['review'].get('binding',{}).get('draft_version')==version else 'Current-version assessment')
+        for name in FORMATS:
+            relevant=[g for g in groups if any(o['format']==name and o['needs_attention'] and effective_choice(book,g,o)!='keep_wording' for o in g['occurrences'])]
+            record=state['drafts'][name]
+            status='Review incomplete' if not state['review'].get('review_complete') else str(len(relevant))+' need attention' if relevant else 'Reviewed ✓'
+            cols=st.columns([2,1.6,.5])
+            cols[0].write(LABELS[name]);cols[1].caption(status)
+            if cols[2].button('View',key='package-view-'+name,type='tertiary'):full_draft_dialog(state,name)
+    with st.container(key='package-approval'):
+        st.subheader('Approve')
+        st.caption('Advisory notes are optional. Resolve must-decide items before approving the current package.')
+        checked=st.checkbox("I’ve reviewed Version "+str(version)+' and approve it for internal use',key='run-approval-check-'+run_id+'-'+str(version))
+        issues=approval_issues(state,book)
+        if approved:st.success('Approved for internal use · Nothing published')
+        if st.button('Approve package',key='approve-package',type='primary',disabled=not checked or bool(issues) or approved):
+            record=approve_internal(state,book,checked)
+            store=getattr(run,'store',None)
+            if store is not None:
+                from uuid import uuid4
+                store.write('human-internal-approval-'+uuid4().hex+'.json',record)
+            st.session_state[approval_key]=record;st.rerun()
+        if issues:st.caption(' '.join(issues))
+        exported=markdown_package(state,approved=approved)
+        st.download_button('Download Markdown',exported,file_name='launchlens-'+state['request']['market_id'].lower()+'-v'+str(version)+'.md',mime='text/markdown',key='package-download',on_click='ignore')
+        import json
+        encoded=json.dumps(exported).replace('<','\\u003c')
+        st.iframe('<style>body{margin:0;font:14px -apple-system,sans-serif;color:#b8c4d4}button{border:0;border-radius:999px;background:#2b3749;color:#f0f4fa;padding:10px 22px;cursor:pointer}span{margin-left:10px}</style><button id="copy" type="button">Copy all</button><span id="result" role="status" aria-live="polite"></span><script>document.getElementById("copy").onclick=async()=>{try{await navigator.clipboard.writeText('+encoded+');document.getElementById("result").textContent="Copied"}catch(e){document.getElementById("result").textContent="Copy unavailable. Use Download Markdown."}};</script>',height=48,alt='Copy all package text')
+        st.caption('Exports carry the label “'+SIMULATION_LABEL+'”. Approval and export never publish anything.')
 
 def risk_scan_view(state):
     from launchlens.package_content import risky_phrase_scan, package_value
     review=state.get('review') or {}
-    hits=review.get('risk_scan') or risky_phrase_scan(package_value(state))
+    from launchlens.review_decisions import current_scan
+    hits=current_scan(state)
     st.markdown('**Risky phrases · Deterministic scan**')
     st.caption('Scan matches are prompts for contextual review, not factual verdicts. Cleared matches remain visible.')
     if not hits:st.write('No configured risky phrases matched.')

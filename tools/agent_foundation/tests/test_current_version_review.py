@@ -60,9 +60,9 @@ class CurrentVersionReviewTests(unittest.TestCase):
   for _ in range(12):call('controller')
   with self.assertRaises(LiveGateError):b.claim('controller','1'*64)
   for _ in range(4):call('package_reviewer')
-  with self.assertRaises(LiveGateError):b.claim('package_reviewer','2'*64)
-  self.assertEqual(b.summary()['call_usage'],{'task_calls':12,'required_review_calls':4})
-  self.assertEqual(len(b.events),16);self.assertGreater(b.cost,0)
+  call('package_reviewer') # No arbitrary per-run review ceiling; spending still checked.
+  self.assertEqual(b.summary()['call_usage'],{'research_task_calls':12,'human_revision_calls':0,'required_review_calls':5})
+  self.assertEqual(len(b.events),17);self.assertGreater(b.cost,0)
  def test_explicit_v2_recheck_calls_only_reviewer_and_cannot_repeat(self):
   r,w,s=self.revised()
   # Model output failure affects current review only; keep current drafts and history.

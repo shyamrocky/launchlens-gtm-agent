@@ -88,7 +88,7 @@ def action_registry(mode="live_research"):
         actions.update({
             'generate_package': {'arguments': {}, 'purpose': 'Draft the five-format GTM package after verified research and launch eligibility'},
             'review_package': {'arguments': {}, 'purpose': 'Delegate independent review of every format and cross-format consistency'},
-            'revise_package': {'arguments': {}, 'purpose': 'Revise the package once only after explicit owner feedback; require fresh review'},
+            'revise_package': {'arguments': {}, 'purpose': 'Revise only for the exact current human request; fresh review is required'},
         })
         actions['finish']['purpose'] = 'Completion requires all five formats and current-version review; never grants approval'
     return actions
@@ -126,7 +126,6 @@ def eligible_actions(state):
     actions=action_registry(state['mode'])
     if state['mode'] in {'offline_package','live_package'}:
         actions.pop('review_package',None)  # Required graph edge after every admission.
-        if not state.get('revision_request') or state.get('revision_attempts'):
-            actions.pop('revise_package',None)
+        actions.pop('revise_package',None)  # Explicit human command; never autonomous repetition.
         if state.get('package'):actions.pop('generate_package',None)
     return actions

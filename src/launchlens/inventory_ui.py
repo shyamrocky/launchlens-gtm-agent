@@ -35,6 +35,10 @@ def source_documents(display, snapshot):
     with st.container(border=True, key="source-documents"):
         st.subheader("Source documents")
         st.caption(display["product_name"])
+        with st.container(key="snapshot-caption"):
+            stamp=datetime.fromisoformat(snapshot['fetched_at']).astimezone(ZoneInfo('America/Los_Angeles'))
+            st.caption('Fixture snapshot · No live source checks performed.' if snapshot.get('data_mode')=='offline' else
+                'Source checks completed '+stamp.strftime('%b %d, %Y · %I:%M:%S %p %Z')+' · Navigation reuses this snapshot.')
         groups = []
         for app in ("Google Drive", "Notion"):
             items = []
@@ -76,7 +80,6 @@ def refresh(display):
 
 
 def inventory_page(display, snapshot):
-    st.title("GTM Launches")
     left, right = st.container(key="inventory-layout").columns([2, 1], gap="small")
     with left, st.container(border=True, key="launch-card"):
         st.subheader(display["product_name"])
@@ -253,23 +256,8 @@ def main():
         st.stop()
     st.session_state.setdefault("screen", "inventory")
     default_offline = os.environ.get("LAUNCHLENS_UI_MODE") == "offline"
-    mode = st.selectbox("Execution data", ["Live agent", "Demo simulation"],
-        index=1 if default_offline else 0, key="ui-mode",
-        help="Switching modes clears the current task. Live agent uses actual sources; model execution requires separate authorization and Start agent.")
-    if mode == "Demo simulation":
-        try:
-            from launchlens.offline_ui_run import fixture_inventory
-        except ImportError:
-            st.error("Offline harness dependencies are unavailable. Run: uv sync --project tools/ui --locked --group offline-agent")
-            st.stop()
-        st.warning("OFFLINE SIMULATION — fixture inventory and scripted model choices. No live AI, Notion, Drive or Pinecone calls.")
-    previous_mode = st.session_state.get("_data_mode")
-    if previous_mode is not None and mode != previous_mode:
-        st.session_state.pop("inventory", None)
-    st.session_state["_data_mode"] = mode
-    if "inventory" not in st.session_state:
-        refresh(display)
-    snapshot = st.session_state["inventory"]
+    st.session_state['ui-mode']=st.session_state.get('ui-mode',st.session_state.get('_data_mode','Demo simulation' if default_offline else 'Live agent'))
+    mode=st.session_state['ui-mode']
     with st.container(key="page-header"):
         brand, nav = st.columns([3, 2], vertical_alignment="center")
         brand.html('<div class="launchlens-brand">LaunchLens</div><p class="launchlens-tagline">Your launch-aware GTM agent.</p>')
@@ -291,14 +279,21 @@ def main():
                 st.session_state["screen"] = "run" if "offline_run" in st.session_state else "saved-review" if has_saved else "brief"
             if reload.button("Refresh data", key="refresh", type="tertiary"):
                 refresh(display)
-                snapshot = st.session_state["inventory"]
         active = "current" if st.session_state["screen"] in {"brief","run","saved-review"} else "home"
         st.html(f'<style>.st-key-{active} button:not(:disabled) {{ color: #f0f4fa; font-weight: 600; }}</style>')
-        stamp = datetime.fromisoformat(snapshot["fetched_at"]).astimezone(ZoneInfo("America/Los_Angeles"))
-        if mode == "Demo simulation":
-            st.caption("Fixture snapshot · All access badges remain Not checked · No live source checks performed.")
-        else:
-            st.caption(f'Source checks completed {stamp.strftime("%b %d, %Y · %I:%M:%S %p %Z")} · Explicit refresh; navigation reuses this snapshot.')
+    if st.session_state['screen']=='inventory':
+        with st.container(key='launch-heading'):
+            heading,control=st.columns([4,1],vertical_alignment='center')
+            heading.title('GTM Launches')
+            with control:
+                mode=st.selectbox('Mode',['Live agent','Demo simulation'],key='ui-mode',format_func=lambda value:'Mode: '+value,label_visibility='collapsed')
+    if mode=='Demo simulation':
+        st.warning('OFFLINE SIMULATION — fixture inventory and scripted model choices. No live AI, Notion, Drive or Pinecone calls.')
+    previous_mode=st.session_state.get('_data_mode')
+    if previous_mode is not None and mode!=previous_mode:st.session_state.pop('inventory',None)
+    st.session_state['_data_mode']=mode
+    if 'inventory' not in st.session_state:refresh(display)
+    snapshot=st.session_state['inventory']
     if snapshot["status"] != "ok":
         st.warning("Some launch data is unavailable. Missing dates/readiness do not grant permission. Refresh data after resolving source access.")
     if st.session_state["screen"] == "saved-review":
@@ -309,12 +304,15 @@ def main():
         except Exception:
             st.error("Saved review is unavailable or has changed. No model calls were made.")
         else:
-            with st.container(key="agent-run"):review_page(saved,saved=True)
+            left, _ = st.container(key="detail-layout").columns([2, 1], gap="small")
+            with left, st.container(key="agent-run"):review_page(saved,saved=True)
     elif st.session_state["screen"] == "run" and "offline_run" in st.session_state:
         from launchlens.agent_run_ui import run_page
-        run_page(display)
+        left, _ = st.container(key="detail-layout").columns([2, 1], gap="small")
+        with left:run_page(display)
     elif st.session_state["screen"] == "brief" and "selected_request" in st.session_state:
-        brief_page(display, snapshot)
+        left, _ = st.container(key="detail-layout").columns([2, 1], gap="small")
+        with left:brief_page(display, snapshot)
     else:
         inventory_page(display, snapshot)
     st.caption("Independent educational project using a fictional launch scenario. Not affiliated with The Coca-Cola Company. LaunchLens never publishes content.")

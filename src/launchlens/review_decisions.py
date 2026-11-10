@@ -27,80 +27,85 @@ def field_label(path):
 def review_identity(state):
     """Full current content and review identity; never trust a model-provided ID alone."""
     return digest({'run_id':state['run_id'],'package':state.get('package'),
-        'drafts':{f:state['drafts'][f]['draft'] for f in FORMATS},'review':state.get('review')})
+        'drafts':{f:state['drafts'][f]['draft'] for f in FORMATS},'review':state.get('review'),'card_policy':'phrase_spans_v2'})
 
 
 def phrase_key(quote, category):
-    q=' '.join(quote.casefold().split())
-    if category=='invented_product_facts' and re.search(r'\b(?:lineup|family)\b',q):return 'lineup / Coca-Cola family'
-    if category=='novelty' and q!='introducing':return 'innovation / new / latest'
-    if category=='differentiation' and q.startswith('unique'):return 'unique'
-    if category=='preference_prediction' and q in {'favorite','favourite','classic favorite','classic favourite'}:return 'classic favorite'
-    return q
+    return ' '.join(quote.casefold().split())
+
+
+def current_scan(state):
+    """Fresh deterministic matches; historical AI dispositions are not invented."""
+    recorded={h['hit_id']:h for h in (state.get('review') or {}).get('risk_scan',[])}
+    hits=risky_phrase_scan(package_value(state))
+    for hit in hits:
+        prior=recorded.get(hit['hit_id'])
+        if prior:hit['reviewer_disposition']=prior.get('reviewer_disposition','unassessed')
+        else:hit['reviewer_disposition']='new_scan_match'
+    return hits
 
 
 def grouped_findings(state):
-    review=state.get('review') or {};package=package_value(state)
-    hits=review.get('risk_scan') or risky_phrase_scan(package)
-    groups={};linked=set()
+    review=state.get('review') or {};package=package_value(state);hits=current_scan(state)
     findings=[dict(f,format=name) for name,item in review.get('format_reviews',{}).items()
               for f in item['assessment']['findings']]
-    def put(name,path,quote,category,start,end,rows,protected=False):
-        phrase=phrase_key(quote,category) if quote else LABELS[name]+' · '+CATEGORY_LABELS.get(category,category)
-        gid='phrase-'+digest([phrase,category])[:16]
-        group=groups.setdefault(gid,{'id':gid,'phrase':phrase,'category':category,'occurrences':[]})
-        oid='occ-'+digest([name,path,start,end,quote,category])[:16]
-        existing=next((o for o in group['occurrences'] if o['id']==oid),None)
-        severity='blocking' if any(f.get('severity')=='blocking' for f in rows) else 'advisory' if any(f.get('severity')=='advisory' for f in rows) else 'cleared' if rows and all(f.get('severity')=='cleared' for f in rows) else 'unassessed'
+    occurrences={}
+    def put(name,path,start,end,category,rows,protected=False,new_scan=False):
         context=dict(text_fields(package[name]['content'])).get(path,'')
-        occurrence={'id':oid,'format':name,'content_field':path,'quote':quote,'context':context,
-            'start':start,'end':end,'findings':rows,'human_clearance_required':protected,
-            'severity':severity,'needs_attention':protected or severity!='cleared'}
-        if existing:existing['findings'].extend(r for r in rows if r not in existing['findings'])
-        else:group['occurrences'].append(occurrence)
+        quote=context[start:end] if isinstance(start,int) else None
+        key=(name,path,start,end);o=occurrences.setdefault(key,{'format':name,'content_field':path,
+            'quote':quote,'context':context,'start':start,'end':end,'findings':[],
+            'categories':[],'human_clearance_required':False,'new_scan_match':False})
+        o['categories']=sorted(set(o['categories']+[category]));o['human_clearance_required'] |= protected
+        o['new_scan_match'] |= new_scan
+        o['findings'].extend(f for f in rows if f not in o['findings'])
+    linked=set()
     for hit in hits:
-        rows=[f for f in findings if hit['hit_id'] in f.get('scan_hit_ids',[])]
-        linked.update(digest(f) for f in rows)
-        put(hit['format'],hit['content_field'],hit['quote'],hit['category'],hit['start'],hit['end'],rows,hit.get('human_clearance_required',False))
+        start,end=hit['start'],hit['end']
+        # The key word is the editable span, not the rest of a novelty phrase.
+        if hit['category']=='novelty' and hit['quote'].casefold().startswith('new '):end=start+3
+        rows=[]
+        for f in findings:
+            if f['format']!=hit['format'] or f['content_field']!=hit['content_field']:continue
+            text=dict(text_fields(package[f['format']]['content'])).get(f['content_field'],'')
+            quote=f.get('quote')
+            spans=[(m.start(),m.end()) for m in re.finditer(re.escape(quote),text)] if quote else []
+            if hit['hit_id'] in f.get('scan_hit_ids',[]) or (hit.get('reviewer_disposition')!='new_scan_match' and any(a<=start and end<=b for a,b in spans)):
+                rows.append(f);linked.add(digest(f))
+        rows.sort(key=lambda f:(hit['hit_id'] not in f.get('scan_hit_ids',[]),hit['quote'].casefold() not in f.get('rationale','').casefold(),len(f.get('quote') or '')))
+        put(hit['format'],hit['content_field'],start,end,hit['category'],rows,
+            hit.get('human_clearance_required',False),hit.get('reviewer_disposition')=='new_scan_match')
     for f in findings:
         if digest(f) in linked:continue
-        name=f['format'];quote=f.get('quote');path=f['content_field'];category=f['dimension']
+        name,path,quote=f['format'],f['content_field'],f.get('quote')
+        if not quote:put(name,path,None,None,f['dimension'],[f],f.get('human_clearance_required',False));continue
         target=dict(text_fields(package[name]['content'])).get(path,'')
-        starts=[m.start() for m in re.finditer(re.escape(quote),target)] if quote else [None]
-        for start in starts:put(name,path,quote,category,start,start+len(quote) if quote else None,[f],f.get('human_clearance_required',False))
-    # First merge overlapping spans within a field, regardless of category or
-    # whether a row came from the scan or independent Reviewer. Raw rows stay intact.
-    occurrences=[dict(o,categories=[g['category']]) for g in groups.values() for o in g['occurrences']]
-    merged=[]
-    for occurrence in sorted(occurrences,key=lambda o:(o['format'],o['content_field'],o['start'] if o['start'] is not None else -1,o['end'] or -1)):
-        old=merged[-1] if merged else None
-        overlap=(old is not None and occurrence['format']==old['format'] and occurrence['content_field']==old['content_field'] and
-            isinstance(occurrence['start'],int) and isinstance(old['start'],int) and occurrence['start']<old['end'])
-        if overlap:
-            old['start']=min(old['start'],occurrence['start']);old['end']=max(old['end'],occurrence['end'])
-            old['quote']=old['context'][old['start']:old['end']]
-            old['categories']=sorted(set(old['categories']+occurrence['categories']))
-            old['findings'].extend(f for f in occurrence['findings'] if f not in old['findings'])
-            old['human_clearance_required'] |= occurrence['human_clearance_required']
-            old['needs_attention'] |= occurrence['needs_attention']
-            old['severity']=max((old['severity'],occurrence['severity']),key=lambda v:{'cleared':0,'unassessed':1,'advisory':2,'blocking':3}[v])
-        else:merged.append(deepcopy(occurrence))
+        # Prefer a short exact term explicitly quoted by the Reviewer, then a
+        # known key word inside its longer quote. Never invent text or offsets.
+        terms=[m.group(1) for m in re.finditer(r"[‘'“\"]([^’'”\"]{1,60})[’'”\"]",f.get('rationale',''))]
+        term=next((t for t in terms if len(t.split())<=6 and t.casefold() in quote.casefold()),None)
+        if term is None:
+            m=re.search(r'\b(?:new|designed (?:to|for)|guided the development|unique|lineup|family|presenting|introducing)\b',quote,re.I)
+            term=m.group() if m else quote
+        if term.casefold().startswith('new '):term='new'
+        for match in re.finditer(re.escape(quote),target):
+            inner=re.search(re.escape(term),match.group(),re.I)
+            if inner:put(name,path,match.start()+inner.start(),match.start()+inner.end(),f['dimension'],[f],f.get('human_clearance_required',False))
     combined={}
-    for o in merged:
-        categories=sorted(o['categories']);category=next((c for c in categories if c in {'availability_urgency','invented_product_facts','preference_prediction'}),categories[0])
+    for o in occurrences.values():
+        cats=o['categories'];o['severity']='blocking' if any(f.get('severity')=='blocking' for f in o['findings']) else 'advisory' if any(f.get('severity')=='advisory' for f in o['findings']) else 'cleared' if o['findings'] and all(f.get('severity')=='cleared' for f in o['findings']) else 'unassessed'
+        o['needs_attention']=o['human_clearance_required'] or o['severity']!='cleared'
+        category=next((c for c in cats if c in {'availability_urgency','invented_product_facts','preference_prediction'}),cats[0])
         phrase=phrase_key(o['quote'],category) if o['quote'] else LABELS[o['format']]+' · '+CATEGORY_LABELS.get(category,category)
-        # A larger merged wording span is shown verbatim, never reduced to an alias.
-        if len(categories)>1 and o['quote']:phrase=o['quote']
-        identity=phrase.casefold();g=combined.setdefault(identity,{'phrase':phrase,'category':category,'categories':[], 'occurrences':[]})
-        g['categories']=sorted(set(g['categories']+categories))
-        o['id']='occ-'+digest([o['format'],o['content_field'],o['start'],o['end'],o['quote'],categories])[:16]
+        g=combined.setdefault(phrase,{'phrase':phrase,'category':category,'categories':[],'occurrences':[]})
+        g['categories']=sorted(set(g['categories']+cats));o['id']='occ-'+digest([o['format'],o['content_field'],o['start'],o['end'],o['quote'],cats])[:16]
         g['occurrences'].append(o)
     result=list(combined.values())
-    for group in result:
-        group['id']='phrase-'+digest([group['phrase'].casefold(),group['categories']])[:16]
-        group['human_clearance_required']=any(o['human_clearance_required'] for o in group['occurrences'])
-        group['needs_attention']=any(o['needs_attention'] for o in group['occurrences'])
-    return sorted(result,key=lambda g:(not g['human_clearance_required'],not g['needs_attention'],g['phrase'].casefold()))
+    for g in result:
+        g['id']='phrase-'+digest([g['phrase'],g['categories']])[:16]
+        g['human_clearance_required']=any(o['human_clearance_required'] for o in g['occurrences'])
+        g['needs_attention']=any(o['needs_attention'] for o in g['occurrences'])
+    return sorted(result,key=lambda g:(not g['human_clearance_required'],not g['needs_attention'],g['phrase']))
 
 
 def decision_book(state, existing=None):
@@ -109,15 +114,20 @@ def decision_book(state, existing=None):
     return {'binding':binding,'groups':{},'overrides':{},'events':[]}
 
 
-def record_decision(state, book, identity, choice, *, occurrence=False):
+def record_decision(state, book, identity, choice, *, occurrence=False, suggestion=None):
     if book.get('binding')!=review_identity(state):raise ValueError('Review version changed')
     if choice not in {'request_changes','keep_wording'}:raise ValueError('Unknown review choice')
     groups=grouped_findings(state)
     allowed={o['id'] for g in groups for o in g['occurrences']} if occurrence else {g['id'] for g in groups}
     if identity not in allowed:raise ValueError('Unknown occurrence or phrase')
+    group=next(g for g in groups if (any(o['id']==identity for o in g['occurrences']) if occurrence else g['id']==identity))
+    if suggestion is not None and (choice!='request_changes' or suggestion not in safe_hints(group)):
+        raise ValueError('Suggestion is not an available screened hint')
     result=deepcopy(book);result['overrides' if occurrence else 'groups'][identity]=choice
+    result.setdefault('replacements',{}).pop(identity,None)
+    if suggestion is not None:result['replacements'][identity]=suggestion
     result['events'].append({'sequence':len(result['events'])+1,'scope':'occurrence' if occurrence else 'phrase',
-        'identity':identity,'decision':choice,'binding':book['binding']})
+        'identity':identity,'decision':choice,'binding':book['binding'],**({'suggestion':suggestion} if suggestion is not None else {})})
     return result
 
 
@@ -129,41 +139,72 @@ def unresolved_groups(groups,book):
     return [g for g in groups if any(o['needs_attention'] and not effective_choice(book,g,o) for o in g['occurrences'])]
 
 
-def safe_hints(group):
-    """Advisory only: screened Reviewer hints, then at most two local alternatives.
+def sentence_bounds(text,start,end):
+    """Keep the complete sentence around an exact phrase, without character cuts."""
+    lo=max(text.rfind('. ',0,start),text.rfind('! ',0,start),text.rfind('? ',0,start))+2
+    if lo==1:lo=0
+    ends=[v+1 for v in (text.find('. ',end),text.find('! ',end),text.find('? ',end)) if v>=0]
+    return lo,min(ends) if ends else len(text)
 
-    No extra inference or automatic edits. Unknown/grammatical cases fall back to
-    the Writer instead of inventing a product claim or promising a safe rewrite.
+
+def replacement_preview(occurrence, replacement):
+    """Replace exactly one verified phrase span and return its full sentence.
+
+    This conservative lexical fit check is not a claim of semantic/grammar proof.
+    Complete-sentence substitutions, repeated boundary words and stale spans fail.
     """
-    hints=[]
-    for occurrence in group['occurrences']:
-        for finding in occurrence['findings']:
-            hint,_=reviewer_hint(finding)
-            if hint and hint not in hints:hints.append(hint)
-    if hints:return hints[:2]
-    alternatives={
-        'unique':['float-inspired','cherry-and-vanilla'],
-        'unique twist':['soda-float inspiration','cherry-and-vanilla notes'],
-        'innovative':['float-inspired','cherry-and-vanilla'],
-        'innovation':['soda-float inspiration','flavor exploration'],
-        'new flavor':['cherry-and-vanilla flavor','float-inspired flavor'],
-        'latest creation':['Cherry Float','float-inspired flavor'],
-        'classic favorite':['classic soda-float idea','soda-float inspiration'],
-        'favorite':['soda-float idea','flavor inspiration'],
-        'where you can find':['the inspiration behind','the flavor notes in'],
-        'the difference':['the flavor notes','the soda-float inspiration'],
-    }
-    originals=list(dict.fromkeys(o['quote'] for o in group['occurrences'] if o['quote']))
-    candidates=alternatives.get(group['phrase'].casefold(),[])
-    if not candidates and len(originals)==1:candidates=alternatives.get(originals[0].casefold(),[])
-    for candidate in candidates[:2]:
-        # Test against EVERY merged original, not just a short alias.
-        if all(reviewer_hint({'quote':original,'suggested_change':candidate})[0] for original in originals):
-            hints.append(candidate)
+    text=occurrence['context'];start,end=occurrence['start'],occurrence['end'];quote=occurrence['quote']
+    if not isinstance(start,int) or not isinstance(end,int) or text[start:end]!=quote:return None
+    if not isinstance(replacement,str) or not replacement.strip() or len(replacement.split())>len(quote.split())+3:return None
+    if any(c in replacement for c in '.!?;\n'):return None
+    if reviewer_hint({'quote':quote,'suggested_change':replacement})[0] is None:return None
+    left=re.findall(r"[\w'-]+",text[:start].casefold());words=re.findall(r"[\w'-]+",replacement.casefold());right=re.findall(r"[\w'-]+",text[end:].casefold())
+    if any(words[-n:]==right[:n] for n in range(1,min(len(words),len(right))+1)):return None
+    if any(left[-n:]==words[:n] for n in range(1,min(len(left),len(words))+1)):return None
+    lo,hi=sentence_bounds(text,start,end)
+    # A phrase replacement must not repeat an existing phrase elsewhere in the
+    # sentence (e.g. 'distinct option ... Coca-Cola distinct option').
+    rest=' '.join(re.findall(r"[\w'-]+",(text[lo:start]+' '+text[end:hi]).casefold()))
+    normalized=' '.join(words)
+    if normalized and re.search(r'(?<!\w)'+re.escape(normalized)+r'(?!\w)',rest):return None
+    return text[lo:start]+replacement+text[end:hi]
+
+
+def _phrase_hint(finding,occurrence):
+    quote=finding.get('quote');suggestion=finding.get('suggested_change')
+    if not isinstance(quote,str) or not isinstance(suggestion,str):return None
+    text=occurrence['context'];start,end=occurrence['start'],occurrence['end']
+    if not isinstance(start,int):return None
+    # Narrow a larger Reviewer replacement ONLY when all text outside the
+    # selected phrase is preserved exactly. Otherwise it cannot replace that span.
+    for match in re.finditer(re.escape(quote),text):
+        if not match.start()<=start<end<=match.end():continue
+        prefix=text[match.start():start];suffix=text[end:match.end()]
+        if not suggestion.casefold().startswith(prefix.casefold()) or not suggestion.casefold().endswith(suffix.casefold()):continue
+        candidate=suggestion[len(prefix):len(suggestion)-len(suffix) if suffix else None].strip()
+        if occurrence['quote'][:1].islower() and candidate:candidate=candidate[:1].lower()+candidate[1:]
+        if replacement_preview(occurrence,candidate) is not None:return candidate
+    return None
+
+
+def safe_hints(group):
+    """Only phrase-sized suggestions that fit every affected occurrence."""
+    occurrences=group['occurrences'];hints=[]
+    for o in occurrences:
+        for finding in o['findings']:
+            hint=_phrase_hint(finding,o)
+            if hint and all(replacement_preview(other,hint) is not None for other in occurrences) and hint not in hints:hints.append(hint)
+    alternatives={'introducing':['Meet','Explore'],'unique':['float-inspired','cherry-and-vanilla'],
+        'innovative':['float-inspired'],'innovation':['soda-float inspiration'],
+        'favorite':['soda-float idea'],'classic favorite':['classic soda-float idea'],
+        'where you can find':['the inspiration behind'],'the difference':['the flavor notes']}
+    if not hints:
+        for candidate in alternatives.get(group['phrase'],[])[:2]:
+            if all(replacement_preview(o,candidate) is not None for o in occurrences):hints.append(candidate)
     return hints[:2]
 
 
-def highlighted(text, occurrences):
+def highlighted(text, occurrences, *, target=None):
     """Escape first, merge overlapping source spans, never replace or truncate draft text."""
     spans=sorted((o['start'],o['end']) for o in occurrences if o['quote'] and
         isinstance(o['start'],int) and isinstance(o['end'],int) and
@@ -174,7 +215,8 @@ def highlighted(text, occurrences):
         else:merged.append((start,end))
     parts=[];cursor=0
     for start,end in merged:
-        parts.extend([escape(text[cursor:start]),'<mark>'+escape(text[start:end])+'</mark>']);cursor=end
+        anchor=' id="selected-phrase"' if target and start<=target[0]<target[1]<=end else ''
+        parts.extend([escape(text[cursor:start]),'<mark'+anchor+'>'+escape(text[start:end])+'</mark>']);cursor=end
     return ''.join(parts)+escape(text[cursor:])
 
 
@@ -188,6 +230,13 @@ def revision_feedback(state,book,notes=''):
                 locations=', '.join(o['format']+'.'+o['content_field']+'['+str(o['start'])+':'+str(o['end'])+']' for o in occurrences)
                 lines.append(('Change ' if choice=='request_changes' else 'Human prefers keeping ')+
                     '“'+group['phrase']+'” at '+locations)
+    for group in grouped_findings(state):
+        for o in group['occurrences']:
+            if effective_choice(book,group,o)!='request_changes':continue
+            selected=book.get('replacements',{}).get(o['id'],book.get('replacements',{}).get(group['id']))
+            if selected:
+                if selected not in safe_hints(group):raise ValueError('Selected hint changed; review the current wording again')
+                lines.append('Requested phrase replacement at '+o['format']+'.'+o['content_field']+'['+str(o['start'])+':'+str(o['end'])+']: replace only “'+o['quote']+'” with “'+selected+'”; preserve the rest of the sentence (human preference; retain evidence and qualifications)')
     if notes.strip():lines.append('Other owner notes: '+notes.strip())
     if not lines:return ''
     result='Human wording feedback only; evidence and launch restrictions remain enforced.\n'+'\n'.join(lines)
@@ -224,8 +273,23 @@ def load_saved_review():
         loaded[key]=json.loads(raw)
     state=loaded['source'];result=loaded['review'];_,_,binding=authoritative_package_binding(state)
     if binding!=result['binding']:raise ValueError('Saved review binding differs')
-    checked=validate_package_review(result['raw_response'],state,isolate_findings=result.get('assessment_policy')=='isolated_findings_v1')
+    checked=validate_package_review(result['raw_response'],state,isolate_findings=result.get('assessment_policy')=='isolated_findings_v1',scan_additions=result.get('scan_additions',False))
     state=deepcopy(state);state['review']=checked
     for f in FORMATS:state['drafts'][f]['review_status']=checked['format_reviews'][f]['review_status']
     state['human_accepted']=False
     return state
+
+
+def carry_unchanged_decisions(before,after,book):
+    """Transfer only decisions for byte-identical fields, never edited context."""
+    result=decision_book(after);old={}
+    def key(o):return (o['format'],o['content_field'],o['context'],o['quote'],o['start'],o['end'],tuple(o['categories']))
+    for group in grouped_findings(before):
+        for occurrence in group['occurrences']:
+            choice=effective_choice(book,group,occurrence)
+            if choice:old[key(occurrence)]=choice
+    for group in grouped_findings(after):
+        for occurrence in group['occurrences']:
+            choice=old.get(key(occurrence))
+            if choice:result=record_decision(after,result,occurrence['id'],choice,occurrence=True)
+    return result
