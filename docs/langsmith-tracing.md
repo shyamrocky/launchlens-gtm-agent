@@ -1,3 +1,9 @@
+Current publication checkpoint — November 11, 2026: owner requested Git sync of
+M2-D059 after the completed app restart/local health check. Fresh verification:
+730 offline tests PASS. No additional restart or live calls for publication.
+[Publication scope](planning/repository-sync-2026-11-09.md#tracing-polish-publication--november-11-2026).
+Earlier pending/restart/local-only labels below are dated implementation history.
+
 # Optional LangSmith tracing
 
 Owner authorized bounded observability on November 10, 2026 (M2-D056).
@@ -38,8 +44,13 @@ stores `langsmith-trace-context.json`: schema, run ID, deterministic root ID, ro
 start time and dotted order only. It is created once with mode0600. Later processes
 and UI actions load/validate those same identifiers and post directly; the exporter
 never invokes `read_run` or `GET /runs/{run_id}`. A same-ID root POST on reattachment
-is idempotent; it does not create a second trace. Root updates carry the preserved
-identity/start/type and the latest observed segment status.
+is idempotent; it does not create a second trace. Root updates use minimal patch records on the supported `/runs/batch` ingestion
+endpoint with one attempt. The original saved start time stays fixed and the latest
+end time only advances, so latency includes human pauses and later resume segments.
+The engine and UI share one exporter for each key/project/client configuration;
+all observed redaction secrets are unioned, never discarded. Root metadata merges
+known values: a null/stale snapshot cannot erase gate/model metadata. Authoritative
+launch checks annotate the root immediately, including Clarify before interruption.
 
 The context file is separate from graph checkpoints, approval/decision receipts and
 accounting. Model inputs and strict saved-state schemas do not gain tracing fields.
@@ -78,7 +89,12 @@ Tool/event spans cover `Notion read`, `Pinecone search`, `launch gate check`,
 `human review decision`, `exact-replacement apply`, `approval` and `download`.
 These appear only when the associated operation executes. Every completed child
 includes outputs; gate checks include `gate_decision`, evidence fetch/search steps
-include `evidence_hit_count`, and scan lists include `hit_count`. Failed children
+include `evidence_hit_count`, and scan lists include `hit_count`. Per-format executions are children of one lazy
+`risky-phrase scan` parent for each execution segment, including nested harness
+contexts. Its counters summarize scan invocations and returned hits; they are not
+unique review-card counts. Splitting the pure scan by format preserves its original
+result order, IDs, exclusions and decisions. No scans means no empty group.
+Failed children
 still include an end time and a safe failure status. Exact-replacement
 preparation may execute more than once and may have no replacements selected.
 Approval/decisions are observed after successful UI commands, without serializing
@@ -256,3 +272,46 @@ Installed SDK HTTP payloads are intercepted, sockets blocked, and tests preserve
 same enabled/disabled model requests/package results/accounting. Lookup API calls
 are absent from exporter AST. No new live LangSmith/model/source verification or
 historical backfill was performed. Restart/owner inspection remains the handoff.
+
+## M2-D059 — Root lifetime, Clarify metadata and grouped scans
+
+Owner authorized this bounded tracing polish with tests on November 10, 2026.
+The earlier M2-D058 Git checkpoint is preserved at55f7825; this follow-up remains
+local pending review/restart, without further publication or live calls.
+
+App logs showed further root update failures but did not retain the exact remote
+error. Root delivery now uses a minimal ingestion patch, avoiding the SDK update
+path's additional nullable fields. This is a supported ingestion shape, verified
+against the installed SDK's HTTP boundary offline; live success is not claimed.
+See the [LangSmith API reference](https://api.smith.langchain.com/redoc).
+
+The cached original root start and monotonically latest end span all segments and
+human pauses. Fake-clock tests cover an initial5s segment, resume after300s, later
+process restoration through650s and a stale clock/update that cannot shorten it.
+The five-field private identity file remains unchanged. No run lookup is added.
+
+Root gate metadata is captured from the authoritative gate tool result immediately,
+including Clarify even before final state update. Later null snapshots do not erase
+known gate/model fields. Actual UK clarification/resume and India Hold are tested.
+One exporter is shared between model and human UI events, while retaining the union
+of known secret values for redaction.
+
+All format scans in a segment fold under one `risky-phrase scan` parent. Children
+are named `scan <format>`, with hit counts and completed timing. Repeated scan calls
+and nested execution contexts share that parent, which is not emitted for runs
+without scans. Enabled/disabled scan outputs, hit IDs, ordering and source data are
+compared across normal/suggestion/policy modes. Scanner patterns and business
+validation remain unchanged.
+
+Runtime changes are confined to `observability.py` and the scan's tracing decorator
+in `package_content.py`. Existing fake-client/wire tests are adapted to ingestion;
+new `test_tracing_polish.py` covers the three requested changes and strict minimal
+payloads/no automatic retries. No prompts, models, graph state, UI flow, revision
+rules, prices, dependencies or budget changes. No historical replay/backfill,
+current-run mutation, service/model call, app restart or Git sync during the fix.
+
+**Verification:**730 offline tests PASS:499 harness,117 UI,114 root, including eight
+new polish cases and the existing tracing/SDK/revision/UI regressions. Canonical
+temporary copy without .env/private runs/workspace; socket blocks and fake ingestion
+state/clock verify original start, advancing end and retained metadata. No live API
+validation, restart or Git sync. Metrics apply to subsequent emissions after restart.

@@ -1,3 +1,35 @@
+## Tracing polish publication — November 11, 2026
+
+**Authority:** owner requested Git sync of completed M2-D059 after the requested
+app restart. This preserves the approved tracing checkpoint in the existing
+private repository; no new milestone, live verification or inference is implied.
+
+**Included:** root updates preserve original start and advancing end across human
+pauses/resumes; authoritative Clarify gate metadata survives incomplete snapshots;
+engine/UI share an exporter while retaining all redaction secrets; per-format scans
+share one parent per execution segment. Minimal root ingestion patches use one
+attempt. Scanner results, graph state, prompts, models, UI journey, revision rules,
+validation and budget accounting are unchanged. Tests use synthetic fixtures,
+fake ingestion/clock and actual harness/continuation flows.
+
+**Verification:**730 fresh offline tests PASS in an isolated canonical copy:
+499 harness,117 UI,114 root. Sockets blocked; root preparation regenerated only
+inside the temporary copy. Existing interpreters, no dependency or lock edits.
+Syntax, exact file scope, credentials, empty environment placeholders, ignore rules,
+whitespace and new documentation links are checked before commit. Eleven canonical
+files are reviewed, staged explicitly and committed with the established GitHub
+noreply identity; normal push only, no visibility/configuration/history changes.
+Verify private visibility, local/remote commit equality and clean tree after push;
+record the resulting SHA in local context/progress and the owner report.
+
+**Runtime boundaries:** app restart at localhost8520 and local health already
+completed; no additional restart needed. Live polish delivery remains unverified.
+No model/source/LangSmith calls, trace backfill, run execution, budget change or
+MEMORY append are initiated by sync. Credentials, responses, decisions, approvals,
+trace context, accounting, environments and workspace stay outside Git. The app
+remains active; this sync does not freeze or restore concurrent private writes.
+[Tracing contract and regression details](../langsmith-tracing.md#m2-d059--root-lifetime-clarify-metadata-and-grouped-scans).
+
 ## LangSmith observability publication — November 10, 2026
 
 **Authority:** owner requested Git sync of completed M2-D056/D057/D058 and the

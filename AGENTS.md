@@ -1,3 +1,21 @@
+## Tracing polish publication — November 11, 2026
+
+Owner requested Git sync of M2-D059. The app was already restarted and its local
+health check passed; this publication needs no additional restart. Fresh isolated
+verification:730 offline tests PASS (499 harness/117 UI/114 root). No live model,
+source or LangSmith verification, run execution or budget changes during sync.
+Private runtime data and workspace stay local. Earlier pending/restart/local-only
+labels retain their dated scope. [Publication details](docs/planning/repository-sync-2026-11-09.md#tracing-polish-publication--november-11-2026).
+
+## Tracing root and scan polish — November 10, 2026
+
+Owner-authorized M2-D059 implemented; restart/owner review pending. Root updates
+preserve total latency across resumes and known Clarify metadata; per-format scans
+fold under one parent per execution segment. No model/prompt/run/budget/flow changes,
+live calls or Git sync. [Details and tests](docs/langsmith-tracing.md#m2-d059--root-lifetime-clarify-metadata-and-grouped-scans).
+730 offline PASS (499 harness/117 UI/114 root).
+Earlier sync/restart/checkpoint labels retain their dated scope.
+
 ## Owner-authorized tracing sync — November 10, 2026
 
 Owner requested private Git preservation of completed M2-D056–D058 and the local

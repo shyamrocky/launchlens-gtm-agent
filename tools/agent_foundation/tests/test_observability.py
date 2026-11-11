@@ -27,6 +27,14 @@ class FakeClient:
         assert isinstance(values.get('end_time', datetime.now()), datetime)
         self.updated.append(deepcopy(values))
 
+    def request_with_retries(self,method,path,**kwargs):
+        assert method=='POST' and path=='/runs/batch' and kwargs['stop_after_attempt']==1
+        for row in json.loads(kwargs['request_kwargs']['data'])['patch']:
+            row['run_id']=row.pop('id')
+            for key in ('start_time','end_time'):
+                if key in row:row[key]=datetime.fromisoformat(row[key])
+            self.update_run(**row)
+
 
 class TracingTests(unittest.TestCase):
     def setUp(self):

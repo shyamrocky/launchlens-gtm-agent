@@ -21,6 +21,7 @@ import time
 from uuid import uuid4, uuid5, NAMESPACE_URL
 
 _CURRENT = ContextVar('launchlens_span', default=None)
+_SCANS = ContextVar('launchlens_scan_batch', default=None)
 _LOG = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parents[2]
 _EMAIL = re.compile(r"[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.I)
@@ -127,7 +128,15 @@ class Tracer:
                 # Identity is local/persisted. No read_run or GET /runs lookup.
                 stage = operation
                 if operation == 'create': client.create_run(**clean)
-                else: client.update_run(**clean)
+                else:
+                    # The ingestion endpoint accepts a minimal patch without
+                    # SDK-added nullable fields. Keep the same one-attempt policy.
+                    patch = {k:v for k,v in clean.items() if v is not None}
+                    patch['id'] = patch.pop('run_id')
+                    body = json.dumps({'patch':[patch]}, ensure_ascii=False,
+                        default=lambda v:v.isoformat() if isinstance(v,datetime) else None).encode()
+                    client.request_with_retries('POST','/runs/batch',stop_after_attempt=1,
+                        request_kwargs={'data':body,'headers':{'Content-Type':'application/json'}})
             except Exception as error:
                 self.failed_operations += 1
                 _warn_failure(stage, error)
@@ -191,37 +200,64 @@ class Tracer:
                 self.emit('create', dict(root))
             return self.roots[identity]
 
-    def _end_root(self, root):
-        self.emit('update', {'run_id': root['id'], 'trace_id': root['id'],
-            'parent_run_id': None, 'dotted_order': root['dotted_order'],
-            'start_time': root['start_time'], 'end_time': datetime.now(timezone.utc),
-            'name': root['name'], 'run_type': root['run_type'], 'session_name': self.project,
-            'extra': root['extra'], 'tags': root['tags']})
+    def _root_update(self, root, outputs=None):
+        # Original start is immutable; every later segment extends the same root.
+        with self.lock:
+            ended = max(datetime.now(timezone.utc),root.get('_last_end',root['start_time']))
+            root['_last_end'] = ended
+            value = {'run_id':root['id'], 'trace_id':root['id'],
+                'dotted_order':root['dotted_order'], 'start_time':root['start_time'],
+                'end_time':ended, 'session_name':self.project,
+                'extra':root['extra'], 'tags':root['tags']}
+            if outputs is not None: value['outputs'] = outputs
+            self.emit('update',value)
+
+    def _merge_root_metadata(self, root, metadata):
+        old = root['extra']['metadata']
+        merged = {**old, **{k:v for k,v in metadata.items() if v is not None and k!='models'}}
+        merged['models'] = {**old.get('models',{}),**metadata.get('models',{})}
+        root['extra'] = {'metadata':merged}; root['tags'] = tags(merged)
+
+    def note_gate(self, root_id, decision):
+        if decision not in {'Proceed','Clarify','Hold'}: return
+        with self.lock:
+            root = self.roots.get(root_id)
+            if root is None: return
+            self._merge_root_metadata(root,{'gate_decision':decision})
+        self._root_update(root)
 
     @contextmanager
     def run(self, state, models=None):
         try:
             root = self.root(state, models)
             token = _CURRENT.set((self, root))
+            prior = _SCANS.get(); scan_token = None
+            if prior is None or prior['tracer'] is not self or prior['root']['id']!=root['id']:
+                batch = {'tracer':self,'root':root,'manager':None,'formats':[],
+                         'scan_count':0,'format_scan_count':0,'hit_count':0}
+                scan_token = _SCANS.set(batch)
         except Exception:
             yield
             return
         try: yield
         finally:
+            if scan_token is not None:
+                batch = _SCANS.get()
+                if batch['manager'] is not None:
+                    batch['record']['outputs'] = {k:batch[k] for k in ('scan_count','format_scan_count','hit_count')}
+                    batch['record']['end_time'] = batch['last_end']
+                    batch['manager'].__exit__(None,None,None)
+                _SCANS.reset(scan_token)
             try: _CURRENT.reset(token)
-            finally: self._end_root(root)
+            finally: self._root_update(root)
 
     def update(self, state, models=None):
         try:
             root = self.root(state, models)
-            metadata = run_metadata(state, models or root.get('extra', {}).get('metadata', {}).get('models'))
-            root['extra'] = {'metadata': metadata}; root['tags'] = tags(metadata)
-            self.emit('update', {'run_id': root['id'], 'trace_id': root['id'],
-                'parent_run_id': None, 'start_time': root['start_time'], 'name': root['name'],
-                'run_type': root['run_type'], 'session_name': self.project, 'dotted_order': root['dotted_order'], 'extra': {'metadata': metadata},
-                'tags': tags(metadata), 'outputs': {'status': state.get('status'),
-                    'version': (state.get('package') or {}).get('version')},
-                'end_time': datetime.now(timezone.utc)})
+            metadata = run_metadata(state, models)
+            with self.lock: self._merge_root_metadata(root,metadata)
+            self._root_update(root,{'status':state.get('status'),
+                                   'version':(state.get('package') or {}).get('version')})
         except Exception: pass
 
 
@@ -241,10 +277,12 @@ def configured(*, path=None, secrets=(), client_factory=_client):
         if values.get('LANGSMITH_TRACING', '').lower() != 'true' or not values.get('LANGSMITH_API_KEY', '').strip(): return None
         key = values['LANGSMITH_API_KEY']; project = values.get('LANGSMITH_PROJECT') or 'default'
         hidden = tuple(v for k, v in values.items() if v and re.search(r'KEY|TOKEN|SECRET|PASSWORD|EMAIL', k, re.I)) + tuple(secrets)
-        cache = (key, project, hidden, client_factory)
+        cache = (key, project, client_factory)
         with _EXPORTERS_LOCK:
             if cache not in _EXPORTERS: _EXPORTERS[cache] = Tracer(key, project, secrets=hidden, client_factory=client_factory)
-            return _EXPORTERS[cache]
+            tracer = _EXPORTERS[cache]
+            with tracer.lock: tracer.secrets = tuple(dict.fromkeys(tracer.secrets + hidden))
+            return tracer
     except Exception as error:
         _warn_failure('configure', error)
         return None
@@ -271,10 +309,11 @@ def span(name, inputs=None, *, kind='tool', metadata=None):
         if current and token is not None:
             # Post a completed child in ONE supported create payload, avoiding
             # the failing child PATCH and its nullable identity fields entirely.
-            tracer.emit('create', {**row, 'end_time': datetime.now(timezone.utc),
+            ended = record.get('end_time') or datetime.now(timezone.utc)
+            tracer.emit('create', {**row, 'end_time': ended,
                 'outputs': record.get('outputs', {'status': 'failed' if record.get('error') else 'completed'}),
                 'error': record.get('error'), 'extra': {'metadata': {
-                    **(metadata or {}), 'latency_seconds': time.monotonic() - started,
+                    **(metadata or {}), 'latency_seconds': (ended-row['start_time']).total_seconds(),
                     **record.get('metadata', {})}}})
             try: _CURRENT.reset(token)
             except ValueError:
@@ -295,11 +334,47 @@ def step(name, *, capture=()):
                 result = function(*args, **kwargs)
                 outputs = {'result': result}
                 if isinstance(result,dict):
-                    if 'decision' in result: outputs['gate_decision'] = result['decision']
+                    if 'decision' in result:
+                        outputs['gate_decision'] = result['decision']
+                        if name=='launch gate check':
+                            tracer,parent = _CURRENT.get()
+                            tracer.note_gate(parent['trace_id'],result['decision'])
                     if isinstance(result.get('records'),list): outputs['evidence_hit_count'] = len(result['records'])
                 elif isinstance(result,list): outputs['hit_count'] = len(result)
                 record['outputs'] = outputs
                 return result
+        return wrapped
+    return decorate
+
+
+def scan_step(formats):
+    """Group the pure format-independent scan calls under one segment parent."""
+    def decorate(function):
+        @wraps(function)
+        def wrapped(package,*args,**kwargs):
+            current = _CURRENT.get(); batch = _SCANS.get()
+            if not current or batch is None: return function(package,*args,**kwargs)
+            if batch['manager'] is None:
+                _CURRENT.set((batch['tracer'],batch['root']))
+                manager = span('risky-phrase scan',{'formats':batch['formats']})
+                record = manager.__enter__(); batch.update(manager=manager,record=record,parent=_CURRENT.get())
+                _CURRENT.set(current)
+            batch['scan_count'] += 1; hits = []
+            try:
+                for name in formats:
+                    if name not in package: continue
+                    if name not in batch['formats']: batch['formats'].append(name)
+                    _CURRENT.set(batch['parent'])
+                    with span('scan '+name,{'format':name}) as record:
+                        # Matches never cross formats: concatenation preserves the
+                        # original order, IDs, exclusions and returned scan result.
+                        found = function({name:package[name]},*args,**kwargs)
+                        record['outputs'] = {'format':name,'hit_count':len(found)}
+                        hits.extend(found);batch['format_scan_count'] += 1;batch['hit_count'] += len(found)
+                return hits
+            finally:
+                batch['last_end'] = datetime.now(timezone.utc)
+                _CURRENT.set(current)
         return wrapped
     return decorate
 

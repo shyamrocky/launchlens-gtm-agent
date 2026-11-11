@@ -110,8 +110,11 @@ class TraceMetricsTests(unittest.TestCase):
             self.assertIn(method,{'POST','PATCH'})
             if method=='POST' and body.get('parent_run_id'):
                 self.assertIn('end_time',body);self.assertIn('start_time',body);self.assertTrue(body.get('outputs'))
-            if method=='PATCH':
-                self.assertIn('start_time',body);self.assertEqual(body['run_type'],'chain');self.assertIn('end_time',body)
+            if url=='/runs/batch':
+                self.assertEqual(method,'POST');self.assertEqual(kwargs['stop_after_attempt'],1)
+                for update in body['patch']:
+                    self.assertIn('start_time',update);self.assertIn('end_time',update)
+                    self.assertNotIn('parent_run_id',update);self.assertNotIn('address',update)
             return Mock(status_code=202)
         with patch.object(Client,'request_with_retries',side_effect=http),patch.object(Client,'read_run',side_effect=AssertionError('Deprecated lookup')) as lookup:
             tracer=obs.Tracer('SYNTHETIC-KEY','test',client_factory=lambda _:sdk)
