@@ -8,6 +8,7 @@ from pathlib import Path
 import socket
 import sys
 import tempfile
+import urllib.error
 import unittest
 from unittest.mock import patch
 
@@ -40,7 +41,7 @@ def project(inputs):
 
 
 class Wire:
-    def __init__(self, override=None):self.calls=[];self.controller=0;self.override=override
+    def __init__(self, override=None, actions=None):self.calls=[];self.controller=0;self.override=override;self.actions=actions
     def __call__(self,model,validator):
         def http(payload):
             if not validator(payload):raise AssertionError('Translation mismatch')
@@ -50,7 +51,7 @@ class Wire:
                 if payload['messages'][0]['content']==load_package_prompt(k))
             data=package_cases()
             if stage=='package_controller':
-                actions=[action('read_pmm_brief','pmm'),action('check_launch','launch'),
+                actions=self.actions or [action('read_pmm_brief','pmm'),action('check_launch','launch'),
                     action('search_product_evidence','facts',query='Flavor and float inspiration',authority='public_product_facts'),
                     action('generate_package','write'),
                     action('revise_package','revise-v2')]
@@ -73,6 +74,76 @@ class Wire:
 class FrozenDateTime(datetime):
     @classmethod
     def now(cls,tz=None):return NOW if tz is not None else NOW.replace(tzinfo=None)
+
+
+class CatalogRenewalTests(unittest.TestCase):
+    def test_expired_catalog_renews_and_start_constructs_run_without_model_call(self):
+        from launchlens import live_package as lp
+        from unittest.mock import Mock
+        from launchlens.run_archive import write_private
+        class Clock(datetime):
+            @classmethod
+            def now(cls,tz=None):return NOW+timedelta(days=2)
+        class Reply:
+            status=200
+            def __init__(self,value):self.raw=json.dumps(value).encode()
+            def __enter__(self):return self
+            def __exit__(self,*_):return False
+            def read(self,_):return self.raw
+        cfg=profile();ids=sorted({r['model_id'] for r in cfg['roles'].values()})
+        account={'data':[{'id':model_id} for model_id in ids]}
+        public=[]
+        for model_id in ids:
+            role=next(r for r in cfg['roles'].values() if r['model_id']==model_id)
+            public.append({'status':'active','flavors':[{'model_id':model_id,
+                'max_model_len':role['context_tokens'],
+                'input_price_per_million_tokens':float(role['input_per_million_usd']),
+                'output_price_per_million_tokens':float(role['output_per_million_usd'])}]})
+        opener=Mock();opener.open.side_effect=[Reply(account),Reply(public)]
+        session={'profile_sha256':lp.PROFILE_SHA256,'package_sha256':lp.CONFIG_SHA256,
+                 'budget_ledger':'data/private/demo-budget-test.json'}
+        budget={'remaining_usd':'1.00'}
+        with tempfile.TemporaryDirectory() as tmp,\
+             patch.object(lp,'CATALOG_QUALIFICATION',Path(tmp)/'qualification.json'),\
+             patch.object(lp,'datetime',Clock),\
+             patch.object(lp,'read_selected_keys',return_value=KEYS),\
+             patch('urllib.request.build_opener',return_value=opener),\
+             patch('launchlens.run_archive.demo_session',return_value=session),\
+             patch('launchlens.run_archive.demo_budget',return_value=budget),\
+             patch('launchlens.run_archive.saved_runs',return_value=[]),\
+             patch.object(lp,'ProtectedStore') as store,\
+             patch.object(lp,'LivePackageRun') as runner:
+            self.assertTrue(lp.readiness(request=request())['ready'])
+            self.assertEqual(opener.open.call_count,2)
+            self.assertTrue((Path(tmp)/'qualification.json').is_file())
+            self.assertTrue(lp.readiness(request=request())['ready'])
+            self.assertEqual(opener.open.call_count,2)
+            self.assertIs(lp.create_live_run(request()),runner.return_value)
+            self.assertEqual(runner.call_count,1)
+            self.assertEqual(opener.open.call_count,2)
+
+    def test_failed_catalog_check_reports_specific_reason_and_cannot_start(self):
+        from launchlens import live_package as lp
+        from unittest.mock import Mock
+        class Clock(datetime):
+            @classmethod
+            def now(cls,tz=None):return NOW+timedelta(days=2)
+        opener=Mock();opener.open.side_effect=urllib.error.URLError('offline')
+        session={'profile_sha256':lp.PROFILE_SHA256,'package_sha256':lp.CONFIG_SHA256,
+                 'budget_ledger':'data/private/demo-budget-test.json'}
+        with tempfile.TemporaryDirectory() as tmp,\
+             patch.object(lp,'CATALOG_QUALIFICATION',Path(tmp)/'qualification.json'),\
+             patch.object(lp,'datetime',Clock),\
+             patch.object(lp,'read_selected_keys',return_value=KEYS),\
+             patch('urllib.request.build_opener',return_value=opener),\
+             patch('launchlens.run_archive.demo_session',return_value=session),\
+             patch.object(lp,'LivePackageRun') as runner:
+            result=lp.readiness(request=request())
+            self.assertFalse(result['ready'])
+            self.assertEqual(result['message'],'Model catalog network check failed')
+            with self.assertRaisesRegex(LiveGateError,'Model catalog network check failed'):
+                lp.create_live_run(request())
+            runner.assert_not_called()
 
 
 class LivePreparationTests(unittest.TestCase):

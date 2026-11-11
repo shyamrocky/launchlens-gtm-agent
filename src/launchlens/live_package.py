@@ -11,7 +11,10 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import ssl
 from threading import Lock
+import urllib.error
+import urllib.request
 
 from launchlens.content_review import ContentCall
 from launchlens.gtm_registry import HarnessError, require, supported_use_cases, validate_request
@@ -32,6 +35,8 @@ PROFILE = ROOT/'data/templates/gtm/live_package_profile_v11.json'
 AUTHORIZATION = ROOT/'data/private/d037-fresh-us-authorization.json'
 BUILD_LEDGER = ROOT/'data/private/build-budget-20261109.json'
 PROFILE_SHA256 = 'e2606a87d3bae59e61db295a00e4c949fe189460b4eb4e5d032bf7ba5d75bae0'
+CATALOG_QUALIFICATION = ROOT/'data/private/model-catalog-qualification.json'
+_catalog_lock = Lock()
 ROLES = ('controller','package_writer','package_reviewer','package_revision')
 
 
@@ -51,6 +56,75 @@ def profile():
          'Unreviewed live execution limits')
     configuration()  # Verify package prompt/template bindings as well.
     return value
+
+
+def catalog_checked_utc(*, now=None):
+    """Renew only the catalog/price check; never change the frozen run profile."""
+    cfg=profile()
+    current=datetime.now(timezone.utc) if now is None else now
+    original=datetime.fromisoformat(cfg['checked_utc'])
+    max_age=cfg['qualification_max_age_seconds']
+    if 0 <= (current-original).total_seconds() <= max_age:
+        return original
+    with _catalog_lock:
+        if CATALOG_QUALIFICATION.is_file():
+            try:
+                from launchlens.run_archive import private_json
+                saved=private_json(CATALOG_QUALIFICATION)
+                checked=datetime.fromisoformat(saved['checked_utc'])
+                if (saved['profile_sha256']==PROFILE_SHA256 and
+                    saved['model_ids']==sorted({r['model_id'] for r in cfg['roles'].values()}) and
+                    0 <= (current-checked).total_seconds() <= max_age):
+                    return checked
+            except (ValueError, KeyError, TypeError, OSError):
+                pass
+        try:
+            from launchlens.live_research import NoRedirect
+            key=read_selected_keys({'NEBIUS_API_KEY'},ROOT/'.env')['NEBIUS_API_KEY']
+            opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect(),
+                urllib.request.HTTPSHandler(context=ssl.create_default_context()))
+            urls=('https://api.tokenfactory.nebius.com/v1/models',
+                  'https://tokenfactory.nebius.com/api/public/models_info')
+            headers=({'Authorization':'Bearer '+key,'Accept':'application/json'},
+                     {'User-Agent':'Mozilla/5.0','Accept':'application/json','Referer':'https://tokenfactory.nebius.com/'})
+            values=[];receipts=[]
+            for url,head in zip(urls,headers):
+                with opener.open(urllib.request.Request(url,headers=head,method='GET'),timeout=15) as response:
+                    raw=response.read(2_000_001)
+                    gate(response.status==200 and len(raw)<=2_000_000,'Model catalog read failed')
+                values.append(json.loads(raw))
+                receipts.append({'url':url,'status':200,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()})
+            account,public=values
+            gate(type(account) is dict and type(account.get('data')) is list and type(public) is list,
+                 'Model catalog response changed')
+            account_ids={entry.get('id') for entry in account['data'] if type(entry) is dict}
+            for model_id in sorted({r['model_id'] for r in cfg['roles'].values()}):
+                gate(model_id in account_ids,'Configured model missing from account catalog: '+model_id)
+                matches=[(entry,flavor) for entry in public if type(entry) is dict
+                    for flavor in entry.get('flavors',[]) if type(flavor) is dict and flavor.get('model_id')==model_id]
+                gate(len(matches)==1 and matches[0][0].get('status')=='active',
+                     'Configured model missing or inactive in price catalog: '+model_id)
+                entry,flavor=matches[0]
+                for role in (r for r in cfg['roles'].values() if r['model_id']==model_id):
+                    gate(flavor.get('max_model_len')==role['context_tokens'],
+                         'Model context limit changed: '+model_id)
+                    gate(Decimal(str(flavor['input_price_per_million_tokens']))==Decimal(role['input_per_million_usd']) and
+                         Decimal(str(flavor['output_price_per_million_tokens']))==Decimal(role['output_per_million_usd']),
+                         'Model price changed: '+model_id)
+            from launchlens.run_archive import write_private
+            checked=current
+            write_private(CATALOG_QUALIFICATION,{'profile_sha256':PROFILE_SHA256,
+                'checked_utc':checked.isoformat(),'model_ids':sorted({r['model_id'] for r in cfg['roles'].values()}),
+                'checks':receipts})
+            return checked
+        except LiveGateError:
+            raise
+        except (urllib.error.URLError,TimeoutError,OSError):
+            raise LiveGateError('Model catalog network check failed') from None
+        except HarnessError:
+            raise LiveGateError('Nebius credential unavailable for model catalog check') from None
+        except (ValueError,KeyError,TypeError,IndexError):
+            raise LiveGateError('Model catalog response changed') from None
 
 
 def preflight(*, package_hash=None, request=None):
@@ -123,11 +197,13 @@ def validate_authorization(value, *, now=None):
     try:
         current = datetime.now(timezone.utc) if now is None else now
         expiry = datetime.fromisoformat(value['expires_utc'])
-        checked = datetime.fromisoformat(cfg['checked_utc'])
+        checked = datetime.fromisoformat(cfg['checked_utc']) if now is not None else catalog_checked_utc()
         gate(expiry.tzinfo is not None and current.tzinfo is not None and
              current < expiry and 0 <= (current-checked).total_seconds() <= cfg['qualification_max_age_seconds']
              and (expiry-checked).total_seconds() <= cfg['qualification_max_age_seconds'],
              'Authorization or catalog qualification expired')
+    except LiveGateError:
+        raise
     except (TypeError, ValueError):
         raise LiveGateError('Invalid authorization expiry') from None
     return plan
@@ -155,7 +231,7 @@ def demo_permission(request):
         scope_sha256=plan['scope_sha256'],request=deepcopy(plan['request']),source_permissions_confirmed=True,
         acknowledge_catalog_not_entitlement=True,acknowledge_context_reservation_and_cap_assumptions=True,
         standing_budget=True,allow_automatic_refinement=True,budget_ledger=session['budget_ledger'],
-        expires_utc=(datetime.fromisoformat(profile()['checked_utc'])+timedelta(seconds=profile()['qualification_max_age_seconds'])).isoformat())
+        expires_utc=(catalog_checked_utc()+timedelta(seconds=profile()['qualification_max_age_seconds'])).isoformat())
     validate_authorization(value)
     remaining=Decimal(demo_budget()['remaining_usd'])
     gate(remaining>=max(Decimal(v['per_call_reservation_usd']) for v in plan['roles'].values()),'Demo budget cannot cover the next bounded call plan')
@@ -170,6 +246,10 @@ def readiness(path=AUTHORIZATION, *, request=None):
         output = ROOT/'data/generated'/('live-package-'+permission['authorization_id'])
         gate(not output.exists(), 'Authorization already consumed; no rerun')
         return {'ready':True,'request':deepcopy(permission['request']),'message':'Standing demo budget applies. Starting makes live calls; archive never refreshes that budget.' if permission.get('budget_ledger') else 'One separately authorized US run is available.'}
+    except LiveGateError as exc:
+        if str(exc) in {'Authorization or catalog qualification expired', 'Invalid authorization expiry'}:
+            return {'ready':False,'request':None,'message':'Model pricing check expired — requalify to run live.'}
+        return {'ready':False,'request':None,'message':str(exc)}
     except Exception:
         return {'ready':False,'request':None,'message':'Live execution awaits separate owner authorization and spending qualification.'}
 
@@ -364,11 +444,11 @@ class RunBudget:
         with self.lock:
             count=sum(self.counts.values())
             return (self.armed and not self.active and
-                state['mode']=='live_package' and state['status'] in {'failed','stopped'} and
-                (state.get('package') or {}).get('version',0)>=2 and state['revision_attempts']>=1 and
+                state['mode']=='live_package' and state['status'] in {'failed','stopped','interrupted'} and
+                (state.get('package') or {}).get('version',0)>=1 and
                 state['pending'] is None and not state['review'] and state['human_accepted'] is False and
                 state['review_attempts']==self.counts['package_reviewer'] and
-                self.counts['package_revision']>=1 and len(self.events)==count and
+                (state['package']['version']==1 or self.counts['package_revision']>=1) and len(self.events)==count and
                 all(e['status']=='usage_accounted' for e in self.events) and
                 (state['turns']==count or (state['turns']==count+1 and
                     state['events'][-1].get('action')=='model_adapter' and state['events'][-1].get('outcome')=='failed_safely')))
@@ -801,14 +881,23 @@ def load_current_live_run():
         state=loaded['state']
         if state['status'] in {'created','running'} or state.get('revision_request') is not None:
             loaded=_interrupt_checkpoint(loaded,store)
-        if loaded['state']['status']=='interrupted':return SavedRunView(loaded,store)
-        try:return _restore_current(loaded,store)
+        try:
+            attached=_restore_current(loaded,store)
+            recover_review=attached.can_review_saved()
+            if not recover_review:return attached
         except (HarnessError,ResearchError,ValueError,TypeError,KeyError,OSError):
             if loaded['state']['status']!='interrupted':
                 state=deepcopy(loaded['state']);state.update(status='interrupted',pending=None,revision_request=None,
                     continuation_notice='Run interrupted. Saved artifacts remain available; archive the package before starting fresh. No model call was made.')
                 loaded=_write_recovery(loaded,store,state,deepcopy(loaded['capture']))
             return SavedRunView(loaded,store)
+    # The saved Reviewer command owns its own execution lease. Never nest locks.
+    try:
+        attached.review_saved(rid)
+        return attached
+    except (HarnessError,ResearchError,ValueError,TypeError,KeyError,OSError):
+        latest,latest_store=_current_receipts()
+        return SavedRunView(latest,latest_store)
 
 
 def _restore_current(loaded,store_path):
@@ -819,7 +908,7 @@ def _restore_current(loaded,store_path):
     gate(not is_archived(state['run_id']),'Current run was archived')
     stopped_display=state['status']=='failed' and state.get('package') is None and not state['drafts']
     if not stopped_display:authoritative_package_binding(state)
-    recovery=state['status'] in {'failed','stopped'} and (state.get('package') or {}).get('version',0)>=2 and not state['review']
+    recovery=state['status'] in {'failed','stopped','interrupted'} and (state.get('package') or {}).get('version',0)>=1 and not state['review']
     gate(recovery or stopped_display or (state['status']=='awaiting_human_review' and bool(state.get('review')) and
         (state['review'].get('review_complete') is True or state['package']['version']>=2)),
         'Current review checkpoint is unavailable')

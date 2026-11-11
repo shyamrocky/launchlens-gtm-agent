@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'src'))
 from launchlens.evidence_payload import storage_fields
 from launchlens.retrieval import (SOURCES, NAMESPACE, MODEL, PRODUCT, PineconeHTTP,
-    RetrievalError, retrieve_product_evidence)
+    OBJECTIVE_RECORD_IDS, RetrievalError, fetch_objective_claims, retrieve_product_evidence)
 
 
 def packet(unit='PROD-002', authority='public_product_facts', links=()):
@@ -61,6 +61,33 @@ class Fake:
 class RetrievalTests(unittest.TestCase):
     def run_tool(self, fake, authority='public_product_facts', query='Prepare GTM evidence'):
         return retrieve_product_evidence(query, authority, transport=fake)
+
+    def test_objective_claims_use_exact_hosted_ids_and_keep_full_evidence(self):
+        packets = []
+        for claim_id in ('PROD-002', 'PROD-003'):
+            value = packet(claim_id)
+            value['chunk_id'] = OBJECTIVE_RECORD_IDS[claim_id]
+            packets.append(value)
+        fake = Fake(targets=packets)
+        result = fetch_objective_claims(['PROD-002', 'PROD-003'], transport=fake)
+        self.assertEqual([row['unit_id'] for row in result['records']], ['PROD-002', 'PROD-003'])
+        self.assertEqual([row['evidence_payload'] for row in result['records']], packets)
+        self.assertEqual(len(fake.calls), 1)
+        self.assertEqual(fake.calls[0][0], 'GET')
+        self.assertTrue(fake.calls[0][1].startswith('/vectors/fetch?'))
+
+    def test_objective_claim_fetch_fails_closed_on_missing_or_corrupt_record(self):
+        value = packet('PROD-002')
+        value['chunk_id'] = OBJECTIVE_RECORD_IDS['PROD-002']
+        fake = Fake(targets=[value])
+        with self.assertRaises(RetrievalError):
+            fetch_objective_claims(['PROD-002', 'PROD-003'], transport=fake)
+        corrupt = record(value)
+        corrupt['metadata']['evidence_json'] += 'CORRUPT'
+        fake = Fake()
+        fake.targets[value['chunk_id']] = corrupt
+        with self.assertRaises((RetrievalError, ValueError)):
+            fetch_objective_claims(['PROD-002'], transport=fake)
 
     def test_complete_packet_and_original_rank_retained(self):
         p = packet(); f = Fake([record(p)])

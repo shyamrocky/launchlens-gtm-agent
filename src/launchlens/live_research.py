@@ -119,10 +119,17 @@ class NebiusHTTP:
                     and payload["messages"][1].get("role") == "user",
                     "Unapproved writing configuration")
         else:
+            supplied_tools = payload.get('tools')
+            names = ([item.get('function', {}).get('name') for item in supplied_tools
+                      if type(item) is dict and type(item.get('function')) is dict]
+                     if type(supplied_tools) is list else [])
             require(common and payload.get("max_tokens") == MAX_OUTPUT_TOKENS
                     and payload.get("tool_choice") == "auto"
                     and payload.get("parallel_tool_calls") is False
-                    and payload.get("tools") == tool_schemas(mode), "Unapproved inference configuration")
+                    and type(supplied_tools) is list and bool(names)
+                    and len(names) == len(supplied_tools) == len(set(names))
+                    and supplied_tools == tool_schemas(mode, set(names)),
+                    "Unapproved inference configuration")
         raw = dumps(payload).encode("utf-8")
         require(len(raw) <= MAX_REQUEST_BYTES, "Context exceeds byte bound; no trimming")
         event = {"attempt": len(self.events) + 1, "request_bytes": len(raw),
@@ -196,10 +203,22 @@ class ResearchModel:
         progress = {"remaining_limits": state["remaining_limits"], "status": state["status"],
             "missing_requirements": state["research_gaps"],
             "human_reply_data_only": state["feedback"]}
+        if state.get('feedback'):
+            progress['human_decision'] = (
+                'Human chose draft without availability wording. Continue this market task: '
+                'retrieve product evidence, draft without availability claims, then obtain required review. '
+                'Do not ask this clarification again.'
+                if state['feedback']=='draft_without_availability' else
+                'Human requested a readiness recheck. Use its authoritative result; '
+                'do not ask this clarification again.'
+                if state['feedback']=='recheck_readiness' else
+                'Human answered the clarification. Do not ask it again.')
         if self._mode == "live_linkedin":
             progress["draft_status"] = "unreviewed" if state["drafts"].get("linkedin") else "absent"
             progress["writing_attempts"] = state["writing_attempts"]
         if self._mode == "live_package":
+            from launchlens.gtm_registry import missing_objective_claim_ids
+            progress['missing_objective_claim_ids'] = missing_objective_claim_ids(state)
             progress["package_state"] = {"version":(state.get("package") or {}).get("version"),
                 "review_status":state.get("review", {}).get("review_status"),
                 "writing_attempts":state["writing_attempts"], "review_attempts":state["review_attempts"],
@@ -208,6 +227,8 @@ class ResearchModel:
             progress["owner_notes_data_only"] = state.get("user_notes", "")
             progress["revision_feedback_data_only"] = state.get("revision_feedback", "")
         messages = [{"role": "system", "content": self._prompt},
+            {"role": "system", "content": "This run is for market " + request['market_id'] +
+             " only. Other markets in PMM positioning are context, not this run's launch gate or task."},
             {"role": "system", "content": "Use native function tool calls. Their envelope supplies "
              "the action id and name; function arguments follow the supplied schema. Select one "
              "tool per turn. Do not emit a JSON action as ordinary text or add state fields. "
@@ -221,7 +242,7 @@ class ResearchModel:
             *native_history(state), {"role": "user", "content": dumps({
                 "harness_state": progress, "research_context": context})}]
         from launchlens.gtm_registry import eligible_actions
-        allowed=eligible_actions(state) if self._mode=='live_package' else None
+        allowed=eligible_actions(state)
         payload = {"model": MODEL, "messages": messages, "tools": tool_schemas(self._mode, allowed),
             "tool_choice": "auto", "parallel_tool_calls": False, "temperature": 0,
             "max_tokens": MAX_OUTPUT_TOKENS, "stream": False, "store": False}
@@ -293,3 +314,7 @@ class LiveResearchTools:
         validate_action({"id": "adapter-validation", "name": "search_product_evidence",
                          "arguments": {"query": query, "authority": authority}})
         return retrieve_product_evidence(query, authority, transport=self._pinecone)
+
+    def fetch_objective_claims(self, claim_ids):
+        from launchlens.retrieval import fetch_objective_claims
+        return fetch_objective_claims(claim_ids, transport=self._pinecone)

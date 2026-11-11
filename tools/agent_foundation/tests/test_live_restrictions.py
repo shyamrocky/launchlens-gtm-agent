@@ -30,7 +30,7 @@ class LiveRestrictionTests(unittest.TestCase):
         source=audit.ReadinessUnavailable(transport) if case['fault'] else transport
         actions=[action('check_launch','launch')]
         if case['id']!='india':
-            actions.append(action('request_clarification','question',question='Safe fixture: resolve the missing operational evidence in the authorized tracker.'))
+            actions.append(action('request_clarification','question',market_id=audit.request(case)['market_id'],question='Safe fixture: resolve the missing operational evidence in the authorized tracker.'))
         def no_pinecone(*args):raise AssertionError('Unexpected search')
         session=FoundationSession(ResearchModel(MockChat(actions)),
             LiveResearchTools(NotionReader(source),no_pinecone),mode='live_research')

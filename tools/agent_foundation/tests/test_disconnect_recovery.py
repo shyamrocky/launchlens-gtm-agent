@@ -36,15 +36,18 @@ class DisconnectRecoveryTests(unittest.TestCase):
   self.assertEqual(s['run_id'],rid);self.assertEqual(s['package']['version'],1)
   self.assertEqual(s['status'],'awaiting_human_review');self.assertTrue(s['review'])
   self.assertEqual(len(self.wire.calls),calls);self.assertEqual(reopened.capture()['spending']['attempts'],run.capture()['spending']['attempts'])
- def test_disconnect_mid_run_becomes_interrupted_and_archivable_no_writer_replay(self):
+ def test_disconnect_after_v1_resumes_required_review_without_writer_replay(self):
   run=self.make_run();rid=run.snapshot()['run_id']
   def drop(_,s):
    if s.get('package') and not s.get('review'):raise BrowserDisconnected()
   with self.assertRaises(BrowserDisconnected):run.execute(rid,on_update=drop)
   calls=len(self.wire.calls);before=run.snapshot()['package'];original={p:p.read_bytes() for p in run.store.path.iterdir()}
-  reopened=load_current_live_run();s=reopened.snapshot()
-  self.assertEqual(s['status'],'interrupted');self.assertEqual(s['package'],before)
-  self.assertEqual(len(self.wire.calls),calls);self.assertFalse(archive.execution_active(rid))
+  with patch('launchlens.live_package.ProviderHTTP',side_effect=lambda model,key,request_validator=None,timeout_seconds=None:self.wire(model,request_validator)):
+   reopened=load_current_live_run()
+  s=reopened.snapshot()
+  self.assertEqual(s['status'],'awaiting_human_review');self.assertEqual(s['package'],before)
+  self.assertTrue(s['review']);self.assertEqual(len(self.wire.calls),calls+1)
+  self.assertFalse(archive.execution_active(rid))
   self.assertTrue(all(p.read_bytes()==raw for p,raw in original.items()))
   saved=archive.archive_run(archive.market_run('US'))
   self.assertEqual(archive.saved_runs(),[])

@@ -7,11 +7,12 @@ import unittest
 from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[3];sys.path.insert(0,str(ROOT/'src'))
 from launchlens.offline_ui_run import OfflineUIRun
-from launchlens.offline_fixtures import request,package_cases
+from launchlens.offline_fixtures import request,package_cases,action
 from launchlens.voice_policy import BRAND_POLICY_ID
 from launchlens.package_content import check_field_claims,PackageError,prepare_package_input,admit_package
 from launchlens.structured_output import response_format
 from launchlens.gtm_registry import HarnessError
+from launchlens.gtm_registry import eligible_actions
 from launchlens.live_research import tool_schemas
 
 def run_case(market='US',scenario='Standard review'):
@@ -53,10 +54,23 @@ class RecoveryTests(unittest.TestCase):
                 self.assertEqual(after['launch']['decision'],'Clarify');self.assertFalse(after['launch']['promotional_draft_allowed'])
                 self.assertFalse(after['restricted_drafting']['availability_wording_allowed']);self.assertEqual(len(after['drafts']),5)
                 self.assertFalse(after['human_accepted']);self.assertFalse(after['package']['publishing_allowed'])
+                self.assertEqual(after['review_attempts'],1)
+                self.assertEqual(sum(e['action']=='request_clarification' and e['outcome']=='completed'
+                    for e in after['events']),1)
+                self.assertNotIn('request_clarification',eligible_actions(after))
                 self.assertEqual(len(run.tools.calls),calls+(reply=='recheck_readiness'))
                 if reply=='recheck_readiness':self.assertIn('Readiness still shows availability unconfirmed',after['continuation_notice'])
                 damaged=deepcopy(after);damaged['launch']['conditions'].append({'code':'invalid_calendar','message':'broken'})
                 with self.assertRaises(Exception):prepare_package_input(damaged)
+    def test_answered_clarification_rejected_even_if_feedback_is_missing(self):
+        run,before=run_case('UK')
+        after=run.resume(before['run_id'],'draft_without_availability')
+        after['feedback']=''
+        after['pending']=action('request_clarification','repeat',market_id='UK',question=before['clarification'])
+        rejected=run.session._dispatch(after)
+        self.assertEqual(rejected['events'][-1]['outcome'],'rejected')
+        self.assertNotIn('request_clarification',eligible_actions(after))
+        self.assertNotIn('repeat',rejected['ledger'])
     def test_uk_read_failure_and_stop_do_not_write(self):
         run,state=run_case('UK');run.tools.fail='launch';after=run.resume(state['run_id'],'recheck_readiness')
         self.assertEqual(after['status'],'failed');self.assertFalse(after['drafts'])

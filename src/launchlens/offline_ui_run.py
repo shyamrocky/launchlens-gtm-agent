@@ -63,7 +63,7 @@ class OfflineUIRun:
                 'revise_package':'Address the requested changes while preserving evidence and launch restrictions.'}
             actions=[action('read_pmm_brief','pmm'), action('check_launch','launch'),
                 action('search_product_evidence','facts',query='Flavor and classic soda-float inspiration',authority='public_product_facts')]
-            if request['market_id']=='UK':actions.append(action('request_clarification','ask',question='UK availability is unconfirmed. Continue without availability wording, recheck readiness, or stop?'))
+            if request['market_id']=='UK':actions.append(action('request_clarification','ask',market_id='UK',question='UK availability is unconfirmed. Continue without availability wording, recheck readiness, or stop?'))
             actions += [action('generate_package','write'),action('revise_package','revise-v2')]
             for entry in actions:entry['why']=purposes[entry['name']]
             self.controller=ScriptedReviewController(actions)

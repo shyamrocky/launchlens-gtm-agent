@@ -13,6 +13,37 @@ from launchlens.inventory import (InventoryError, OUTPUT_NAMES,
 from launchlens.launch_checks import evaluate_launch
 
 
+INVENTORY_SNAPSHOT = Path(__file__).resolve().parents[2] / 'data/private/home-inventory.json'
+
+
+def saved_inventory():
+    """Last successful live Home read; never grants a run new permissions."""
+    from launchlens.run_archive import private_json
+    try:
+        value = private_json(INVENTORY_SNAPSHOT)
+        if (value.get('status') == 'ok' and value.get('data_mode') != 'offline'
+                and set(value.get('markets', {})) >= {'US', 'UK', 'IN'}):
+            return value
+    except (HarnessError, OSError, ValueError, TypeError, KeyError):
+        pass
+    return None
+
+
+def active_run_market():
+    run = st.session_state.get('offline_run')
+    if run is not None:
+        try:
+            state = run.snapshot()
+            if state and (state.get('status') in {'created', 'running', 'needs_clarification'}
+                          or state.get('revision_request') is not None):
+                return state['request']['market_id']
+        except (HarnessError, KeyError, TypeError):
+            pass
+    if st.session_state.get('run-command') is not None:
+        return (st.session_state.get('selected_request') or {}).get('market_id')
+    return None
+
+
 def date_label(value):
     if not value:
         return "Date unavailable"
@@ -83,6 +114,13 @@ def source_documents(display, snapshot):
         blocked=refresh_blocked()
         if st.button('↻ Refresh',key='refresh',type='tertiary',disabled=blocked,help=REFRESH_BLOCKED_MESSAGE if blocked else 'Re-read launch data and check Drive access; keep current runs.'):
             refresh(display);st.rerun()
+        if blocked:
+            market = active_run_market()
+            if market:
+                label = 'India' if market == 'IN' else market
+                if st.button(label+' run in progress · View run ›',key='source-active-run',type='tertiary'):
+                    st.session_state['screen']='run';st.rerun()
+            st.caption(REFRESH_BLOCKED_MESSAGE)
         refresh_result(snapshot)
         groups = []
         for app in ("Google Drive", "Notion"):
@@ -195,6 +233,9 @@ def refresh(display):
             st.session_state["inventory"] = fetch_inventory(display, verify_documents=True)
     if previous is not None:
         st.session_state["refresh-result"] = refresh_changes(previous, st.session_state["inventory"])
+    if st.session_state.get('ui-mode') != 'Demo simulation' and st.session_state['inventory'].get('status') == 'ok':
+        from launchlens.run_archive import write_private
+        write_private(INVENTORY_SNAPSHOT, st.session_state['inventory'])
     return True
 
 
@@ -399,8 +440,13 @@ def brief_page(display, snapshot):
         from launchlens.live_package import readiness
         ready = readiness(request=request) if not offline else {'ready':False}
         live_allowed = ready['ready'] and ready.get('request') == request
+        attached = existing.snapshot() if existing is not None else None
+        existing_blocks = attached is not None and (offline or
+            attached['request']['market_id']==market or
+            not (attached['status'] in {'approved','stopped'} or attached.get('human_accepted')))
         if st.button("Start simulation" if offline else "Start agent", key="prepare-start", type="primary",
-                     disabled=(not offline and not live_allowed) or existing is not None or saved is not None):
+                     disabled=(not offline and not live_allowed) or existing_blocks or saved is not None,
+                     help=ready.get('message') if not offline and not live_allowed else None):
             try:
                 from launchlens.voice_policy import BRAND_POLICY_ID
                 if offline:
@@ -419,7 +465,7 @@ def brief_page(display, snapshot):
             in_progress=executing(saved) if not offline else saved['status'] in {'created','running'}
             st.caption('A '+market_name+' run is in progress · View it' if in_progress else
                        'A '+market_name+' package is saved · View it or archive it before starting fresh.')
-        elif existing is not None:
+        elif existing_blocks:
             st.caption('A current run is already attached · View it before starting another run.')
         if (existing is not None or saved is not None) and st.button("View current simulation" if offline else "View current run", key="prepare-view-run", type="tertiary"):
             if existing is None and not offline:
@@ -502,7 +548,8 @@ def archive_confirmation(record,run=None):
             active=active or bool(getattr(getattr(current,'guard',None),'active',False))
         except HarnessError:active=True
     status='approved' if record['status']=='approved' else 'awaiting review' if record['status']=='awaiting_human_review' else record['status'].replace('_',' ')
-    st.write('Archive '+label+' · Version '+str(record['version'])+' ('+status+') and start a new run? The archived package stays downloadable.')
+    version_label='Not drafted' if record['version']==0 else 'Version '+str(record['version'])
+    st.write('Archive '+label+' · '+version_label+' ('+status+') and start a new run? The archived package stays downloadable.')
     st.caption('Sources, product evidence and original receipts stay unchanged. This does not refill the demo budget or call a model.')
     if active:st.warning('Stop the run first')
     try:data=archive_download(record)
@@ -611,7 +658,15 @@ def main():
         st.session_state.pop('inventory',None)
         st.session_state.pop("refresh-result", None)
     st.session_state['_data_mode']=mode
-    if 'inventory' not in st.session_state and not refresh(display):st.stop()
+    if 'inventory' not in st.session_state:
+        if refresh_blocked():
+            cached = saved_inventory() if mode == 'Live agent' else None
+            if cached is None:
+                st.error('Saved launch inventory is unavailable while the run is active. Finish or stop the run to refresh.')
+                st.stop()
+            st.session_state['inventory'] = cached
+        elif not refresh(display):
+            st.stop()
     snapshot=st.session_state['inventory']
     if snapshot["status"] != "ok":
         st.warning("Some launch data is unavailable. Missing dates/readiness do not grant permission. Refresh data after resolving source access.")

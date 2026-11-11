@@ -71,7 +71,7 @@ def action_registry(mode="live_research"):
         "check_launch": {"arguments": {}, "purpose": "Compute scoped launch eligibility from source records"},
         "search_product_evidence": {"arguments": {"query": "text", "authority": "approved category"},
                                     "purpose": "Retrieve product facts or synthetic intent"},
-        "request_clarification": {"arguments": {"question": "text"}, "purpose": "Pause the current task"},
+        "request_clarification": {"arguments": {"market_id": "market code", "question": "text"}, "purpose": "Pause this market's task"},
         "finish": {"arguments": {}, "purpose": "Request research-stage completion; code verifies prerequisites"},
     }
     if mode in {"live_linkedin", "offline_review"}:
@@ -110,6 +110,7 @@ def validate_action(value, mode="live_research"):
                 "Search query must contain 1–2000 characters")
         require(type(args["authority"]) is str and args["authority"] in SOURCES, "Unsupported evidence authority")
     if value["name"] == "request_clarification":
+        require(type(args["market_id"]) is str and args["market_id"] in MARKETS, "Unsupported clarification market")
         require(type(args["question"]) is str and args["question"].strip() and len(args["question"]) <= 500,
                 "Clarification requires 1–500 characters")
     return value
@@ -121,11 +122,42 @@ def objective_claims(request):
     return dict(OBJECTIVE_CLAIMS[request["objective_id"]])
 
 
+def missing_objective_claim_ids(state):
+    """IDs still needed for drafting, based on complete public claim records."""
+    supported = {row.get('unit_id') for result in state.get('evidence', [])
+                 for row in result.get('records', [])
+                 if row.get('authority') == 'public_product_facts'
+                 and row.get('usable_as_complete_evidence') is True
+                 and row.get('reference_status') in {'resolved', 'not_expanded'}
+                 and (row.get('evidence_payload') or {}).get('chunk_kind') == 'product_claim'
+                 and (row.get('evidence_payload') or {}).get('claim_source_mappings')}
+    return [claim for claim in objective_claims(state['request']) if claim not in supported]
+
+
 def eligible_actions(state):
     """Application-owned options inside the registered task; not model policy."""
     actions=action_registry(state['mode'])
+    if (state.get('launch') or {}).get('decision') != 'Clarify' or clarification_used(state):
+        actions.pop('request_clarification',None)
+    if state.get('feedback') in {'draft_without_availability', 'recheck_readiness'} and state.get('restricted_drafting'):
+        actions.pop('search_product_evidence', None)
     if state['mode'] in {'offline_package','live_package'}:
         actions.pop('review_package',None)  # Required graph edge after every admission.
         actions.pop('revise_package',None)  # Explicit human command; never autonomous repetition.
-        if state.get('package'):actions.pop('generate_package',None)
+        launch = state.get('launch') or {}
+        may_draft = (launch.get('decision') == 'Proceed' or
+                     (launch.get('decision') == 'Clarify' and
+                      state.get('feedback') in {'draft_without_availability', 'recheck_readiness'} and
+                      bool(state.get('restricted_drafting'))))
+        if state.get('package') or state.get('pmm') is None or not may_draft or missing_objective_claim_ids(state):
+            actions.pop('generate_package',None)
     return actions
+
+
+def clarification_used(state):
+    """A completed clarification is single-use even if feedback is lost on resume."""
+    return bool(state.get('feedback')) or any(
+        entry.get('action', {}).get('name') == 'request_clarification'
+        and entry.get('status') == 'completed'
+        for entry in state.get('ledger', {}).values()
+    )

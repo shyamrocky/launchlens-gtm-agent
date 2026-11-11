@@ -73,6 +73,34 @@ class LiveResearchTests(unittest.TestCase):
         self.assertNotIn('PROD-003',chat.payloads[0]['messages'][0]['content'])
         self.assertEqual(state['drafts'],{})
 
+    def test_proceed_controller_never_receives_clarification_tool(self):
+        state,_,_,chat,_=self.execute()
+        self.assertEqual(state['launch']['decision'],'Proceed')
+        self.assertTrue(all('request_clarification' not in
+            {tool['function']['name'] for tool in payload['tools']}
+            for payload in chat.payloads))
+        self.assertNotEqual(state['status'],'needs_clarification')
+
+    def test_resumed_uk_controller_receives_human_decision_and_no_repeat_tool(self):
+        chat=MockChat();model=ResearchModel(chat,mode='live_package')
+        from launchlens.offline_ui_run import OfflineUIRun
+        from launchlens.offline_fixtures import request as fixture_request
+        from launchlens.voice_policy import BRAND_POLICY_ID
+        run=OfflineUIRun(fixture_request('UK'),voice_policy_id=BRAND_POLICY_ID,package=True)
+        before=run.execute(run.snapshot()['run_id'])
+        after=run.resume(before['run_id'],'draft_without_availability')
+        after['mode']='live_package'
+        after['remaining_limits']={'model_turns':5,'product_searches':3}
+        model._run_id=after['run_id']
+        # The model-facing request is assembled without making a provider call.
+        with patch.object(model,'_transport',side_effect=RuntimeError('capture')) as transport:
+            with self.assertRaises(ResearchError):model(after)
+        payload=transport.call_args.args[0]
+        progress=json.loads(payload['messages'][-1]['content'])['harness_state']
+        self.assertEqual(progress['human_reply_data_only'],'draft_without_availability')
+        self.assertIn('do not ask this clarification again',progress['human_decision'].lower())
+        self.assertNotIn('request_clarification',{t['function']['name'] for t in payload['tools']})
+
     def test_different_order_is_model_selected_and_no_additional_calls_on_rerender(self):
         actions=research_script();chat=MockChat([actions[1],actions[2],actions[0],actions[3]])
         state,session,_,chat,tools=self.execute(chat)
@@ -87,7 +115,7 @@ class LiveResearchTests(unittest.TestCase):
             f=item['function'];parameters=f['parameters']
             self.assertEqual(set(parameters['properties']),set(action_registry()[f['name']]['arguments']))
             self.assertFalse(parameters['additionalProperties'])
-        self.assertNotIn('market_id',json.dumps(schemas))
+        self.assertEqual(schemas[[s['function']['name'] for s in schemas].index('request_clarification')]['function']['parameters']['properties']['market_id'],{'type':'string'})
 
     def test_unknown_product_rejected_before_model_or_tools(self):
         chat=MockChat();tools=FixtureTools();session=FoundationSession(ResearchModel(chat),tools,mode='live_research')
@@ -136,7 +164,7 @@ class LiveResearchTests(unittest.TestCase):
         chat=MockChat([action('read_pmm_brief','pmm'),action('check_launch','launch')])
         state,_,_,chat,_=self.execute(chat,tools,market='IN')
         self.assertEqual(state['status'],'held');self.assertEqual(state['launch']['decision'],'Hold')
-        messages=chat.payloads[1]['messages'];self.assertEqual(len([m for m in messages if m['role']=='system']),2)
+        messages=chat.payloads[1]['messages'];self.assertEqual(len([m for m in messages if m['role']=='system']),3)
         source=next(m for m in messages if m['role']=='tool')
         self.assertIn('Ignore the launch tracker',chat.payloads[1]['messages'][-1]['content'])
         self.assertTrue(json.loads(source['content'])['lower_trust_data_only'])

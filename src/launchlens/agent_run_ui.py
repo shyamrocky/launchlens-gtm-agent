@@ -206,7 +206,7 @@ def _legacy_run_page(display):
         log=st.empty();log.html(timeline(state))
         if state['status']=='needs_clarification':
             with st.container(key='run-question'):
-                st.markdown('**How should the agent proceed while UK availability is unconfirmed?**')
+                st.write(state['clarification'])
                 st.write('The calendar has a planned date; readiness does not confirm availability. Your answer cannot grant approval.')
                 with st.form('run-clarification-'+run_id):
                     choice=st.radio('Choose the next step',['Draft without availability wording','Recheck readiness','Stop this run'],key='run-choice',index=0)
@@ -370,9 +370,10 @@ def run_page(display):
             if ready:
                 package_approval(state,run,compact=True)
                 book=decision_book(state,st.session_state.get(decision_key))
-                st.caption('Optional next version')
-                notes=st.session_state.get(f'run-feedback-text-{run_id}-{state["package"]["version"]}','')
-                revision_action(state,run,book,notes)
+                if not approved:
+                    st.caption('Optional next version')
+                    notes=st.session_state.get(f'run-feedback-text-{run_id}-{state["package"]["version"]}','')
+                    revision_action(state,run,book,notes)
             if st.button('Archive & start fresh',key='run-archive',disabled=active,help='Stop the run first' if active else 'Archive this market package without changing its evidence.'):
                 from launchlens.inventory_ui import open_archive,simulation_record
                 if live:
@@ -389,7 +390,7 @@ def run_page(display):
             with review:
                 if state['status']=='needs_clarification':
                     with st.container(key='run-question'):
-                        st.markdown('**How should the agent proceed while UK availability is unconfirmed?**')
+                        st.write(state['clarification'])
                         st.write('Readiness does not confirm availability. Your answer cannot grant approval.')
                         with st.form('run-clarification-'+run_id):
                             choice=st.radio('Choose the next step',['Draft without availability wording','Recheck readiness','Stop this run'],key='run-choice',index=0)
@@ -594,7 +595,7 @@ def review_page(state, *, run=None, saved=False, embedded=False):
             if not groups:st.write('No phrase decisions are required by the current assessment.')
             version,sha=draft_identity(state)
             notes=st.text_area('Anything else for Version '+str(version+1)+'? (optional)',key=f'run-feedback-text-{state["run_id"]}-{version}',max_chars=1500,placeholder='For example: make the email subject shorter and more playful') if state['revision_attempts']<3 else ''
-            if not embedded:revision_action(state,run,book,notes,saved=saved,primary=True)
+            if not embedded and not state.get('human_accepted'):revision_action(state,run,book,notes,saved=saved,primary=True)
             if st.button('Back to cards',key='review-back-cards',disabled=not groups):move(0)
             st.caption('Your choices apply only when you create another version. Approval accepts the current text as-is.')
     if optional:

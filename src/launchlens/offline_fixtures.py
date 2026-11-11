@@ -118,6 +118,12 @@ class FixtureTools:
                 "product_id": PRODUCT, "requested_authority": authority,
                 "records": records, "issues": []}
 
+    def fetch_objective_claims(self, claim_ids):
+        self._call("objective_claims")
+        result = self.search("SAFE FIXTURE exact objective claim lookup", "public_product_facts")
+        result["records"] = [row for row in result["records"] if row["unit_id"] in claim_ids]
+        return result
+
 
 """Canonical OFFLINE mocks for existing FoundationSession, never a live Reviewer."""
 from copy import deepcopy

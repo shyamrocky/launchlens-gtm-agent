@@ -19,7 +19,7 @@ from langsmith import tracing_context
 from launchlens.content_review import (ReviewError, authoritative_binding, validate_review, prepare_revision)
 from launchlens.evidence_payload import storage_fields
 from launchlens.gtm_registry import (HarnessError, MAX_SEARCHES, MAX_TURNS,
-    action_registry, objective_claims, require, validate_action, validate_request)
+    action_registry, objective_claims, missing_objective_claim_ids, require, validate_action, validate_request)
 from launchlens.launch_checks import evaluate_launch
 from launchlens.linkedin_drafting import DraftValidationError, prepare_input, admit_output, digest
 from launchlens.notion_tools import PMM_PAGE, PRODUCT
@@ -66,6 +66,14 @@ class State(TypedDict):
     failure_history: list
     continuation_notice: str
     normalizations: list
+
+
+class DraftEligibilityError(Exception):
+    """Stable, source-free reason for rejecting a draft before inference."""
+    def __init__(self, code, field_path, rule):
+        self.code = code
+        self.diagnostic = {'field_path': field_path, 'rule': rule}
+        super().__init__(code)
 
 
 def initial_state(request, mode="offline_simulation", user_notes="", voice_policy_id=None):
@@ -123,6 +131,7 @@ class FoundationSession:
         builder.add_node("decide", self._decide)
         builder.add_node("dispatch", self._dispatch)
         builder.add_node("clarify", self._clarify)
+        builder.add_node("required_objective_evidence", self._required_objective_evidence)
         builder.add_node("required_review", self._required_review)
         builder.add_node("required_refine", self._required_refine)
         builder.add_edge(START, "decide")
@@ -130,7 +139,10 @@ class FoundationSession:
         builder.add_conditional_edges("dispatch", self._route)
         builder.add_conditional_edges("required_review", self._route)
         builder.add_conditional_edges("required_refine", self._route)
-        builder.add_conditional_edges("clarify", lambda s: "decide" if s["status"]=="running" else END)
+        builder.add_conditional_edges("clarify", lambda s: "required_objective_evidence" if s["status"] == "running" and
+            s.get('feedback') in {'draft_without_availability', 'recheck_readiness'} and s.get('restricted_drafting') else
+            ("decide" if s["status"] == "running" else END))
+        builder.add_conditional_edges("required_objective_evidence", lambda s: "decide" if s["status"] == "running" else END)
         # Suppress automatic tracing even if inherited environment enables LangSmith.
         with tracing_context(enabled=False):
             self._graph = builder.compile(checkpointer=self._saver)
@@ -237,7 +249,7 @@ class FoundationSession:
             state['mode']=='live_package' and
             ((stopped_display and state['status']=='failed' and state['package'] is None and not state['drafts']) or
              (not review_recovery and state['status']=='awaiting_human_review' and type(state['package']['version']) is int and state['package']['version']>=1) or
-             (review_recovery and state['status'] in {'failed','stopped'} and state['package']['version']>=2 and state['revision_attempts']>=1 and not state['review'])) and
+             (review_recovery and state['status'] in {'failed','stopped','interrupted'} and state['package']['version']>=1 and not state['review'])) and
             state['revision_request'] is None and state['pending'] is None and
             state['human_accepted'] is False, 'Only the current review checkpoint can resume')
         require(not stopped_display or (state['status']=='failed' and state['package'] is None and not state['drafts']),'Stopped restore is display-only')
@@ -379,7 +391,7 @@ class FoundationSession:
                     if inputs is not None and reply is None:
                         observed['status'] = 'running'
                     for update in self._graph.stream(inputs, self._config(), stream_mode='updates'):
-                        for node in ('decide', 'dispatch', 'clarify', 'required_review', 'required_refine'):
+                        for node in ('decide', 'dispatch', 'clarify', 'required_objective_evidence', 'required_review', 'required_refine'):
                             if node in update:
                                 observed.update(deepcopy(update[node]))
                         if on_update is not None:
@@ -499,8 +511,8 @@ class FoundationSession:
     def can_review_saved(self):
         state=self._snapshot()
         if state is None or state['mode'] not in {'offline_package','live_package'}:return False
-        if state['status'] not in {'failed','stopped'} or (state.get('package') or {}).get('version',0)<2:return False
-        if state['revision_attempts']<1 or state.get('review') or state['human_accepted']:return False
+        if state['status'] not in {'failed','stopped','interrupted'} or (state.get('package') or {}).get('version',0)<1:return False
+        if state.get('review') or state['human_accepted']:return False
         if 'harness-review-v'+str(state['package']['version']) in state['ledger'] or any(r.get('binding',{}).get('draft_version')==state['package']['version'] for r in state['reviews']):return False
         try:authoritative_package_binding(state)
         except Exception:return False
@@ -509,7 +521,7 @@ class FoundationSession:
             and (guard.can_review_saved(state) if guard is not None else True))
 
     def review_saved(self, run_id, *, on_update=None):
-        """Explicit recovery of the admitted V2 only; no Controller or Writer call."""
+        """Recover the saved current version's required review; no Writer call."""
         require(self._lock.acquire(blocking=False), 'Execution is running')
         try:
             self._check_id(run_id);require(self.can_review_saved(), 'Saved current-version review unavailable')
@@ -550,6 +562,14 @@ class FoundationSession:
         view.pop("pending", None)
         from launchlens.gtm_registry import eligible_actions
         view["allowed_actions"] = eligible_actions(state)
+        if not view['allowed_actions'] or (missing_objective_claim_ids(state) and
+                state['searches'] >= self._max_searches and
+                'search_product_evidence' not in view['allowed_actions']):
+            state['status'] = 'failed'
+            state['draft_failure'] = {'stage':'evidence_eligibility', 'code':'required_objective_evidence_unavailable',
+                                      'field_path':'evidence', 'rule':'no_eligible_evidence_action'}
+            self._event(state, 'evidence_eligibility', 'required_claims_unavailable', time.monotonic())
+            return state
         view["remaining_limits"] = {"model_turns": self._max_turns - self._task_turns(state),
                                     "product_searches": self._max_searches - state["searches"]}
         state["turns"] += 1
@@ -618,6 +638,25 @@ class FoundationSession:
         if action is None:
             return state
         name, args, action_id = action["name"], action["arguments"], action["id"]
+        if name == 'search_product_evidence':
+            query = ' '.join(args['query'].casefold().split())
+            prior = {(' '.join(row['action']['arguments']['query'].casefold().split()))
+                     for row in state['ledger'].values()
+                     if row['action']['name'] == 'search_product_evidence' and row['status'] == 'completed'}
+            if query in prior:
+                self._event(state, name, 'rejected_repeated_query', time.monotonic(), action_id=action_id)
+                return state
+            if state.get('feedback') in {'draft_without_availability', 'recheck_readiness'} and state.get('restricted_drafting'):
+                self._event(state, name, 'rejected_after_clarification', time.monotonic(), action_id=action_id)
+                return state
+        from launchlens.gtm_registry import clarification_used
+        if name == 'request_clarification' and (
+            (state.get('launch') or {}).get('decision') != 'Clarify' or
+            clarification_used(state) or args.get('market_id') != state['request']['market_id']
+        ):
+            self._event(state, name, 'rejected', time.monotonic(), action_id=action_id,
+                        why='Clarification is outside this run or has already been answered')
+            return state
         fingerprint = hashlib.sha256(json.dumps({"name": name, "arguments": args},
             sort_keys=True, allow_nan=False).encode()).hexdigest()
         started = time.monotonic()
@@ -658,6 +697,22 @@ class FoundationSession:
                 require(self._mode in {"offline_package", "live_package"}, "Package action unavailable in this profile")
                 failure_stage = "draft_eligibility" if name == "generate_package" else "review_eligibility"
                 if name == "generate_package":
+                    from launchlens.launch_checks import availability_only_gap
+                    launch = state.get('launch')
+                    restricted = (type(launch) is dict and availability_only_gap(launch)
+                        and state.get('feedback') in {'draft_without_availability', 'recheck_readiness'}
+                        and state.get('restricted_drafting') == {
+                            'request_sha256':digest(state['request']),
+                            'launch_sha256':digest(launch),
+                            'availability_wording_allowed':False})
+                    if not (type(launch) is dict and (
+                        launch.get('decision') == 'Proceed' and launch.get('promotional_draft_allowed') is True
+                        or restricted)):
+                        raise DraftEligibilityError('draft_permission_denied', 'launch', 'launch_gate_or_human_answer_missing')
+                    if state.get('pmm') is None:
+                        raise DraftEligibilityError('pmm_guidance_missing', 'pmm', 'required_guidance_missing')
+                    if missing_objective_claim_ids(state):
+                        raise DraftEligibilityError('objective_evidence_missing', 'evidence', 'required_claim_missing')
                     inputs = prepare_package_input(state)
                     if state["writing_attempts"] and not state.get('writer_retry'):
                         require(state["writing_attempts"] in {1,2} and state["package"], "Writing already attempted; no retry")
@@ -782,11 +837,11 @@ class FoundationSession:
             else:  # finish cannot supply status/approval; code determines the outcome.
                 launch = state["launch"]
                 require(launch is not None, "Launch eligibility must be checked")
-                if launch["decision"] == "Clarify":
+                if launch["decision"] == "Clarify" and not state.get('feedback'):
                     state["status"] = "needs_clarification"
                     state["clarification"] = "; ".join(c["message"] for c in launch["conditions"])
                 else:
-                    require(launch["promotional_draft_allowed"] and state["pmm"] is not None,
+                    require((launch["promotional_draft_allowed"] or state.get('restricted_drafting')) and state["pmm"] is not None,
                             "Research prerequisites remain incomplete")
                     state["research_gaps"] = self._objective_gaps(state)
                     if not state["research_gaps"]:
@@ -804,10 +859,10 @@ class FoundationSession:
             state["ledger"][action_id]["status"] = "failed"
             state["status"] = "failed"
             if name in {"generate_linkedin", "generate_package"}:
-                detail = error.diagnostic if isinstance(error, DraftValidationError) else {
+                detail = error.diagnostic if isinstance(error, (DraftValidationError, DraftEligibilityError)) else {
                     "field_path":None, "rule":"unknown_validation_failure"}
                 state["draft_failure"] = {"stage":failure_stage,
-                    "code":error.code if isinstance(error, DraftValidationError) else "operation_failed", **detail}
+                    "code":error.code if isinstance(error, (DraftValidationError, DraftEligibilityError)) else "operation_failed", **detail}
             if name in {"review_linkedin", "revise_linkedin", "review_package", "revise_package"}:
                 if isinstance(error, ReviewError):
                     detail = error.diagnostic
@@ -861,6 +916,32 @@ class FoundationSession:
             except Exception:
                 return {'status':'failed','clarification':'','restricted_drafting':None,'continuation_notice':'Readiness could not be checked. Drafting remains paused.'}
         return {'feedback': reply, 'status': 'running', 'clarification': ''}
+
+    def _required_objective_evidence(self, state):
+        """Continue a UK restricted draft with exact approved claims, without controller search."""
+        state = deepcopy(state)
+        missing = missing_objective_claim_ids(state)
+        if not missing:
+            return state
+        started = time.monotonic()
+        try:
+            require(callable(getattr(self._tools, 'fetch_objective_claims', None)),
+                    'Exact objective evidence adapter missing')
+            value = self._validate_evidence(
+                deepcopy(self._tools.fetch_objective_claims(missing)), 'public_product_facts')
+            state['evidence'].append(value)
+            state['research_gaps'] = self._objective_gaps(state)
+            require(not missing_objective_claim_ids(state), 'Required objective claims remain missing')
+            self._event(state, 'fetch_required_objective_claims', 'completed', started,
+                        origin='harness_required', claim_ids=missing)
+        except Exception:
+            state['status'] = 'failed'
+            state['draft_failure'] = {'stage':'evidence_eligibility',
+                'code':'required_objective_evidence_unavailable', 'field_path':'evidence',
+                'rule':'exact_claim_fetch_failed'}
+            self._event(state, 'fetch_required_objective_claims', 'failed_safely', started,
+                        origin='harness_required')
+        return state
 
 
     def _writer_failure_retryable(self,state):
