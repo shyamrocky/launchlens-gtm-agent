@@ -1,3 +1,52 @@
+## Revision checkpoint sync — November 10, 2026
+
+**Authority:** owner explicitly requested “git sync” after diagnosis of three
+remaining live-E2E issues. Publish completed M2-D052/D053 implementation, normal
+project-location tests, the minimal synthetic fixture, and storage/continuity policy
+to the existing private repository. This authorizes this scoped publication only;
+no implementation of the three diagnosed fixes, inference, content acceptance,
+source/index changes, run/approval/budget edits or new milestone is implied.
+
+**Included:** shared explicit avoid-list/current flags; per-occurrence unresolved
+tracking independent of Reviewer omissions; source-bound field-edit Writer
+protocol and versioned prompt; exact suggestions with validation/fresh review;
+notes limited to targeted fields; valid no-ops excluded from revision allowance
+with all actual spending retained; matching offline mocks/regressions; canonical
+policy requiring synthetic fixtures and workspace continuity-only notes.
+The 196-byte fixture contains independently authored no-op/partial examples,
+not saved response excerpts or protected run data.
+
+**Known limits:** the current suggestion click submits immediately rather than
+waiting for Create next version; automatic citation retry is skipped by resume /
+continue paths; another-market Prepare ignores receipt-based approval. All three
+are confirmed, remain implemented as diagnosed, and await separate fix approval.
+[Diagnosis summary](writer-run-experience-review.md#known-e2e-issues-pending-approval).
+Owner-reported US/UK/India live E2E is recorded as reported; no live retest is part
+of this sync. App was already restarted after implementation; no restart needed
+for publication. Historical restart-pending/no-Git labels retain their dated scope.
+
+**Verification:**677 fresh offline tests PASS in the clean canonical copy
+(450 harness +113 UI +114 root), using existing interpreters without installation.
+Root page/chunk JSONL prerequisites were regenerated only inside that temporary
+copy from unchanged canonical inputs. No saved/private runs, credentials or workspace
+were copied. Python/JSON syntax (165 files), new documentation links, credential
+value/pattern scans and publication-path exclusions PASS. Three pre-existing
+historical documentation links refer to ignored local derived artifacts and remain
+local reproduction links; no protected outputs are added to make them public.
+All2,044 protected originals were hash-identical before staging: source data,
+configuration, prompts, runs/receipts, approvals, accounting, credentials and MEMORY.
+Remote isPrivate=true and starting remote main equals local ccacf48.
+Exact reviewed publication scope:32 files. No source/service/model calls, restart,
+run mutation, budget change or implementation of the three pending fixes.
+
+**Excluded/preserved:** workspace (including MEMORY), all generated/private runs,
+response captures, checkpoints, authorizations, approvals, budget ledgers,
+credentials, local environments, and all unchanged source/corpus files. Remote
+privacy and starting local/remote main equality are verified before publication;
+staged paths/content are reviewed before commit and normal fast-forward push.
+
+---
+
 # Repository synchronization — 2026-11-09
 
 Owner instruction: “lets do a git sync u have any concerns ?”

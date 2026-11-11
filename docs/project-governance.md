@@ -1,6 +1,7 @@
 # Canonical files and workspace boundary
 
-Authority: explicit owner instruction, 2026-11-04 (America/Los_Angeles).
+Authority: explicit owner instruction, 2026-11-04; fixture/workspace refinement,
+2026-11-10 (America/Los_Angeles).
 This is the canonical policy for file placement and the development-workspace
 boundary. AGENTS.md links here rather than maintaining another policy copy.
 
@@ -10,8 +11,10 @@ boundary. AGENTS.md links here rather than maintaining another policy copy.
   and operating instructions.
 - src/, tools/, tests/, or existing equivalents: maintained implementation,
   reusable scripts and tests. Do not add directories or abstractions until needed.
-- workspace/: explicitly temporary drafts, private investigations, scratch outputs
-  and development checkpoints. It is Git-ignored and nonauthoritative.
+- workspace/: continuity notes only, including BUILD_CONTEXT.md,
+  IMPLEMENTATION_PROGRESS.md and MEMORY.md. It is Git-ignored and nonauthoritative.
+  Keep maintained code, tests and test resources in their normal project locations;
+  use the operating-system temporary directory for disposable test copies.
 
 Never use workspace/ as the sole authoritative location for a project deliverable
 or maintained implementation.
@@ -32,6 +35,11 @@ version. Do not treat approval of a draft as permission for an unrelated milesto
 The application, build, tests, deployment and required safety checks must not
 depend on files inside workspace/. Temporary experiments there must not become
 required components. Missing development notes must not prevent setup or testing.
+
+Regression fixtures must be minimal, independently authored synthetic examples of
+the failure shape. Do not copy saved Writer responses, run checkpoints, receipts
+or other protected execution artifacts into version-controlled test fixtures.
+Tests must not require those private artifacts.
 
 Keep private source material and execution records protected. Required private
 runtime artifacts need an explicit storage and provisioning contract outside

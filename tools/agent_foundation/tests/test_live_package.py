@@ -48,7 +48,7 @@ class Wire:
             self.calls.append(deepcopy(payload))
             if self.override is not None:return self.override(payload)
             stage=next(k for k in ['package_controller','package_writer','package_reviewer','package_revision']
-                if payload['messages'][0]['content']==load_package_prompt(k))
+                if payload['messages'][0]['content']==load_package_prompt(k) or (k=='package_revision' and 'field Revision Writer' in payload['messages'][0]['content']))
             data=package_cases()
             if stage=='package_controller':
                 actions=self.actions or [action('read_pmm_brief','pmm'),action('check_launch','launch'),
@@ -61,7 +61,11 @@ class Wire:
             else:
                 inputs=json.loads(payload['messages'][1]['content'])
                 if stage=='package_writer':candidate=data['initial_package']
-                elif stage=='package_revision':candidate=data['revision_package']
+                elif stage=='package_revision':
+                    candidate=data['revision_package']
+                    if inputs.get('revision_protocol'):
+                        from launchlens.offline_fixtures import fixture_revision_edits
+                        candidate=fixture_revision_edits(inputs)
                 else:
                     from launchlens.offline_fixtures import fixture_package_review
                     candidate=fixture_package_review(data['initial_review' if inputs['binding']['draft_version']==1 else 'revision_review'],inputs['package'])

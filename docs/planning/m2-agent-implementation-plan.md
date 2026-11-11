@@ -1,3 +1,45 @@
+## Scoped engineering publication checkpoint — November 10, 2026
+
+Owner authorized Git sync of completed M2-D052/D053 and the synthetic-fixture /
+workspace policy correction. Publication preserves the current implementation;
+it does not authorize the three newly diagnosed fixes. Owner reports live E2E
+passed across US/UK/India; no assistant rerun or new inference during sync.
+[Known suggestion, continuation-retry and cross-market approval defects](writer-run-experience-review.md#known-e2e-issues-pending-approval)
+remain pending separate implementation approval. Original saved runs, approvals,
+budgets, sources and private history remain local and unchanged. Earlier status
+and restart-pending entries below are historical.
+
+## Current checkpoint — M2-D053, November 10, 2026
+
+Fixture follow-up: independently authored minimal synthetic cases replace copied
+response excerpts. Code/tests stay in normal project directories; workspace is
+continuity-only.450 harness +113 UI checks PASS without protected runtime inputs.
+[Storage policy](../project-governance.md#reproducibility-and-private-runtime-artifacts).
+
+Owner-approved field-scoped revision fix implemented, including exact suggestions
+without Writer calls, notes restricted to selected fields, and audited no-ops
+excluded from the three-revision allowance while actual spending is retained.
+The same full validation and fresh Reviewer apply to changed packages; no extra
+pipeline, automatic retry or model/provider change.450 harness +113 UI +114 root
+checks PASS offline. Current UK V3/2of3/unapproved and all original protected records
+remain unchanged; no retroactive refunds or inference. App restart pending at8520.
+Stop for owner review/retest; no Git sync or next milestone inferred.
+[Decision, behavior, verification and limits](writer-run-experience-review.md#m2-d053--targeted-field-edits-exact-suggestions-and-no-op-accounting).
+Earlier checkpoints below retain their historical scope.
+
+## Current checkpoint — M2-D052, November 10, 2026
+
+Owner-approved bounded revision convergence implemented; owner review pending.
+Both revision origins receive full avoid-list/current flagged locations. Requested
+phrase occurrences are compared with returned text; unchanged requests remain
+unresolved independently of fresh Reviewer omissions. The existing fresh review,
+market gates, cap and approval controls remain. 443 harness + 111 UI + 114 root
+checks PASS offline; sanitized V3/V4 regressions and saved-V4 read-only verification.
+Current UK V4/3-of-3/unapproved and all protected records remain unchanged. No live
+call, retry, service restart, MEMORY append or Git sync. Stop for owner review.
+[Decision, implementation, verification and limits](writer-run-experience-review.md#m2-d052--market-independent-revision-convergence-november-10-2026).
+Earlier checkpoints below are history.
+
 ## Owner-authorized archive and demo reset sync — November 10, 2026
 
 Owner requested Git sync of completed M2-D049: Archive & start fresh, read-only

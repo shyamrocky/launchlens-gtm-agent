@@ -67,7 +67,7 @@ class PackageTests(unittest.TestCase):
         self.assertEqual(len(after['draft_history']),2);self.assertEqual(len(after['reviews']),2)
         self.assertEqual(after['review']['review_status'],'human_clearance_required')
         self.assertTrue(all(r['version']==2 for r in after['drafts'].values()))
-        self.assertNotEqual(s['package']['creative_anchor_sha256'],after['package']['creative_anchor_sha256'])
+        self.assertEqual(s['package']['creative_anchor_sha256'],after['package']['creative_anchor_sha256'])
         self.assertTrue(all(r['binding']==after['review']['binding'] for r in after['review']['format_reviews'].values()))
         self.assertFalse(after['human_accepted']);self.assertFalse(after['package']['publishing_allowed'])
         session.request_revision(after['run_id'],'Again',draft_version=2,draft_sha256=after['package']['package_sha256'])
@@ -252,7 +252,8 @@ class PackageTests(unittest.TestCase):
         after=session.run(s['run_id'])
         self.assertEqual(after['status'],'failed');self.assertEqual(after['drafts'],s['drafts'])
         self.assertEqual(after['package'],s['package']);self.assertEqual(after['revision_attempts'],1)
-        self.assertEqual(after['review_failure']['format'],'blog');self.assertEqual(reviser.calls[0]['candidate'],bad)
+        self.assertEqual(reviser.calls[0]['raw_candidate'],bad)
+        self.assertNotIn('candidate',reviser.calls[0])
 
     def test_required_review_has_separate_cap_when_task_pool_is_exhausted(self):
         session,s=self.run_case(limit=5)

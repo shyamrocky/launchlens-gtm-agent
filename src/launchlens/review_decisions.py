@@ -92,6 +92,15 @@ def grouped_findings(state):
         for match in re.finditer(re.escape(quote),target):
             inner=re.search(re.escape(term),match.group(),re.I)
             if inner:put(name,path,match.start()+inner.start(),match.start()+inner.end(),f['dimension'],[f],f.get('human_clearance_required',False))
+    # This is a deterministic unresolved request, not a fabricated AI finding.
+    from launchlens.package_content import current_revision_resolution
+    for request in current_revision_resolution(state).get('requests',[]):
+        if request['status']!='unresolved':continue
+        row={'severity':'blocking','dimension':'revision_request','origin':'revision_request',
+             'rationale':'Requested rephrase remains unchanged in this field; the Writer did not resolve this occurrence.',
+             'suggested_change':None}
+        put(request['format'],request['content_field'],request['current_start'],request['current_end'],
+            'revision_request',[row])
     combined={}
     for o in occurrences.values():
         cats=o['categories'];o['severity']='blocking' if any(f.get('severity')=='blocking' for f in o['findings']) else 'advisory' if any(f.get('severity')=='advisory' for f in o['findings']) else 'cleared' if o['findings'] and all(f.get('severity')=='cleared' for f in o['findings']) else 'unassessed'

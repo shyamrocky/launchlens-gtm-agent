@@ -197,7 +197,7 @@ class ContentCall:
     def __call__(self, state):
         package_stage = self._stage.startswith('package_')
         maximum = __import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['review_attempts'] if self._stage == 'package_reviewer' else __import__('launchlens.package_content',fromlist=['configuration']).configuration()['limits']['revision_attempts'] if self._stage=='package_revision' else 2 if self._stage in {'linkedin_reviewer','package_writer'} else 1
-        check(maximum is None or len(self.calls) < maximum, 'attempt_limit')
+        check(maximum is None or sum(c.get('outcome')!='no_op' for c in self.calls) < maximum, 'attempt_limit')
         if package_stage:
             from launchlens.package_content import prepare_call, load_package_prompt
             inputs = prepare_call(state, self._stage, projector=self._projector)
@@ -206,10 +206,13 @@ class ContentCall:
                       prepare_revision(state, projector=self._projector))
         retry = self._stage == 'package_writer' and state.get('writer_retry') is True and len(self.calls)==1
         if self._stage == 'package_writer' and self.calls:check(retry,'attempt_limit','binding')
-        check(retry or not any(c['binding'] == inputs['binding'] for c in self.calls), 'attempt_limit', 'binding')
+        check(retry or not any(c['binding'] == inputs['binding'] and (not inputs.get('revision_command_id') or c.get('revision_command_id')==inputs['revision_command_id']) for c in self.calls), 'attempt_limit', 'binding')
         policy_id = state.get('voice_policy_id')
         instructions = (load_package_prompt(self._stage,inputs['writer_brief']['package_contract']['sha256']) if package_stage else
             voice_prompt(self._stage, policy_id) if policy_id is not None else load_review_prompt(self._stage))
+        if inputs.get('revision_protocol'):
+            from launchlens.field_revisions import prompt
+            instructions=prompt()
         model_inputs = deepcopy(inputs)
         if retry:
             model_inputs['previous_validation_diagnostic_data_only'] = deepcopy(state['draft_failure'])
@@ -223,6 +226,7 @@ class ContentCall:
         check(len(dumps(payload).encode()) <= MAX_REQUEST_BYTES, 'request_too_large')
         event = {'binding':deepcopy(inputs['binding']), 'input_sha256':digest(inputs),
                  'request_sha256':digest(payload), 'input':deepcopy(inputs), 'outcome':'attempted'}
+        if inputs.get('revision_command_id'):event['revision_command_id']=inputs['revision_command_id']
         if package_stage:
             event.update(model_input=deepcopy(model_inputs), model_input_sha256=digest(model_inputs))
         self.calls.append(event); started = time.monotonic()
@@ -241,7 +245,10 @@ class ContentCall:
             except Exception:
                 raise ReviewError('invalid_json') from None
             event['raw_candidate'] = deepcopy(candidate)
-            if self._stage in {'package_writer','package_revision'}:
+            if inputs.get('revision_protocol'):
+                from launchlens.field_revisions import merge
+                candidate=merge(state,inputs,candidate);event['normalizations']=[]
+            elif self._stage in {'package_writer','package_revision'}:
                 from launchlens.package_content import normalize_package
                 candidate,journal=normalize_package(candidate);event['normalizations']=journal
             event['candidate'] = deepcopy(candidate); event['outcome'] = 'returned_for_validation'

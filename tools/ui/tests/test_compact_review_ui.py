@@ -43,7 +43,7 @@ class CompactReviewTests(unittest.TestCase):
  def test_current_v2_choices_can_create_v3_and_then_show_new_current_review(self):
   from ui_review_helpers import finish_stack
   a=self.app('review_v2');run=a.session_state['offline_run'];before=run.snapshot()
-  finish_stack(a);self.assertEqual(a.button(key='create-next-version').label,'Create Version 3')
+  finish_stack(a,request_changes=True);self.assertEqual(a.button(key='create-next-version').label,'Create Version 3')
   self.assertFalse(a.button(key='create-next-version').disabled)
   a.text_area[0].input('Preserve facts, apply my wording choices.')
   a.button(key='create-next-version').click().run();self.assertFalse(a.exception)

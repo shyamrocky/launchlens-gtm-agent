@@ -1,3 +1,188 @@
+## Known E2E issues pending approval
+
+November 10, 2026: owner reports final live E2E passed for US, UK and India.
+The assistant did not repeat those live runs. Read-only saved-file/code diagnosis
+confirmed three remaining defects; their fixes require separate owner approval:
+
+- **Suggestion submission:** Use suggestion currently queues an immediate exact
+  revision and fresh review, consuming a revision when text changes. Expected:
+  record the choice and apply it only on Create next version. This behavior is
+  preserved in this sync; the earlier implementation's immediate-submit
+  interpretation was incorrect.
+- **Citation retry after clarification:** field_claim_coverage is recognized as
+  citation-only, but automatic retry is attached only to LivePackageRun.execute.
+  resume/continue_run bypass that wrapper, so a rejected post-clarification Writer
+  response can stop after one call although manual Try again is eligible.
+- **Approved run across markets:** Prepare uses raw status/human_accepted flags;
+  actual approval is a matching protected receipt/UI state and does not set those
+  flags. The earlier test fabricated approved flags rather than clicking real
+  approval, so it missed the receipt-based case.
+
+No fix, new inference, run change, content approval, budget adjustment or retry is
+included in publication of this diagnosis. Future regressions must use minimal
+synthetic inputs, with real approval flow and continuation entry points exercised
+offline; protected responses/runs remain local. Earlier pending-restart and saved
+run status notes below describe their original checkpoints.
+
+---
+
+## Fixture storage follow-up — November 10, 2026
+
+Owner clarified that code/tests belong in normal version-controlled project
+locations, workspace is continuity-only, and regression fixtures must be minimal
+synthetic failure shapes rather than copied Writer responses or protected runs.
+The revision test fixture now has two short independently authored strings
+(196bytes): an unchanged field and a partially edited field with a repeated phrase.
+Removed copied response excerpts and unused section text; assertions derive offsets
+from synthetic input. Application code and saved artifacts are unchanged.
+
+Verification:450 harness +113 UI tests PASS in an isolated copy without credentials,
+saved responses, private receipts or protected run files. Existing
+maintained fixtures and version-controlled source inputs remain available. No new
+application test claim, live call, runtime change, restart or Git sync. The earlier
+M2-D053 root results below remain historical; this follow-up changes test data,
+assertions, policy and continuity notes only.
+[Canonical storage policy](../project-governance.md#reproducibility-and-private-runtime-artifacts).
+
+---
+
+## M2-D053 — Targeted field edits, exact suggestions and no-op accounting
+
+**Date/authority:** November 10, 2026. Owner approved the bounded field-edit fix
+with three explicit changes: Use suggestion applies its exact replacement in
+code without a Writer call; notes guide targeted fields only and cannot expand
+scope; a no-op response does not use the three-revision allowance, while actual
+model spending remains spent. **Status:** implemented offline; owner review and
+app restart pending. No live execution or Git publication authorized here.
+
+**Decision and rationale:** retain the existing harness and independent fresh
+Reviewer, but replace whole-package revision output with source-bound field edits.
+The saved UK V1/V2/V3 were identical across all46 text fields despite44 requested
+occurrences; field edits reduce copying pressure and make scope enforceable.
+Alternatives rejected: another prompt-only whole-package rewrite, unbounded retry,
+notes selecting arbitrary fields, and refunding actual model usage. This supersedes
+the earlier Writer-mediated-suggestion and no-op-cap proposals, not their history.
+
+**Input/output boundary.** New versioned `targeted_fields_v1` permission and hashed
+`package_field_revision_v1.txt` prompt operate in the existing revision node and
+ContentCall adapter. Each targeted field appears once, with its exact hash,
+requested occurrences, keep spans and approved replacements. The Writer receives
+original eligible evidence/qualifications/launch constraints, relevant format tone,
+the complete avoid-list and current flagged locations. Duplicate whole-package
+schemas, review transcripts and the rest of the package are excluded. Notes are
+guidance only. Every returned field ID/hash, source package hash, text value and
+citation list is checked; missing/unknown edits, invalid citations and attempts to
+undo keeps or exact replacements are rejected before admission. The full merged
+package is then validated against original evidence and structural policy and
+fresh-reviewed. The AI assessment and deterministic request outcomes stay separate.
+
+**Exact suggestions.** Clicking Use suggestion queues a literal span replacement,
+validation and fresh Reviewer only. Offsets are checked against the bound source;
+repeated replacements apply in reverse order. Mixed exact/rephrase requests shift
+remaining request/keep coordinates to the text actually supplied to the Writer.
+An exact change has explicit deterministic provenance and no fabricated Writer
+receipt. A successful exact replacement creates a revised version and uses one
+revision under the existing limit. Notes-only/all-kept UI submissions cannot start
+a rewrite; direct API guidance is bounded to current flagged locations. Unlocated
+automatic findings hand off for exact field selection rather than expanding scope.
+
+**No-op/accounting.** A valid response with no text changes preserves the current
+package, version, history and existing matching review. It clears the command and
+returns to human review; it does not consume a revision or automatically call again.
+A later explicit command has a new identity, so replay protection does not block
+an intentional request after a no-op. Every actual Writer call/usage/cost remains
+in captures and the spending ledger. Only a provably uncalled Reviewer reservation
+is settled at zero; actual spending is never refunded. Budget/raw-call counters
+and consumed revisions are separate and survive restore, including more than
+three raw calls when the excess are audited no-ops. Other failure handling retains
+its existing conservative behavior. The one automatic pass is still single-use.
+
+**Historical/current-state preservation.** Original prompts, configuration,
+profiles, source data, authorization receipts, decisions, approvals and accounting
+are unchanged. Old packages remain valid through original contracts; new package
+metadata records the actual revision protocol/method/prompt identity. No prior
+attempt is retroactively refunded. Current saved UK Version3 remains unapproved,
+2of3 used; no remaining revision, suggestion, review or model call was executed.
+
+**Verification:**450 harness +113 UI +114 root tests PASS offline in an isolated
+copy, using existing interpreters with no install/dependency change. New and updated
+regressions cover saved V3/V4 shapes and partial survivors, both origins/US/UK,
+market-independent helpers, exact suggestions with zero Writer/one fresh Reviewer,
+notes-only rejection and attempted scope expansion, shifted offsets after exact
+edits, stale/unknown/missing fields and citations, keep/suggestion preservation,
+four paid no-ops with zero consumed revisions and checkpoint restore, review-only
+reservations and known-unused-review settlement, current/source contract integrity,
+and the existing approval/limit/recovery controls. Mock transports speak the new
+field contract and remain explicitly authored fixtures, not semantic evaluation.
+Independent schema checks pass. Offline preview of the saved UK request groups
+44 targets into14 fields; its compact model-facing user payload is about55KB versus
+92KB previously (not a live token/cost or quality result). No API calls, automatic
+retries, source/index writes, app restart, MEMORY append or Git sync.
+
+**Restart/next boundary:** restart the existing localhost:8520 Streamlit app to load
+this code. Restart is not execution permission. Owner then reviews/retests; live
+field-rewrite compliance and semantic quality remain unverified by offline tests.
+
+---
+
+## M2-D052 — Market-independent revision convergence, November 10, 2026
+
+**Decision:** give every package revision the same explicit avoidance guidance and
+current flagged field locations; compare requested phrase occurrences after the
+Writer returns, then retain the existing fresh independent Reviewer pass.
+**Authority/status:** owner approved this bounded implementation on November 10,
+2026; implemented offline, owner review pending. No new inference, retry, cap,
+market eligibility, pipeline, approval or publication authority.
+**Rationale:** saved UK V3/V4 received the right field and human requests but
+returned surviving wording. Human revisions lacked the automatic pass's explicit
+scanner patterns. Fresh Reviewer omissions made surviving issues disappear.
+**Alternatives:** relying on fresh review alone loses prior requests; replacing
+text deterministically would author copy; additional Writer loops consume calls.
+Neither alternative was adopted.
+
+`prepare_call` now provides `full_avoid_list`, `current_flagged_locations`, exact
+`requested_phrase_changes` and a single-response self-check to either origin.
+The existing evidence projection, original validation, prompt/model bindings and
+fresh Reviewer input scope remain. The flags include current scan occurrences
+(with disposition) and semantic findings, including unresolved earlier requests.
+
+The existing revision handler compares source-verified field/phrase spans with
+the admitted response and records `revision-resolution-vN` in the existing ledger,
+bound to its exact package hash. Repeated occurrences are aligned through field
+edits, including shifted offsets, capitalization and partial removal. Results are
+**Unresolved** or **Wording changed; meaning requires review**, never automatic
+claims of a successful semantic fix. Freeform notes still reach the Writer but
+are not claimed as mechanically verified phrase requests.
+
+Unresolved occurrences become clearly attributed request findings in the human
+review UI even when the fresh Reviewer clears or omits them. The original AI
+assessment is unchanged. The summary and detailed results remain visible if the
+fresh review is not ready. Human keep/accept-as-is, evidence/launch controls and
+revision cap remain. No automatic retry or additional model pass was added.
+
+**Verification:** 443 harness + 111 UI + 114 root tests PASS in an isolated copy,
+using the existing UI interpreter for harness/schema checks (the foundation
+interpreter lacks jsonschema). No install or dependency/lock change. Six new tests
+include sanitized saved V3/V4 blog shapes, ignored rephrases, partially removed
+repeats, path/case/offset mapping, a Reviewer omitting a surviving phrase, complete
+and pending-review UI, and historical-report absence. Both origins are exercised
+end to end in US/UK; pure phrase tracking is identical for US/UK/IN. Existing India
+drafting eligibility remains gated; no India end-to-end generation is claimed.
+Focused checks were rerun after final presentation/test refinements. Saved UK V4
+passed authoritative binding and read-only AppTest with zero socket connections.
+
+The current UK V4 and its protected artifacts are unchanged; historical runs are
+not retrofitted with a new ledger report. It remains unapproved with 3/3 revisions
+used. Existing human editing/rescan and explicit as-is approval remain available;
+no V5 Writer call is unlocked. Corrected model-authored prose would require a new,
+separately authorized Writer call. New checks expose surviving requests for future
+revisions; offline wiring does not establish live semantic convergence.
+
+No service restart, live model/service call, Git sync or MEMORY append. Stop for
+owner review. Earlier results below retain their historical scope.
+
+---
+
 ## M2-D048 — Required-only review and protected-scan refinement
 
 Owner direction, November10,2026: required decisions only in the card stack;

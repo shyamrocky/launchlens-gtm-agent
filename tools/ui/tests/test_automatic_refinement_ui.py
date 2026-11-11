@@ -13,7 +13,7 @@ class AutoRefineUITests(unittest.TestCase):
   s={'revision_attempts':1,'package':{'version':2},'status':'awaiting_human_review','reviews':[],
    'events':[{'action':'automatic_refinement','outcome':'completed','origin':'agent','fixed_count':2,
      'attempted_count':3,'why':'Fresh review checked the changes.'}]}
-  self.assertEqual(activity_phases(s)[0]['steps'][0]['title'],'Agent fixed 2 blocking issues')
+  self.assertEqual(activity_phases(s)[0]['steps'][0]['title'],'Agent changed 2 flagged phrases')
   s['events'][0]['fixed_count']=0
   self.assertEqual(activity_phases(s)[0]['steps'][0]['title'],'Agent refinement checked')
 if __name__=='__main__':unittest.main()

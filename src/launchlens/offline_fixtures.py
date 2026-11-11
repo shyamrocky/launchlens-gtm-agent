@@ -248,10 +248,11 @@ class PackageFixtureTransport:
             candidate = data['initial_package']
         elif self.stage == 'package_revision':
             candidate = data['revision_package']
+            if inputs.get('revision_protocol'):candidate=fixture_revision_edits(inputs)
         else:
             name = 'initial' if inputs['binding']['draft_version'] == 1 else 'revision'
-            if digest(inputs['package']) != digest(data[name+'_package']):
-                raise ValueError('No mock review for this exact package')
+            # Authored findings are filtered to exact current quotes below; field
+            # edits can preserve untargeted initial fields in a revised package.
             candidate = fixture_package_review(data[name+'_review'],inputs['package'])
         return {'model':payload['model'],'choices':[{'finish_reason':'stop',
             'message':{'role':'assistant','content':json.dumps(candidate,ensure_ascii=False)}}]}
@@ -273,6 +274,35 @@ def fixture_package_review(legacy, package):
         else:findings.append({'dimension':'grounding','content_field':hit['content_field'],
             'quote':hit['quote'],'severity':'cleared','rationale':'Authored safe fixture disposition; not semantic verification.',
             'suggested_change':'No mock correction.','claim_ids':[],'scan_hit_ids':[hit['hit_id']]})
-    for group in result.values():
+    from launchlens.package_content import text_fields
+    for name,group in result.items():
+        fields=dict(text_fields(package[name]['content']))
+        group['findings']=[f for f in group['findings'] if f.get('quote') is None or f['quote'] in fields.get(f['content_field'],'')]
         for f in group['findings']:f.setdefault('scan_hit_ids',[])
     return result
+
+def fixture_edits(model_input, package):
+    """Authored offline transport adapter, never called by production parsing."""
+    from launchlens.package_content import text_fields
+    edits = {}
+    for identity,field in model_input['targeted_fields'].items():
+        text = dict(text_fields(package[field['format']]['content'])).get(field['content_field'],field['text'])
+        ids = next((r['claim_ids'] for r in package[field['format']]['claim_references'] if r['content_field']==field['content_field']),[])
+        edits[identity] = dict(source_sha256=field['source_sha256'],text=text,claim_ids=ids)
+    return dict(source_package_sha256=model_input['binding']['draft_sha256'],edits=edits)
+
+
+def fixture_revision_edits(inputs):
+    """Authored field-only MOCK corrections for lifecycle tests, not semantics."""
+    from launchlens.field_revisions import set_text
+    package=package_cases()['initial_package']
+    for field in inputs['targeted_fields'].values():
+        text=field['text']
+        for target in sorted(field['requests'],key=lambda r:len(r['quote']),reverse=True):
+            if any(k['quote'] in target['quote'] or target['quote'] in k['quote'] for k in field['kept_occurrences']):continue
+            text=text.replace(target['quote'],'the flavor story')
+        # Deliberately retain a recurring scan target so mocked multi-version
+        # lifecycle/cap tests exercise genuine edits rather than static no-ops.
+        if field['content_field'].endswith('body'):text+=' It offers a flavor story.'
+        set_text(package,field['format'],field['content_field'],text)
+    return fixture_edits(inputs,package)

@@ -1,7 +1,7 @@
 """Interactions for the single-card UI, using only authored offline/mock runs."""
-def finish_stack(app):
+def finish_stack(app,request_changes=False):
     for _ in range(40):
-        buttons=[b for b in app.button if (b.key or '').startswith('keep-phrase-')]
+        buttons=[b for b in app.button if (b.key or '').startswith('changes-' if request_changes else 'keep-phrase-')]
         if not buttons:break
         buttons[0].click().run()
         assert not app.exception

@@ -1,3 +1,19 @@
+## Owner-authorized revision checkpoint sync — November 10, 2026
+
+Owner requested Git sync of completed M2-D052/D053: shared revision avoidance and
+request tracking, targeted field edits, deterministic suggestions, notes confined
+to targets, and no-op accounting that retains actual spending. Regression fixtures
+are minimal independently authored synthetic cases; workspace is continuity-only.
+Owner reports final live E2E passed for US/UK/India; three remaining defects are
+[documented and await separate fix approval](docs/planning/writer-run-experience-review.md#known-e2e-issues-pending-approval):
+immediate suggestion submission, citation retry bypass after clarification, and
+receipt-based approval ignored by another-market Prepare. This sync preserves the
+current code and does not implement those fixes or execute a run. Fresh clean-copy
+verification:450 harness +113 UI +114 root=677 offline tests PASS. Protected run
+artifacts, receipts, approvals, sources, budgets, credentials and workspace stay
+local. [Publication scope and verification](docs/planning/repository-sync-2026-11-09.md#revision-checkpoint-sync--november-10-2026).
+Earlier checkpoint labels below retain their historical scope.
+
 ## Owner-authorized archive and demo reset sync — November 10, 2026
 
 Owner requested Git sync of completed M2-D049: Archive & start fresh, read-only

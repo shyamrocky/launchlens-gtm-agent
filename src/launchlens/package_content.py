@@ -139,7 +139,7 @@ def resolve_field(content, path):
     return fields[path]
 
 
-def admit_package(value, inputs, *, version=1):
+def admit_package(value, inputs, *, version=1, revision_execution=None):
     if type(value) is not dict or set(value) != set(FORMATS):
         raise PackageError()
     records = evidence_records(inputs); drafts = {}
@@ -189,6 +189,13 @@ def admit_package(value, inputs, *, version=1):
         'creative_anchor_sha256':anchor,'human_accepted':False,'publishing_allowed':False}
     if inputs.get('tone_policy'):
         metadata['tone_policy_sha256']=configuration(inputs['package_contract']['sha256'])['tone_policy_sha256']
+    if revision_execution is not None:
+        from launchlens.field_revisions import PROTOCOL,PROMPT_SHA
+        check(revision_execution in (
+            {'protocol':PROTOCOL,'method':'field_writer','prompt_sha256':PROMPT_SHA},
+            {'protocol':PROTOCOL,'method':'exact_replacement','prompt_sha256':None}), 'stale_binding')
+        metadata['revision_execution']=deepcopy(revision_execution)
+        for record in drafts.values():record['writer_prompt_sha256']=revision_execution['prompt_sha256']
     return drafts, metadata
 
 
@@ -201,7 +208,7 @@ def authoritative_package_binding(state):
     check(type(metadata) is dict and set(state['drafts']) == set(FORMATS), 'stale_binding', 'binding')
     version = metadata.get('version')
     check(type(version) is int and version >= 1, 'stale_binding', 'binding')
-    expected, expected_meta = admit_package(package_value(state), inputs, version=version)
+    expected, expected_meta = admit_package(package_value(state), inputs, version=version, revision_execution=metadata.get('revision_execution'))
     check(metadata == expected_meta, 'stale_binding', 'binding')
     for name in FORMATS:
         actual = deepcopy(state['drafts'][name]); actual['review_status'] = 'unreviewed'
@@ -263,6 +270,10 @@ def prepare_call(state, stage, *, projector=None):
               'permission_denied', 'binding')
         check(type(permission.get('feedback')) is str and 0 < len(permission['feedback'].strip()) <= MAX_PACKAGE_FEEDBACK,
               'permission_denied')
+        result['full_avoid_list']=refinement_avoid_list(inputs)
+        result['current_flagged_locations']=revision_flagged_locations(state)
+        result['requested_phrase_changes']=revision_phrase_targets(state)
+        result['revision_self_check']='For either revision origin, check all returned copy against full_avoid_list. Apply requested_phrase_changes at their exact fields; inspect for new risky phrases before returning once. Kept wording remains a human preference subject to evidence and launch restrictions.'
         if permission.get('origin')=='agent':
             marker=state['ledger'].get('harness-auto-refinement',{})
             targets=refinement_targets(state)
@@ -279,6 +290,10 @@ def prepare_call(state, stage, *, projector=None):
             result['protected_phrase_rule']='Rewrite if needed; never grant keep clearance. Remaining protected phrases require a human.'
         result.update(review=({name:{**deepcopy(item),'findings':[f for f in deepcopy(item['findings']) if f.get('severity')=='blocking' and f.get('origin')!='deterministic_scan']} for name,item in review['assessment'].items()} if permission.get('origin')=='agent' else deepcopy(review['assessment'])),owner_feedback_data_only=permission['feedback'],
                       writing_instructions=load_package_prompt('package_writer',inputs['package_contract']['sha256']))
+        if permission.get('field_plan'):
+            from launchlens.field_revisions import prepare,plan
+            check(permission['field_plan']==plan(state,permission),'permission_denied','binding')
+            return prepare(state,inputs,binding,projector)
     return result
 
 
@@ -621,7 +636,9 @@ def refinement_targets(state):
 
 
 def refinement_avoid_list(inputs):
-    policy=inputs['tone_policy']
+    policy=inputs.get('tone_policy')
+    if policy is None:
+        return {'scan_patterns':risk_patterns(),'no_links':True}
     return {'per_format':{f:deepcopy(policy['format_specs'][f]['avoid']) for f in FORMATS},
             'all_formats_never':deepcopy(policy['all_formats']['never']),
             'no_links':policy['all_formats']['no_links'],
@@ -637,3 +654,89 @@ def new_protected_hits(before,after):
         if remaining[identity]:remaining[identity]-=1
         else:new.append(deepcopy(hit))
     return new
+
+
+def revision_flagged_locations(state):
+    """Current scan and semantic findings, including unresolved prior requests."""
+    from launchlens.review_decisions import grouped_findings
+    return [dict(format=o['format'],content_field=o['content_field'],quote=o['quote'],
+                 start=o['start'],end=o['end'],severity=o['severity'],
+                 human_clearance_required=o['human_clearance_required'],needs_attention=o['needs_attention'])
+            for g in grouped_findings(state) for o in g['occurrences']]
+
+
+def revision_phrase_targets(state):
+    """Resolve generated human feedback or bound agent findings to exact text spans.
+
+    Freeform notes are still delivered, but never claimed as mechanically verified.
+    Only source-verified paths/offsets enter the deterministic comparison.
+    """
+    permission=state.get('revision_request') or {};package=package_value(state);targets=[]
+    def add(name,path,quote,start,end):
+        text=dict(text_fields(package.get(name,{}).get('content',{}))).get(path,'')
+        if (isinstance(start,int) and isinstance(end,int) and 0<=start<end<=len(text)
+                and quote.casefold()==text[start:end].casefold()):
+            row=dict(format=name,content_field=path,quote=text[start:end],start=start,end=end)
+            if row not in targets:targets.append(row)
+    if permission.get('origin')=='agent':
+        for finding in permission.get('blocking_findings',[])+permission.get('protected_scan_hits',[]):
+            name,path,quote=finding['format'],finding['content_field'],finding.get('quote')
+            if not quote:continue
+            text=dict(text_fields(package.get(name,{}).get('content',{}))).get(path,'')
+            for match in re.finditer(re.escape(quote),text):add(name,path,match.group(),match.start(),match.end())
+    else:
+        for line in permission.get('feedback','').splitlines():
+            match=re.fullmatch(r'Change “(.+)” at (.+)',line)
+            if not match:continue
+            quote,locations=match.groups()
+            for location in locations.split(', '):
+                found=re.fullmatch(r'(\w+)\.([\w.]+)\[(\d+):(\d+)\]',location)
+                if found:
+                    name,path,start,end=found.groups();add(name,path,quote,int(start),int(end))
+    return targets
+
+
+def compare_revision_phrases(before,after,targets):
+    """Track each requested occurrence across edits, without judging meaning.
+
+    Align all equal phrases in a field, including unrequested repeats, so deleting
+    one occurrence cannot count as deleting its surviving sibling. Ambiguous
+    surviving matches are conservatively assigned to remaining source occurrences.
+    """
+    from difflib import SequenceMatcher
+    results=[];alignments={}
+    for target in targets:
+        name,path,quote=target['format'],target['content_field'],target['quote']
+        key=(name,path,quote.casefold())
+        old=dict(text_fields(before[name]['content'])).get(path,'')
+        new=dict(text_fields(after[name]['content'])).get(path,'')
+        if key not in alignments:
+            sources=list(re.finditer(re.escape(quote),old,re.I));destinations=list(re.finditer(re.escape(quote),new,re.I))
+            pairs={};used=set()
+            blocks=SequenceMatcher(None,old,new,autojunk=False).get_matching_blocks()
+            for source in sources:
+                for block in blocks:
+                    if block.a<=source.start() and source.end()<=block.a+block.size:
+                        offset=block.b+source.start()-block.a
+                        dest=next((i for i,m in enumerate(destinations) if m.start()==offset),None)
+                        if dest is not None and dest not in used:pairs[source.span()]=dest;used.add(dest)
+                        break
+            remaining=[m for m in sources if m.span() not in pairs]
+            for i,dest in enumerate(destinations):
+                if i in used or not remaining:continue
+                source=min(remaining,key=lambda m:abs(m.start()/max(len(old),1)-dest.start()/max(len(new),1)))
+                pairs[source.span()]=i;remaining.remove(source)
+            alignments[key]=(pairs,destinations)
+        pairs,destinations=alignments[key];index=pairs.get((target['start'],target['end']))
+        row=deepcopy(target);row['status']='unresolved' if index is not None else 'wording_changed'
+        if index is not None:row.update(current_start=destinations[index].start(),current_end=destinations[index].end())
+        results.append(row)
+    return results
+
+
+def current_revision_resolution(state):
+    """Only a report bound to the exact current text may affect its review UI."""
+    package=state.get('package') or {}
+    ledger=state.get('ledger',{})
+    report=ledger.get('last-revision-result') or ledger.get('revision-resolution-v'+str(package.get('version')), {})
+    return report if report.get('draft_sha256')==package.get('package_sha256') else {}

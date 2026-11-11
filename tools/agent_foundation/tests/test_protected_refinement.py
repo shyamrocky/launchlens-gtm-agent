@@ -23,17 +23,18 @@ class ProtectedRefinementTests(unittest.TestCase):
   return r,w,r.execute(r.snapshot()['run_id'])
  def test_protected_scan_hits_trigger_even_if_reviewer_only_advisory_or_cleared(self):
   r,w,s=self.make();self.assertEqual(s['package']['version'],2);self.assertEqual(s['revision_attempts'],1)
-  v=w.revision_inputs[0];self.assertEqual(v['blocking_findings_to_fix'],[])
-  self.assertTrue(v['protected_scan_hits_to_rewrite']);self.assertTrue(all(h['human_clearance_required'] for h in v['protected_scan_hits_to_rewrite']))
+  v=w.revision_inputs[0];self.assertEqual(s['ledger']['harness-auto-refinement']['findings'],[])
+  protected=[h for h in v['current_flagged_locations'] if h['human_clearance_required']]
+  self.assertTrue(protected);self.assertTrue(v['targeted_fields'])
   self.assertFalse(s['human_accepted']);self.assertTrue(s['review']['human_clearance_required'])
   self.assertEqual(r.guard.counts['package_revision'],1)
  def test_full_avoid_list_matches_the_shared_policy_and_scan_exactly(self):
-  r,w,s=self.make();v=w.revision_inputs[0];p=v['writer_brief']['tone_policy'];avoid=v['full_avoid_list']
+  r,w,s=self.make();v=w.revision_inputs[0];p=__import__('launchlens.voice_policy',fromlist=['load_tone_policy']).load_tone_policy();avoid=v['full_avoid_list']
   self.assertEqual(avoid['per_format'],{f:x['avoid'] for f,x in p['format_specs'].items()})
   self.assertEqual(avoid['all_formats_never'],p['all_formats']['never'])
   self.assertEqual(avoid['scan_patterns'],risk_patterns(scan_additions='tone_v2'))
-  self.assertIn('Before returning your single final response',load_package_prompt('package_revision'))
-  self.assertTrue(avoid['no_links']);self.assertLess(len(v['owner_feedback_data_only']),300)
+  self.assertIn('Inspect the complete avoid-list',__import__('launchlens.field_revisions',fromlist=['prompt']).prompt())
+  self.assertTrue(avoid['no_links']);self.assertLess(len(v['owner_notes_data_only']),300)
  def test_post_scan_is_current_version_only_and_does_not_start_another_writer(self):
   r,w,s=self.make();payloads=[json.loads(p['messages'][1]['content']) for p in w.calls if p['messages'][0]['content']==load_package_prompt('package_reviewer')]
   self.assertNotIn('post_refinement_scan',payloads[0]);scan=payloads[-1]['post_refinement_scan']

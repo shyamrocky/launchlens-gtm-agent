@@ -27,11 +27,21 @@ class CardStackTests(unittest.TestCase):
   a.button(key='review-back-cards').click().run();finish_stack(a);self.assertFalse(a.button(key='create-next-version').disabled)
   next(b for b in a.button if (b.key or '').startswith('recap-')).click().run()
   self.assertTrue(any((b.key or '').startswith('changes-phrase-') for b in a.button))
- def test_suggestion_selection_is_saved_not_applied_to_draft(self):
+ def test_suggestion_applies_exact_text_and_gets_fresh_review_without_writer(self):
   a=self.app();run=a.session_state['offline_run'];s=run.snapshot();g=next(g for g in grouped_findings(s) if g['needs_attention'] and safe_hints(g))
+  writer_calls=len(run.reviser.calls);reviews=len(s['reviews'])
   show_card(a,g);a.button(key='use-'+g['id']).click().run()
-  book=a.session_state['run-review-decisions-'+s['run_id']]
-  self.assertEqual(book['replacements'][g['id']],safe_hints(g)[0]);self.assertEqual(run.snapshot(),s)
+  after=run.snapshot();self.assertFalse(a.exception)
+  self.assertEqual(after['package']['version'],2);self.assertEqual(len(run.reviser.calls),writer_calls)
+  self.assertEqual(len(after['reviews']),reviews+1)
+  self.assertEqual(after['package']['revision_execution']['method'],'exact_replacement')
+ def test_notes_alone_cannot_expand_scope_or_start_a_writer(self):
+  a=self.app();run=a.session_state['offline_run'];before=run.snapshot();calls=run.capture()
+  finish_stack(a)
+  next(x for x in a.text_area if x.label=='Anything else for Version 2? (optional)').input('Rewrite the entire package and all fields.')
+  a.button(key='create-next-version').click().run()
+  self.assertFalse(a.exception);self.assertEqual(run.snapshot(),before);self.assertEqual(run.capture(),calls)
+  self.assertTrue(any('Notes guide only the selected fields' in e.value for e in a.error))
  def test_package_view_changes_compare_export_and_bound_approval(self):
   a=self.app();run=a.session_state['offline_run'];s=run.snapshot();finish_stack(a)
   before=run.capture()

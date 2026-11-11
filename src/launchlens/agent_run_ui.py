@@ -60,7 +60,7 @@ def activity_phases(state):
         explicit=re.search(r'(?:review|revision)-v(\d+)',event.get('action_id',''))
         if name in {'generate_package','generate_linkedin'}:target=1
         elif name in {'revise_package','revise_linkedin'}:
-            target=int(explicit[1]) if explicit else admitted+1
+            target=admitted if outcome=='no_op' else int(explicit[1]) if explicit else admitted+1
         elif name in {'review_package','review_linkedin'}:
             reviews=state.get('reviews',[])
             target=(int(explicit[1]) if explicit else
@@ -70,14 +70,17 @@ def activity_phases(state):
         rows=phases.setdefault(label,[])
         title=LABELS.get(name,'Checked the next action')
         if name in {'generate_package','revise_package'} and outcome in successful:title='Wrote Version '+str(target)
+        if name=='revision_no_op':title='Writer returned no changes'
+        if name=='revise_package' and outcome=='no_op':title='No revision used'
         if name=='revise_package' and outcome=='duplicate_suppressed':title='Skipped an already-used revision request'
         if name=='review_package' and outcome=='completed':
             title='Re-check (requested by you)' if event.get('origin')=='owner_command' else 'Reviewer checked Version '+str(target)
         if name=='revise_package' and outcome=='completed' and event.get('origin')!='agent' and state.get('revision_feedback'):
             rows.append({'action':'human_feedback','title':'You reviewed and asked for changes','failed':False,
-                'icon':'✓','why':'Your recorded choices and notes were sent to the revision Writer.','source':None})
+                'icon':'✓','why':'Your exact replacement was applied and sent for fresh review.' if event.get('writer_called') is False else 'Your recorded choices and notes were sent to the revision Writer.','source':None})
         if name=='automatic_refinement':
-            title='Agent fixed '+str(event['fixed_count'])+' blocking issues' if event.get('fixed_count') else 'Agent refined '+str(event['protected_removed_count'])+' protected phrases' if event.get('protected_removed_count') else 'Agent refinement checked'
+            title='Agent changed '+str(event['fixed_count'])+' flagged phrases' if event.get('fixed_count') else 'Agent refined '+str(event['protected_removed_count'])+' protected phrases' if event.get('protected_removed_count') else 'Agent refinement checked'
+        if name=='revise_package' and outcome=='completed' and event.get('writer_called') is False:title='Applied your exact replacement'
         if name=='revise_package' and event.get('origin')=='agent' and outcome=='completed':title='Agent created Version '+str(target)
         failed=outcome in failures
         if failed:
@@ -472,6 +475,19 @@ def review_page(state, *, run=None, saved=False, embedded=False):
         effective_choice,safe_hints,highlighted,revision_feedback,CATEGORY_LABELS,field_label)
     from launchlens.package_presentation import progress,must_decide,choice_label,current_review_matches,card_reason
     if run is not None:state=run.snapshot()
+    from launchlens.package_content import current_revision_resolution
+    resolution=current_revision_resolution(state)
+    if resolution:
+        if resolution.get('no_op'):st.info('Writer returned no text changes. The current version is preserved and no revision was used. Actual model usage remains spent.')
+        requests=resolution['requests'];unresolved=[r for r in requests if r['status']=='unresolved']
+        changed=len(requests)-len(unresolved)
+        st.caption(f'{changed} requested occurrences changed wording · {len(unresolved)} unresolved. Fresh review checks meaning and new claims.')
+        if unresolved:st.warning('Some requested rephrases remain unchanged. They are still listed below even if the Reviewer omitted them.')
+        if requests:
+            with st.expander('Requested wording results'):
+                for request in requests:
+                    label='Unresolved' if request['status']=='unresolved' else 'Wording changed; meaning requires review'
+                    st.write(label+' · '+LABELS[request['format']]+' · '+field_label(request['content_field'])+' · “'+request['quote']+'”')
     if not current_review_matches(state):
         st.info('Version '+str(state['package']['version'])+' is current. Its review is not ready yet; no earlier-version decisions are shown.')
         return
@@ -510,6 +526,17 @@ def review_page(state, *, run=None, saved=False, embedded=False):
             store=ProtectedStore(ROOT/'data/generated'/('human-review-'+uuid4().hex))
         if store is not None:store.write('human-decision-'+uuid4().hex+'.json',changed)
         st.session_state[key]=changed
+        if suggestion is not None:
+            if run is None or saved:st.error('An active run and fresh review capacity are required.');return
+            selected=record_decision(state,decision_book(state),group['id'],'request_changes',suggestion=suggestion)
+            for item in group['occurrences']:
+                if effective_choice(book,group,item)=='keep_wording':selected=record_decision(state,selected,item['id'],'keep_wording',occurrence=True)
+            feedback=revision_feedback(state,selected)
+            try:
+                request_revision=getattr(run,'request_revision',run.session.request_revision)
+                request_revision(state['run_id'],feedback,draft_version=state['package']['version'],draft_sha256=state['package']['package_sha256'])
+                st.session_state['run-command']='execute';st.session_state['run-show-package']=False;st.rerun()
+            except (ValueError,HarnessError):st.error('The replacement could not be queued for validation and fresh review.');return
         if occurrence is None:st.session_state[position]=index+1
         st.rerun()
     if index<len(groups):
@@ -567,7 +594,7 @@ def review_page(state, *, run=None, saved=False, embedded=False):
                         except (ValueError,HarnessError):st.error('Edit not saved. Preserve required evidence, citations, CTA and launch restrictions; then try again.')
             else:
                 cols=st.columns([1.15,1.6,1])
-                if cols[0].button('Use “'+hint+'”' if hint else 'Use suggestion',key='use-'+group['id'],type='primary',disabled=hint is None):choose(group,'request_changes',suggestion=hint)
+                if cols[0].button('Use “'+hint+'”' if hint else 'Use suggestion',key='use-'+group['id'],type='primary',disabled=hint is None or run is None or saved or (getattr(run,'kind','demo')=='live' and not run.guard.can_revise(writer_required=False))):choose(group,'request_changes',suggestion=hint)
                 if cols[1].button('Let the Writer rephrase',key='changes-'+group['id']):choose(group,'request_changes')
                 if cols[2].button('Keep wording',key='keep-'+group['id']):choose(group,'keep_wording')
                 if choice_label(group,book)!='Not decided':st.caption('Your choice: '+choice_label(group,book))
@@ -594,10 +621,10 @@ def review_page(state, *, run=None, saved=False, embedded=False):
                 if st.button('“'+group['phrase']+'” · '+choice_label(group,book),key='recap-'+group['id'],type='tertiary',width='stretch'):move(i)
             if not groups:st.write('No phrase decisions are required by the current assessment.')
             version,sha=draft_identity(state)
-            notes=st.text_area('Anything else for Version '+str(version+1)+'? (optional)',key=f'run-feedback-text-{state["run_id"]}-{version}',max_chars=1500,placeholder='For example: make the email subject shorter and more playful') if state['revision_attempts']<3 else ''
+            notes=st.text_area('Anything else for Version '+str(version+1)+'? (optional)',key=f'run-feedback-text-{state["run_id"]}-{version}',max_chars=1500,placeholder='Guidance for selected fields only; notes cannot add other fields') if state['revision_attempts']<3 else ''
             if not embedded and not state.get('human_accepted'):revision_action(state,run,book,notes,saved=saved,primary=True)
             if st.button('Back to cards',key='review-back-cards',disabled=not groups):move(0)
-            st.caption('Your choices apply only when you create another version. Approval accepts the current text as-is.')
+            st.caption('Use suggestion applies the exact text and requests fresh review without a Writer call. Rephrase choices apply when you create another version.')
     if optional:
         with st.expander(str(len(optional))+' optional suggestions ›',expanded=False):
             st.caption('Optional only. These never require a choice or block approval.')
@@ -613,12 +640,8 @@ def review_page(state, *, run=None, saved=False, embedded=False):
                     from launchlens.review_decisions import replacement_preview
                     preview=replacement_preview(first,hints[0])
                     st.html('<div class="suggestion-box"><small>Sentence after the change</small><p>'+escape(preview)+'</p></div>')
-                    if state['revision_attempts']<3 and st.button('Use “'+hints[0]+'”',key='use-'+group['id']):
-                        changed=record_decision(state,book,group['id'],'request_changes',suggestion=hints[0])
-                        from uuid import uuid4
-                        store=getattr(run,'store',None)
-                        if store is not None:store.write('human-decision-'+uuid4().hex+'.json',changed)
-                        st.session_state[key]=changed;st.rerun()
+                    if state['revision_attempts']<3 and st.button('Use “'+hints[0]+'”',key='use-'+group['id'],disabled=run is None or saved or (getattr(run,'kind','demo')=='live' and not run.guard.can_revise(writer_required=False))):
+                        choose(group,'request_changes',suggestion=hints[0])
                 if st.button('See full draft ›',key='optional-full-'+group['id'],type='tertiary'):full_draft_dialog(state,first['format'],first)
                 a,b=st.columns(2)
                 if state['revision_attempts']<3 and a.button('Request optional change',key='optional-change-'+group['id']):
@@ -640,7 +663,7 @@ def review_page(state, *, run=None, saved=False, embedded=False):
 
 def revision_action(state,run,book,notes='',*,saved=False,primary=False):
     """Existing explicit revision command; rendering never starts a model call."""
-    from launchlens.review_decisions import grouped_findings,revision_feedback
+    from launchlens.review_decisions import grouped_findings,revision_feedback,effective_choice
     from launchlens.package_presentation import progress
     version,sha=draft_identity(state);stats=progress(grouped_findings(state),book)
     eligible=run is not None and not saved and state['status']=='awaiting_human_review' and state.get('revision_request') is None and state['revision_attempts']<3
@@ -649,7 +672,9 @@ def revision_action(state,run,book,notes='',*,saved=False,primary=False):
     if submitted:
         try:
             feedback=revision_feedback(state,book,notes)
-            if not feedback:st.error('Add a wording choice or note before creating the next version.')
+            if not feedback:st.error('Select wording to change before creating the next version.')
+            elif not any(effective_choice(book,g,o)=='request_changes' for g in grouped_findings(state) for o in g['occurrences']):
+                st.error('Choose at least one phrase to change. Notes guide only the selected fields.')
             else:
                 request_revision=getattr(run,'request_revision',run.session.request_revision)
                 request_revision(state['run_id'],feedback,draft_version=version,draft_sha256=sha)

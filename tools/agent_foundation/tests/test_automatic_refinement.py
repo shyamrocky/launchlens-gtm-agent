@@ -19,7 +19,7 @@ class BlockingWire(CompactWire):
   base=super().__call__(model,validator)
   def call(payload):
    response=base(payload);stage=payload['messages'][0]['content']
-   if stage not in {load_package_prompt('package_reviewer'),load_package_prompt('package_revision')}:return response
+   if stage not in {load_package_prompt('package_reviewer'),__import__('launchlens.field_revisions',fromlist=['prompt']).prompt()}:return response
    inputs=json.loads(payload['messages'][1]['content'])
    out=json.loads(response.body)
    if stage==load_package_prompt('package_reviewer'):
@@ -29,7 +29,7 @@ class BlockingWire(CompactWire):
        'dimension':'grounding','severity':self.severity,'reason':'Fixture factual wording requires correction.',
        'suggestion':'Use the supported flavor story.','claim_ids':['PROD-002']}]
     out['choices'][0]['message']['content']=json.dumps(candidate)
-   elif stage==load_package_prompt('package_revision'):
+   elif stage==__import__('launchlens.field_revisions',fromlist=['prompt']).prompt():
     self.revision_inputs.append(deepcopy(inputs))
     if self.bad_revision:out['choices'][0]['message']['content']='{"campaign_brief":13}'
    return WireResponse(200,json.dumps(out).encode(),{})
@@ -57,10 +57,10 @@ class AutomaticRefinementTests(unittest.TestCase):
   self.assertTrue(any(g['human_clearance_required'] for g in grouped_findings(s)))
   self.assertFalse(decision_book(s)['groups'])
   rev=w.revision_inputs[0];self.assertEqual(rev['revision_origin'],'agent')
-  self.assertTrue(rev['blocking_findings_to_fix']);self.assertIn('never grant keep',rev['protected_phrase_rule'])
-  self.assertLess(len(rev['owner_feedback_data_only']),300)
-  self.assertEqual(rev['blocking_findings_to_fix'],s['ledger']['harness-auto-refinement']['findings'])
-  self.assertTrue(all(f['severity']=='blocking' for v in rev['review'].values() for f in v['findings']))
+  requests=[t for field in rev['targeted_fields'].values() for t in field['requests']]
+  self.assertTrue(requests);self.assertNotIn('review',rev);self.assertNotIn('package',rev)
+  for finding in s['ledger']['harness-auto-refinement']['findings']:
+   self.assertTrue(any(t['format']==finding['format'] and t['content_field']==finding['content_field'] and t['quote']==finding['quote'] for t in requests))
   latest=[json.loads(p['messages'][1]['content']) for p in w.calls if p['messages'][0]['content']==load_package_prompt('package_reviewer')][-1]
   self.assertEqual(latest['package'],package_value(s));self.assertNotIn('review',latest);self.assertNotIn('owner_feedback_data_only',latest)
   initial=len(w.calls);self.assertEqual(r.execute(s['run_id']),s);self.assertEqual(initial,len(w.calls))

@@ -336,7 +336,7 @@ class FoundationSession:
             return self._snapshot()
         finally:self._lock.release()
 
-    def _revision_permission(self,state,feedback,draft_version,draft_sha256):
+    def _revision_permission(self,state,feedback,draft_version,draft_sha256,command_id=None):
         require(self._mode in {"offline_review","offline_package","live_package"} and state['status']=='awaiting_human_review',
                 'Current reviewed draft required before revision')
         package=self._mode in {'offline_package','live_package'}
@@ -348,7 +348,12 @@ class FoundationSession:
                 'Feedback exceeds the bounded revision limit')
         require(state['revision_attempts']<(configuration()['limits']['revision_attempts'] if package else 1) and state['revision_request'] is None and state['review'].get('binding')==binding,
                 'Revision is unavailable or already requested')
-        return {'binding':binding,'review_sha256':digest(state['review']),'feedback':feedback}
+        permission={'binding':binding,'review_sha256':digest(state['review']),'feedback':feedback}
+        if package:
+            from launchlens.field_revisions import plan
+            permission.update(command_id=command_id or uuid4().hex)
+            permission['field_plan']=plan(state,permission)
+        return permission
 
     def check_revision(self,run_id,feedback,*,draft_version,draft_sha256):
         require(self._lock.acquire(blocking=False),'Execution is running')
@@ -357,12 +362,12 @@ class FoundationSession:
             return self._revision_permission(self._snapshot(),feedback,draft_version,draft_sha256)
         finally:self._lock.release()
 
-    def request_revision(self,run_id,feedback,*,draft_version,draft_sha256):
+    def request_revision(self,run_id,feedback,*,draft_version,draft_sha256,command_id=None):
         """One explicit human command per bound version; never an automatic loop."""
         require(self._lock.acquire(blocking=False),'Execution is running')
         try:
             self._check_id(run_id)
-            permission=self._revision_permission(self._snapshot(),feedback,draft_version,draft_sha256)
+            permission=self._revision_permission(self._snapshot(),feedback,draft_version,draft_sha256,command_id)
             with tracing_context(enabled=False):
                 self._graph.update_state(self._config(),{'revision_request':permission,
                     'human_accepted':False,'revision_feedback':feedback,'status':'created'})
@@ -464,6 +469,13 @@ class FoundationSession:
         permission={'binding':binding,'review_sha256':digest(state['review']),
             'feedback':'Correct blocking_findings_to_fix and protected_scan_hits_to_rewrite using full_avoid_list when supplied. Preserve facts, citations, qualifications and format tone. Never grant keep clearance or human approval.',
             'origin':'agent','blocking_findings':findings,**({'protected_scan_hits':protected} if configuration(inputs['package_contract']['sha256'])['automatic_refinement'].get('trigger')=='reviewer_blocking_or_protected_scan_hits' else {})}
+        from launchlens.field_revisions import plan
+        permission.update(command_id=uuid4().hex)
+        try:permission['field_plan']=plan(state,permission)
+        except ReviewError:
+            state['ledger']['harness-auto-refinement']={'status':'deferred','source_binding':binding,
+                'findings':deepcopy(findings),'reason':'exact_field_targets_required'}
+            return state
         marker={'status':'deferred','source_binding':binding,'findings':deepcopy(findings),**({'protected_scan_hits':deepcopy(protected)} if 'protected_scan_hits' in permission else {})}
         state['ledger']['harness-auto-refinement']=marker  # one decision, including denial
         if state['revision_attempts']>=configuration()['limits']['revision_attempts'] or len(permission['feedback'])>MAX_PACKAGE_FEEDBACK:
@@ -505,7 +517,7 @@ class FoundationSession:
             'name':'revise_package','arguments':{},'origin':'agent',
             'why':'Rewrite blocking findings and protected scan wording once, preserving evidence and launch restrictions.'}
         result=self._dispatch(state)
-        result['ledger']['harness-auto-refinement']['status']='revised' if result['status']=='running' else 'failed'
+        result['ledger']['harness-auto-refinement']['status']='revised' if result['status']=='running' else 'no_op' if (result['ledger'].get('last-revision-result') or {}).get('no_op') else 'failed'
         return result
 
     def can_review_saved(self):
@@ -545,13 +557,13 @@ class FoundationSession:
         finally:self._lock.release()
 
     def _task_turns(self, state):
-        return state['turns']-state['review_attempts']-state['revision_attempts'] if self._mode in {'offline_package','live_package'} else state['turns']
+        return state['turns']-state['review_attempts']-state['ledger'].get('revision-writer-call-count',state['revision_attempts']) if self._mode in {'offline_package','live_package'} else state['turns']
 
     def _decide(self, state):
         state = deepcopy(state)
         if self._mode in {'offline_package','live_package'} and state.get('revision_request'):
             binding=state['revision_request']['binding']
-            state['pending']={'id':'human-revision-v'+str(binding['draft_version']+1)+'-'+binding['draft_sha256'][:12],
+            state['pending']={'id':'human-revision-v'+str(binding['draft_version']+1)+'-'+state['revision_request'].get('command_id',binding['draft_sha256'][:12]),
                 'name':'revise_package','arguments':{},'why':'Apply your explicit changes to the current version, then obtain a fresh review.'}
             return state  # Human selected the task; no extra controller inference.
         if self._task_turns(state) >= self._max_turns:
@@ -757,18 +769,46 @@ class FoundationSession:
                     # The model cannot grant approval or initiate an extra revision.
                     state["status"] = "awaiting_human_review"
                 else:
-                    prepare_call(state,'package_revision')  # Exact current-version human permission.
-                    target_version=state['package']['version']+1
-                    state['revision_attempts']+=1;state['turns']+=1
-                    failure_stage='revision_model'
-                    candidate=self._revision_writer(deepcopy(state))
-                    calls=getattr(self._revision_writer,'calls',[])
-                    if calls:state['normalizations'].extend(deepcopy(calls[-1].get('normalizations',[])))
+                    from launchlens.field_revisions import exact_package,PROTOCOL,PROMPT_SHA
+                    from launchlens.package_content import revision_phrase_targets,compare_revision_phrases,package_value,text_fields
+                    request=state['revision_request'];selected=request.get('field_plan')
+                    phrase_targets=selected['targets'] if selected else revision_phrase_targets(state)
+                    previous_package=package_value(state);target_version=state['package']['version']+1
+                    writer_required=not selected or bool(selected['writer_targets'])
+                    prepare_call(state,'package_revision')
+                    state['ledger'].setdefault('revision-writer-call-count',state['revision_attempts'])
+                    state['revision_attempts']+=1
+                    if writer_required:
+                        state['turns']+=1;state['ledger']['revision-writer-call-count']+=1
+                        failure_stage='revision_model'
+                        candidate=self._revision_writer(deepcopy(state))
+                        calls=getattr(self._revision_writer,'calls',[])
+                        if calls:state['normalizations'].extend(deepcopy(calls[-1].get('normalizations',[])))
+                    else:candidate=exact_package(state)
                     failure_stage='revision_validation'
-                    drafts,metadata=admit_package(candidate,prepare_package_input(state),version=target_version)
-                    state['drafts'],state['package']=drafts,metadata
-                    state['draft_history'].append({'version':target_version,'drafts':deepcopy(drafts),'package':deepcopy(metadata)})
-                    state['review']={};state['revision_request']=None;state['human_accepted']=False
+                    execution=({'protocol':PROTOCOL,'method':'field_writer' if writer_required else 'exact_replacement',
+                        'prompt_sha256':PROMPT_SHA if writer_required else None} if selected else None)
+                    drafts,metadata=admit_package(candidate,prepare_package_input(state),version=target_version,revision_execution=execution)
+                    changed=any(dict(text_fields(candidate[f]['content']))!=dict(text_fields(previous_package[f]['content'])) for f in previous_package)
+                    resolution={'source_version':target_version-1,'draft_version':target_version if changed else target_version-1,
+                        'draft_sha256':metadata['package_sha256'] if changed else state['package']['package_sha256'],
+                        'origin':request.get('origin','human'),'no_op':not changed,'writer_called':writer_required,
+                        'requests':compare_revision_phrases(previous_package,candidate,phrase_targets)}
+                    state['ledger']['last-revision-result']=resolution
+                    state['ledger']['field-revision-'+request.get('command_id',str(target_version))]=deepcopy(resolution)
+                    if not changed:
+                        state['revision_attempts']-=1
+                        if writer_required and calls:calls[-1]['outcome']='no_op'
+                        if self._execution_guard is not None:self._execution_guard.finish_noop_revision(writer_required=writer_required)
+                        state['revision_request']=None;state['status']='awaiting_human_review'
+                        outcome='no_op'
+                        self._event(state,'revision_no_op','completed',started,origin=request.get('origin','human'),
+                            version=state['package']['version'],why='No text changed. The previous version and review are preserved; this does not use a revision. Any Writer usage remains spent.')
+                    else:
+                        state['ledger']['revision-resolution-v'+str(target_version)]=resolution
+                        state['drafts'],state['package']=drafts,metadata
+                        state['draft_history'].append({'version':target_version,'drafts':deepcopy(drafts),'package':deepcopy(metadata)})
+                        state['review']={};state['revision_request']=None;state['human_accepted']=False
                 value = {"draft_version":state["package"]["version"], "formats":list(state["drafts"]),
                          "status":state["review"].get("review_status", "unreviewed")}
             elif name == "generate_linkedin":
@@ -854,7 +894,7 @@ class FoundationSession:
                          "mode": state["mode"], "missing_requirements": list(state["research_gaps"])}
             state["ledger"][action_id].update(status="completed", result=deepcopy(value))
             self._event(state, name, outcome, started, action_id=action_id,
-                        decision=state["launch"]["decision"] if name == "check_launch" else None, why=action.get('why',''), **({'origin':action.get('origin','human')} if name=='revise_package' else {}))
+                        decision=state["launch"]["decision"] if name == "check_launch" else None, why=action.get('why',''), **({'origin':action.get('origin','human'),'writer_called':state['ledger'].get('last-revision-result',{}).get('writer_called',True)} if name=='revise_package' else {}))
         except Exception as error:
             state["ledger"][action_id]["status"] = "failed"
             state["status"] = "failed"

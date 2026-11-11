@@ -106,7 +106,7 @@ class LivePackageUITests(unittest.TestCase):
 
     def test_live_feedback_uses_same_guard_and_fresh_all_format_review(self):
         app,run,wire=self.start_live()
-        finish_stack(app)
+        finish_stack(app,request_changes=True)
         next(x for x in app.text_area if x.label=='Anything else for Version 2? (optional)').input('Remove unsupported intensity.')
         next(b for b in app.button if b.label=='Create Version 2').click().run()
         self.assertEqual(len(app.exception),0);self.assertEqual(run.snapshot()['package']['version'],2)
