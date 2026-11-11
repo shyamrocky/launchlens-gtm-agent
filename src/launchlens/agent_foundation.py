@@ -15,6 +15,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
 from langsmith import tracing_context
+from launchlens.observability import configured, graph_callbacks, span
 
 from launchlens.content_review import (ReviewError, authoritative_binding, validate_review, prepare_revision)
 from launchlens.evidence_payload import storage_fields
@@ -94,7 +95,7 @@ class FoundationSession:
     Public run/resume methods accept a run ID, not model-provided graph updates.
     """
     def __init__(self, model, tools, *, max_turns=MAX_TURNS, max_searches=MAX_SEARCHES,
-                 mode="offline_simulation", writer=None, reviewer=None, revision_writer=None, voice_policy_id=None, execution_guard=None, automatic_refinement=False):
+                 mode="offline_simulation", writer=None, reviewer=None, revision_writer=None, voice_policy_id=None, execution_guard=None, automatic_refinement=False, tracer=None):
         require(mode in {"offline_simulation", "live_research", "live_linkedin", "offline_review", "offline_package", "live_package"}, "Invalid execution mode")
         require(callable(model), "A model adapter is required")
         require(all(callable(getattr(tools, name, None)) for name in
@@ -115,6 +116,7 @@ class FoundationSession:
         require((mode == "live_package" and callable(getattr(execution_guard, "arm", None))) or
                 (mode != "live_package" and execution_guard is None), "Explicit live execution guard required")
         require(type(automatic_refinement) is bool and (not automatic_refinement or mode in {'offline_package','live_package'}), 'Invalid automatic refinement mode')
+        self._tracer = tracer if tracer is not None else (configured() if mode.startswith("live_") else None)
         self._automatic_refinement = automatic_refinement
         self._execution_guard = execution_guard
         self._voice_policy_id = voice_policy_id
@@ -384,7 +386,13 @@ class FoundationSession:
             require(reply is None or state["status"] == "needs_clarification",
                     "This run is not awaiting clarification")
             inputs = Command(resume=reply) if reply is not None else {**state, "status": "running"}
-            with tracing_context(enabled=False):
+            from contextlib import nullcontext
+            trace = self._tracer.run(state, self._trace_models()) if self._tracer else nullcontext()
+            with trace, tracing_context(enabled=False):
+                if reply is not None:
+                    with span("human_resume", {"kind": "clarification", "answer": reply}): pass
+                if state.get("revision_request") or state.get("writer_retry"):
+                    with span("human_resume", {"kind": "revision" if state.get("revision_request") else "try_again"}): pass
                 try:
                     if continue_checkpoint or (state.get('writer_retry') and state.get('pending')):
                         inputs = None  # Existing graph checkpoint already points to dispatch.
@@ -395,7 +403,7 @@ class FoundationSession:
                     observed = deepcopy(state)
                     if inputs is not None and reply is None:
                         observed['status'] = 'running'
-                    for update in self._graph.stream(inputs, self._config(), stream_mode='updates'):
+                    for update in self._graph.stream(inputs, {**self._config(), "callbacks": graph_callbacks()}, stream_mode='updates'):
                         for node in ('decide', 'dispatch', 'clarify', 'required_objective_evidence', 'required_review', 'required_refine'):
                             if node in update:
                                 observed.update(deepcopy(update[node]))
@@ -407,9 +415,20 @@ class FoundationSession:
                         "events": [*self._snapshot()["events"],
                                    {"action": "execution", "outcome": "failed_safely"}]})
             self._initial = None
-            return self._snapshot()
+            result = self._snapshot()
+            if self._tracer: self._tracer.update(result, self._trace_models())
+            return result
         finally:
             self._lock.release()
+
+    def _trace_models(self):
+        try:
+            if self._mode == "live_package":
+                from launchlens.live_package import profile
+                return {k: v["model_id"] for k, v in profile()["roles"].items()}
+            from launchlens.live_research import MODEL
+            return {"controller": MODEL}
+        except Exception: return {}  # Optional metadata cannot fail execution.
 
     @staticmethod
     def _event(state, action, outcome, started, **fields):
@@ -550,7 +569,7 @@ class FoundationSession:
             with tracing_context(enabled=False):
                 self._graph.update_state(self._config(),state,as_node='dispatch')
                 observed=deepcopy(state)
-                for update in self._graph.stream(None,self._config(),stream_mode='updates'):
+                for update in self._graph.stream(None,{**self._config(), 'callbacks': graph_callbacks()},stream_mode='updates'):
                     if 'required_review' in update:observed.update(deepcopy(update['required_review']))
                     if on_update is not None:on_update(deepcopy(update),deepcopy(observed))
             return self._snapshot()
@@ -595,6 +614,7 @@ class FoundationSession:
             require(not checked['id'].startswith(('harness-','agent-revision-','human-revision-')), 'Harness action IDs are reserved')
             require(checked['name'] in view['allowed_actions'], 'Action unavailable in current state')
             state["pending"] = deepcopy(checked)
+            with span("controller_action", {"action": checked["name"], "why": checked.get("why", "")}): pass
         except (HarnessError, TypeError, ValueError, OverflowError):
             self._event(state, "model_proposal", "rejected", started)
         except Exception:
@@ -934,6 +954,7 @@ class FoundationSession:
 
     def _clarify(self, state):
         # Interrupt node has no side effects before interrupt: resume reexecutes it.
+        with span("human_interrupt", {"question": state["clarification"]}): pass
         reply = interrupt({"run_id": state["run_id"], "question": state["clarification"],
                            "notice": "Reply is guidance, never operational approval"})
         require(type(reply) is str and reply.strip() and len(reply) <= 2000, "Invalid clarification reply")

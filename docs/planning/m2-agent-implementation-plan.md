@@ -1,3 +1,71 @@
+## M2-D056–D058 publication and restart status — November 10, 2026
+
+Owner requested Git sync of the completed opt-in tracing, recoverable export,
+completed child metrics and saved local trace identity, plus prior E2E report notes.
+Latest owner-authorized M2-D058 restart/health completed; no restart needed for sync.
+722 fresh offline PASS (491 harness/117 UI/114 root). No live metric re-verification,
+model/source/LangSmith calls, saved-run/budget changes or further milestone in sync.
+Private runtime artifacts/workspace remain local. [Publication record](repository-sync-2026-11-09.md#langsmith-observability-publication--november-10-2026).
+Earlier checkpoint pending/no-Git labels retain their historical scope.
+
+---
+
+## M2-D058 — Child metrics and lookup-free reattachment, November 10, 2026
+
+Owner reports India root/children visible and authorized completed child timing,
+canonical tokens/cost and removal of deprecated lookup. Child spans now POST once
+with end time/outputs; LLMs include actual usage/model/provider and estimated USD
+using the existing profile rates. Private per-run trace context preserves root/order
+across resumes and processes without GET/read_run; graph state and receipts unchanged.
+[Details, tests and compatibility limits](../langsmith-tracing.md#m2-d058--completed-child-metrics-and-lookup-free-saved-trace-identity).
+722 offline tests PASS (491 harness/117 UI/114 root).
+Restart/owner review pending. No live calls, current-run/budget/prompt/model changes,
+backfill or Git sync during implementation. Earlier checkpoint labels are history.
+
+---
+
+## M2-D057 — Recoverable LangSmith export, November 10, 2026
+
+Owner approved the tracing-only repair after an authorized connectivity diagnosis.
+New traces create directly; restored-run lookup is optional and failures leave later
+exports enabled. Background timeouts2s/5s; fixed safe failure categories are logged.
+No agent behavior, prompt/model, validation, UI flow, revision or budget changes.
+[Implementation, diagnosis evidence and offline regressions](../langsmith-tracing.md#m2-d057--recoverable-export-and-optional-reattachment).
+717 offline tests PASS (486 harness/117 UI/114 root).
+Restart/owner review pending; no live calls or Git sync during this implementation.
+Prior connectivity check and prior restart entries retain their historical scope.
+
+---
+
+## M2-D056 — Opt-in LangSmith observability, November 10, 2026
+
+Owner approved bounded tracing only, with no agent/harness/UI-flow/model/prompt/
+budget behavior changes. Implementation and offline verification are described in
+[LangSmith tracing](../langsmith-tracing.md). Tracing stays off unless explicitly
+enabled with a key; delivery is bounded, asynchronous and best effort. Saved runs,
+receipts, ledger, existing `.env` and prompts remain unchanged. No live calls or
+Git sync. This scoped observability authorization supersedes the earlier freeze
+recommendation only for tracing; the six reported limitations remain unchanged.
+Restart/owner review pending. Earlier entries retain their historical status.
+
+---
+
+## Owner-reported E2E pass and freeze recommendation — November 10, 2026
+
+Owner reports UK passed again: clarification/answer → first-attempt V1 → agent V2
+(32 changed,0 unresolved,8 cards) → human V3 (8of8 applied,0 unresolved) → approval
+and download. Owner reports flows work across all three markets and recommends
+freezing implementation at already-synced0e8f24f for recording/submission.
+Latest engineering verification remains692 offline PASS; this UK pass did not need
+the citation repair, so it adds no live validation of that repair path. Seven V3
+Factual support cards were reported; citation loss is suspected, not diagnosed.
+[Full report, six submission limitations and evidence distinctions](writer-run-experience-review.md#owner-reported-uk-e2e-retest-and-freeze-recommendation--november-10-2026).
+Owner reports aboutUSD1.11 left; roughly four runs is an unverified planning estimate.
+Next proposed work:preservation/sync, LangSmith tracing, US→UK→India recording,
+submission document. These notes do not start tracing, recording or further fixes.
+Documentation only; new notes local, no inference/run/budget/MEMORY/Git sync changes.
+Earlier pending-retest and implementation labels below are historical.
+
 ## Owner-authorized publication checkpoint — November 10, 2026
 
 Owner requested private Git sync of completed M2-D054/D055. Fresh clean canonical

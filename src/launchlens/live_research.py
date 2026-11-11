@@ -4,6 +4,7 @@ No environment-file loading, generated corpus files, fallback tools or model-sel
 scope. The CLI provisions credentials. Full evidence stays in harness state and is
 sent as lower-trust tool data; excessive context stops explicitly, never truncates.
 """
+from launchlens.observability import llm, step
 from copy import deepcopy
 import hashlib
 import json
@@ -106,6 +107,10 @@ class NebiusHTTP:
         self.events.clear()
 
     def __call__(self, payload):
+        label = "Writer" if payload.get("max_tokens") == MAX_WRITER_OUTPUT_TOKENS else "controller"
+        return llm(label, payload, lambda: self._call(payload))
+
+    def _call(self, payload):
         require(len(self.events) < MAX_TURNS, "Hosted model-call budget exhausted")
         common = (payload.get("model") == MODEL and payload.get("store") is False
                   and payload.get("stream") is False and payload.get("temperature") == 0)
@@ -302,19 +307,23 @@ class LiveResearchTools:
             if isinstance(events, list):
                 events.clear()
 
+    @step('Notion read', capture=('request',))
     def read_pmm(self, request):
         validate_request(request)
         return self._notion.get_pmm_brief()
 
+    @step('Notion read', capture=('request',))
     def read_launch(self, request):
         request = validate_request(request)
         return self._notion.get_launch_context(request["market_id"])
 
+    @step('Pinecone search', capture=('query', 'authority'))
     def search(self, query, authority):
         validate_action({"id": "adapter-validation", "name": "search_product_evidence",
                          "arguments": {"query": query, "authority": authority}})
         return retrieve_product_evidence(query, authority, transport=self._pinecone)
 
+    @step('required claim fetch', capture=('claim_ids',))
     def fetch_objective_claims(self, claim_ids):
         from launchlens.retrieval import fetch_objective_claims
         return fetch_objective_claims(claim_ids, transport=self._pinecone)

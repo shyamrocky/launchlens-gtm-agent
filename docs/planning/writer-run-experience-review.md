@@ -1,3 +1,127 @@
+## M2-D056–D058 publication and restart status — November 10, 2026
+
+Owner requested Git sync of the completed opt-in tracing, recoverable export,
+completed child metrics and saved local trace identity, plus prior E2E report notes.
+Latest owner-authorized M2-D058 restart/health completed; no restart needed for sync.
+722 fresh offline PASS (491 harness/117 UI/114 root). No live metric re-verification,
+model/source/LangSmith calls, saved-run/budget changes or further milestone in sync.
+Private runtime artifacts/workspace remain local. [Publication record](repository-sync-2026-11-09.md#langsmith-observability-publication--november-10-2026).
+Earlier checkpoint pending/no-Git labels retain their historical scope.
+
+---
+
+## M2-D058 — Child metrics and lookup-free reattachment, November 10, 2026
+
+Owner reports India root/children visible and authorized completed child timing,
+canonical tokens/cost and removal of deprecated lookup. Child spans now POST once
+with end time/outputs; LLMs include actual usage/model/provider and estimated USD
+using the existing profile rates. Private per-run trace context preserves root/order
+across resumes and processes without GET/read_run; graph state and receipts unchanged.
+[Details, tests and compatibility limits](../langsmith-tracing.md#m2-d058--completed-child-metrics-and-lookup-free-saved-trace-identity).
+722 offline tests PASS (491 harness/117 UI/114 root).
+Restart/owner review pending. No live calls, current-run/budget/prompt/model changes,
+backfill or Git sync during implementation. Earlier checkpoint labels are history.
+
+---
+
+## M2-D057 — Recoverable LangSmith export, November 10, 2026
+
+Owner approved the tracing-only repair after an authorized connectivity diagnosis.
+New traces create directly; restored-run lookup is optional and failures leave later
+exports enabled. Background timeouts2s/5s; fixed safe failure categories are logged.
+No agent behavior, prompt/model, validation, UI flow, revision or budget changes.
+[Implementation, diagnosis evidence and offline regressions](../langsmith-tracing.md#m2-d057--recoverable-export-and-optional-reattachment).
+717 offline tests PASS (486 harness/117 UI/114 root).
+Restart/owner review pending; no live calls or Git sync during this implementation.
+Prior connectivity check and prior restart entries retain their historical scope.
+
+---
+
+## M2-D056 — Opt-in LangSmith observability, November 10, 2026
+
+Owner approved bounded tracing only, with no agent/harness/UI-flow/model/prompt/
+budget behavior changes. Implementation and offline verification are described in
+[LangSmith tracing](../langsmith-tracing.md). Tracing stays off unless explicitly
+enabled with a key; delivery is bounded, asynchronous and best effort. Saved runs,
+receipts, ledger, existing `.env` and prompts remain unchanged. No live calls or
+Git sync. This scoped observability authorization supersedes the earlier freeze
+recommendation only for tracing; the six reported limitations remain unchanged.
+Restart/owner review pending. Earlier entries retain their historical status.
+
+---
+
+## Owner-reported UK E2E retest and freeze recommendation — November 10, 2026
+
+**Evidence status:** owner supplied this live browser test report after M2-D055
+and its restart. The assistant did not execute or independently inspect this run.
+Owner reports that flows work across US, UK and India, with UK passing again through
+clarification, human answer, V1, automatic V2, human-requested V3, approval and download.
+This updates the pending live-retest handoff; it does not convert offline tests into
+live citation-repair evidence or establish a new milestone's acceptance.
+
+| Step | Owner-reported result |
+| --- | --- |
+| Clarification → answer → V1 | Passed. V1 drafted on its first Writer attempt. The citation omission did not occur, so reference-only citation repair was not exercised in this live test. |
+| Agent refinement → V2 | 32 requested occurrences changed wording; 0 unresolved; 8 cards remained. |
+| Human-requested rewrite → V3 | 8 of 8 applied; 0 unresolved. |
+| Approval and export | Approved and downloaded successfully. |
+
+**Separate engineering evidence:** latest clean-copy offline verification remains
+692 passing tests (462 harness/116 UI/114 root). These include reference-only citation
+repair and the retry-created omission regression. No tests or live calls were rerun
+for this documentation update. The owner's live pass and offline results are separate
+forms of evidence; occurrence changes do not themselves establish factual correctness.
+
+**New reported quirk:** V3 showed seven Factual support cards on wording the owner
+considered accurate, including cherry/vanilla and soda-float inspiration statements.
+The owner suspects rewritten sentences lost citations. That cause is unconfirmed:
+no new saved-request/response/reference diagnosis was requested or performed.
+The owner used Keep wording and completed approval; those human choices do not
+repair missing references or prove the Reviewer was wrong. No fix is proposed or
+implemented in this update.
+
+**Known limitations to carry into the submission:**
+
+1. Rewritten versions can receive Factual support flags on apparently accurate
+   statements. Lost or insufficient field citations are the owner's suspected
+   cause, not a confirmed finding for this retest. Human Keep wording permits an
+   explicit disposition; citations and factual support still merit inspection.
+2. The Writer can omit a V1 field citation. One automatic reference-only repair is
+   implemented and covered offline; its live path was not needed in this UK pass.
+   The owner reports rerunning as a practical fallback. This is a deliberate new
+   attempt within the remaining budget, not an unlimited automatic retry guarantee.
+3. Reviewer findings can vary between versions. The deterministic word scan provides
+   repeatable detection of configured phrases; it does not prove factual support or
+   replace semantic review and human judgment.
+4. Reloading during execution does not reliably resume the complete workflow in
+   the owner's experience. Existing limited checkpoint/reattachment recovery is
+   not a claim of universal resumption. Avoid mid-run reloads during recording.
+5. Some UI status labels can remain stale, such as Waiting on you after an answer.
+   This is a reported display limitation, not evidence that the answer was lost.
+6. Drafts can fall below length targets and ads can exceed them. Length targets are
+   advisory; hard structural, citation, evidence and launch restrictions still apply.
+
+**Freeze recommendation:** owner recommends keeping the working implementation
+unchanged for recording/submission, using the known workarounds instead of adding
+more fixes. The code baseline is private main commit
+`0e8f24f4df380661c20cbcad523c115cc633d466`, already synced before this report.
+Record these limitations without silently implementing the suspected citation-loss
+fix, inheritance, tracing or another pipeline change.
+
+**Budget and next steps:** owner reports approximately USD1.11 remaining in the UI.
+The precise ledger was not inspected or changed here. Roughly four full runs is the
+owner's planning estimate, not verified capacity; actual usage and failed attempts
+can change recording coverage. The proposed sequence is preservation/sync, LangSmith
+tracing, US→UK→India recording, then the submission document. Code preservation is
+already complete at the SHA above; these new report notes are local pending a later
+sync. Tracing and recording have not been started by this documentation task.
+
+This update changes documentation and continuity only. No application code, prompts,
+models, saved runs, approvals, budget, source data, MEMORY or Git publication changes.
+Earlier implementation/restart/publication entries below retain their original scope.
+
+---
+
 ## M2-D054/D055 publication and restart status — November 10, 2026
 
 Owner approved the three E2E corrections and reference-only citation retry repair,

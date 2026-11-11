@@ -525,6 +525,8 @@ def review_page(state, *, run=None, saved=False, embedded=False):
             from launchlens.package_content import ROOT
             store=ProtectedStore(ROOT/'data/generated'/('human-review-'+uuid4().hex))
         if store is not None:store.write('human-decision-'+uuid4().hex+'.json',changed)
+        from launchlens.observability import human_event
+        human_event(state,"human review decision",{"choice":choice,"phrase":group['phrase'],"replacement":suggestion},store=store)
         st.session_state[key]=changed
         if occurrence is None:st.session_state[position]=index+1
         st.rerun()
@@ -758,11 +760,14 @@ def package_approval(state,run,*,compact=False):
                     store.write('human-decision-'+uuid4().hex+'.json',accepted)
                     store.write('human-internal-approval-'+uuid4().hex+'.json',record)
                 st.session_state['run-review-decisions-'+run_id]=accepted
+                from launchlens.observability import human_event
+                human_event(state,"approval",{"version":version},store=store)
                 st.session_state[approval_key]=record;st.rerun()
             if issues:st.caption(' '.join(issues))
         if not compact:st.caption('Approval is recorded for this exact version. You can later request another revision; that version will need its own approval.')
         exported=markdown_package(state,approved=approved)
-        st.download_button('Download Markdown',exported,file_name='launchlens-'+state['request']['market_id'].lower()+'-v'+str(version)+'.md',mime='text/markdown',key='package-download',on_click='ignore',type='primary' if approved else 'secondary',width='stretch' if compact else 'content')
+        from launchlens.observability import download_data
+        st.download_button('Download Markdown',download_data(state,exported,store=getattr(run,'store',None)),file_name='launchlens-'+state['request']['market_id'].lower()+'-v'+str(version)+'.md',mime='text/markdown',key='package-download',on_click='ignore',type='primary' if approved else 'secondary',width='stretch' if compact else 'content')
         import json
         encoded=json.dumps(exported).replace('<','\\u003c')
         st.iframe('<style>body{margin:0;font:14px -apple-system,sans-serif;color:#b8c4d4}button{border:0;border-radius:999px;background:#2b3749;color:#f0f4fa;padding:10px 22px;cursor:pointer}span{margin-left:10px}</style><button id="copy" type="button">Copy all</button><span id="result" role="status" aria-live="polite"></span><script>document.getElementById("copy").onclick=async()=>{try{await navigator.clipboard.writeText('+encoded+');document.getElementById("result").textContent="Copied"}catch(e){document.getElementById("result").textContent="Copy unavailable. Use Download Markdown."}};</script>',height=48,alt='Copy all package text')

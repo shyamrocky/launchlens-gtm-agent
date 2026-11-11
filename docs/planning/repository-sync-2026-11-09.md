@@ -1,3 +1,59 @@
+## LangSmith observability publication — November 10, 2026
+
+**Authority:** owner requested Git sync of completed M2-D056/D057/D058 and the
+local owner-reported E2E documentation. This accepts preservation of the scoped
+engineering checkpoint in the existing private repository; content approval,
+further inference and new milestones remain separate.
+
+**Included:** opt-in LangSmith configuration; filtered automatic graph nodes;
+controller/Writer/Reviewer/revision/citation-repair spans; completed child timing,
+canonical tokens and estimated USD from unchanged configured role rates; source,
+gate, scan and human UI events; bounded background delivery with sanitized failure
+logs and recoverable errors; private per-run trace identity for resumes with no
+deprecated run lookup. Regression fixtures are independently authored synthetic
+examples. Also includes the previously local owner-reported UK E2E pass, freeze
+recommendation and six known submission limitations.
+
+**Scope boundaries:** graph checkpoints, prompt/model/profile selection, evidence,
+validation, UI journey, revision limits and budget accounting are unchanged.
+Private langsmith-trace-context.json data is runtime-only and is excluded along
+with all saved responses, decisions/approvals, authorization/accounting records,
+credentials, workspace and local environments. The existing demo allocation is
+not reset or extended. No source/model/LangSmith API calls, trace backfill, run
+execution, restart or MEMORY append are initiated by this Git sync. GitHub metadata and
+normal Git push are the only external operations for publication.
+
+**Verification:**722 fresh offline tests PASS in a canonical temporary copy:
+491 harness (including29 tracing cases),117 UI and114 root. Root prerequisites
+regenerated there only. The tests cover SDK HTTP payloads/end times, all five LLM
+roles and configured-rate cost estimates, no run lookup, actual saved-review
+restore/revision, clarification resume, malformed/unwritable trace context,
+sanitized delivery failures and unchanged enabled/disabled model requests/package
+results/accounting. Actual suggestion→submit→approval→download UI passes. The sync does not
+write private artifacts, .env or MEMORY; running-app changes remain outside Git. Exact staged
+paths/content, syntax, ignore rules, credentials and links reviewed before commit.
+Existing interpreters used; no dependencies installed or lock edits. The running
+app updated private accounting/current-run records and generated call artifacts
+concurrently with this audit. They are neither overwritten nor published; a claim
+of byte-identical private runtime state across the entire sync is not made. The running
+app updated private accounting/current-run records and generated call artifacts
+concurrently with this audit. They are neither overwritten nor published; a claim
+of byte-identical private runtime state across the entire sync is not made.
+
+**Runtime/live evidence:** owner-authorized restart after M2-D058 completed at
+localhost8520 and local health passed. Owner reported India root/children visible
+after M2-D057; the later completed child metrics/no-lookup repair remains verified
+offline, without a subsequent owner report of live metrics. One earlier, explicitly
+authorized synthetic connectivity trace succeeded during diagnosis; it is not
+repeated or published here. No extra restart is needed for this publication.
+Earlier pending restart/no-Git labels are historical. [Tracing contract and limits](../langsmith-tracing.md).
+
+**Publication set:**18 explicitly reviewed canonical files, normal fast-forward
+push from main, no force or history/visibility/Git configuration changes. Protected
+runtime artifacts and workspace continuity stay local. Stop after verified sync.
+
+---
+
 ## E2E corrections and citation repair sync — November 10, 2026
 
 **Authority:** owner explicitly requested Git sync after approving M2-D054 and

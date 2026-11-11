@@ -1,4 +1,5 @@
 """Bounded edits inside the existing revision/validation/review cycle."""
+from launchlens.observability import step
 from copy import deepcopy
 import hashlib
 from pathlib import Path
@@ -80,6 +81,7 @@ def plan(state, permission):
                 replacements=replacements, keeps=keeps, writer_targets=writer_targets, notes=notes)
 
 
+@step('exact-replacement apply', capture=())
 def exact_package(state):
     value = package_value(state); selected = state['revision_request']['field_plan']['replacements']
     grouped = {}

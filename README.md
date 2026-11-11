@@ -1,3 +1,52 @@
+## Owner-authorized tracing sync — November 10, 2026
+
+Owner requested private Git preservation of completed M2-D056–D058 and the local
+E2E report notes.722 fresh offline PASS (491 harness/117 UI/114 root); latest
+M2-D058 restart/health already complete. Owner-reported India trace visibility is
+separate from unverified live child metrics after the latest repair. No run/budget/
+prompt/model changes, new calls or restart for this sync. Private artifacts and
+workspace remain local. [Publication scope and verification](docs/planning/repository-sync-2026-11-09.md#langsmith-observability-publication--november-10-2026).
+Earlier pending/restart/no-publication labels are historical.
+
+## LangSmith child metrics and saved identity — November 10, 2026
+
+Owner-approved M2-D058 implemented; restart/owner inspection pending. Completed child
+payloads include timing, outputs and canonical LLM token/cost metadata. A private
+trace-context file preserves root/order without deprecated server lookup; no graph
+state, prompt/model, approval or budget changes. No live calls/backfill/Git sync.
+[Scope, setup and verification](docs/langsmith-tracing.md#m2-d058--completed-child-metrics-and-lookup-free-saved-trace-identity).
+722 offline tests PASS (491 harness/117 UI/114 root).
+Earlier pending/restart/lookup entries retain their historical scope.
+
+## LangSmith export repair — November 10, 2026
+
+Owner-approved telemetry-only fix implemented; restart/owner review pending.
+New roots skip lookup; restored-run lookup cannot disable subsequent export.
+Background delivery uses realistic timeouts and fixed safe failure logs.
+[Details and verification](docs/langsmith-tracing.md#m2-d057--recoverable-export-and-optional-reattachment).
+No live calls, saved-run/budget changes, prompt/model changes or Git sync in this
+implementation. Prior tracing/restart/connectivity records are historical.
+
+## Optional LangSmith tracing — November 10, 2026
+
+Owner-authorized bounded observability is implemented; restart/owner review pending.
+[Configuration, trace structure, privacy and failure isolation](docs/langsmith-tracing.md).
+Disabled unless explicitly enabled with a key; no model/source calls, saved-run or
+budget changes, prompt/model changes or Git sync. Earlier freeze/history entries
+retain their original scope; only tracing was newly authorized.
+
+## Owner-reported UK E2E pass — November 10, 2026
+
+Owner reports UK passed again through clarification, first-attempt V1, agent V2,
+human V3, approval and download; reports flows working across US/UK/India and
+recommends freezing implementation for recording/submission at synced0e8f24f.
+Latest offline verification remains692 PASS; this live pass did not exercise the
+citation repair. Seven new V3 Factual support cards were reported; citation loss
+is suspected and uninvestigated. [Report and submission limitations](docs/planning/writer-run-experience-review.md#owner-reported-uk-e2e-retest-and-freeze-recommendation--november-10-2026).
+AboutUSD1.11 remaining is owner-reported, not a fresh ledger audit. Tracing,
+recording and submission preparation remain proposed next work. Documentation only;
+no code/run/budget changes or Git sync. Earlier checkpoint labels are historical.
+
 ## Owner-authorized E2E and citation repair sync — November 10, 2026
 
 Owner requested Git sync of completed M2-D054/D055: deferred suggestion submission,

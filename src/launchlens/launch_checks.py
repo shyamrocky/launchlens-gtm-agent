@@ -3,6 +3,7 @@
 Applies the four required readiness areas and calendar/date rules in M1.4 design.
 These results control draft scope, never real publishing or actual stock assertions.
 """
+from launchlens.observability import step
 from datetime import date
 import re
 from launchlens.notion_tools import PRODUCT, MARKETS
@@ -18,6 +19,7 @@ def iso_date(value):
     return date.fromisoformat(value)
 
 
+@step('launch gate check', capture=())
 def evaluate_launch(context, evaluation_date):
     """Compute Proceed/Clarify/Hold from source values; never accept a model verdict.
 

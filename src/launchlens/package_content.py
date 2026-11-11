@@ -3,6 +3,7 @@
 Campaign direction, product evidence and launch permission stay distinct. Shared
 validators check structure/references, never semantic entailment or human approval.
 """
+from launchlens.observability import step
 from copy import deepcopy
 import hashlib
 import json
@@ -453,6 +454,7 @@ def risk_patterns(*,scan_additions=True,suggestion=False):
     return patterns
 
 
+@step('risky-phrase scan', capture=())
 def risky_phrase_scan(package, *, suggestion=False, scan_additions=True):
     hits=[]
     for name in FORMATS:

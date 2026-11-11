@@ -17,6 +17,7 @@ import urllib.error
 import urllib.request
 
 from launchlens.content_review import ContentCall
+from launchlens.observability import configured, llm, run_context
 from launchlens.gtm_registry import HarnessError, require, supported_use_cases, validate_request
 from launchlens.linkedin_drafting import digest
 from launchlens.live_research import ResearchError
@@ -539,6 +540,16 @@ class LiveTransport:
         self.guard.stop()  # Never clear a spent authorization on Reset/Generate again.
 
     def __call__(self, payload):
+        label = {"controller": "controller", "package_writer": "Writer", "package_reviewer": "Reviewer", "package_revision": "revision Writer"}[self.role]
+        if self.role == "package_writer" and len(payload.get("messages", [])) > 1:
+            try:
+                if strict_json(payload["messages"][1]["content"]).get("citation_repair_protocol"): label = "citation repair"
+            except Exception: pass
+        try: pricing = profile()['roles'][self.role]
+        except Exception: pricing = None
+        return llm(label, payload, lambda: self._call(payload), pricing=pricing)
+
+    def _call(self, payload):
         spec = profile()['roles'][self.role]
         gate(type(payload) is dict and payload.get('model') == spec['model_id'] and
             payload.get('temperature') == 0 and payload.get('store') is False and payload.get('stream') is False
@@ -618,12 +629,15 @@ def worker_command(method):
     from functools import wraps
     @wraps(method)
     def call(self,run_id,*args,**kwargs):
-        if self.store is None:return method(self,run_id,*args,**kwargs)
-        from launchlens.run_archive import execution_lease
-        with execution_lease(run_id):
-            self.guard.archive_gate()
-            try:return method(self,run_id,*args,**kwargs)
-            finally:self._persist(self.snapshot())
+        state = self.snapshot()
+        models = self.session._trace_models() if self.session._tracer else None
+        with run_context(self.session._tracer, state, models):
+            if self.store is None:return method(self,run_id,*args,**kwargs)
+            from launchlens.run_archive import execution_lease
+            with execution_lease(run_id):
+                self.guard.archive_gate()
+                try:return method(self,run_id,*args,**kwargs)
+                finally:self._persist(self.snapshot())
     return call
 
 
@@ -650,7 +664,7 @@ class LivePackageRun:
         self.tools = tools if tools is not None else LiveResearchTools(NotionReader(NotionHTTP(keys['NOTION_API_KEY'])),PineconeHTTP(keys['PINECONE_API_KEY']))
         self.session = FoundationSession(self.controller,self.tools,mode='live_package',writer=self.writer,
             reviewer=self.reviewer,revision_writer=self.reviser,voice_policy_id=BRAND_POLICY_ID,execution_guard=self.guard,
-            automatic_refinement=permission.get('allow_automatic_refinement',False))
+            automatic_refinement=permission.get('allow_automatic_refinement',False), tracer=configured(secrets=self._secrets))
         if checkpoint is None:self.session.start(permission['request'],user_notes=notes)
         else:
             state,capture=checkpoint
@@ -663,6 +677,8 @@ class LivePackageRun:
                 for path in self.store.path.glob('state-*.json'):
                     self._saved.add(digest(strict_json(path.read_bytes())))
 
+        if self.session._tracer:
+            self.session._tracer.bind_context(self.session.snapshot(), self.store)
         self.guard.run_id=self.session.snapshot()['run_id']
 
     def snapshot(self):return self.session.snapshot()
