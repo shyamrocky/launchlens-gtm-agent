@@ -115,13 +115,14 @@ class PackageTests(unittest.TestCase):
                     if problem=='empty':refs[0]['claim_ids']=[]
                     if problem=='duplicate':refs.append(deepcopy(refs[0]))
                     if problem=='ineligible':refs[0]['claim_ids']=['PROD-001']
-                    writer=self.call('package_writer',bad);_,s=self.run_case(writer=writer)
+                    writer=self.call('package_writer',bad);session,s=self.run_case(writer=writer)
                     if problem=='empty':
                         self.assertTrue(writer.calls[0]['normalizations'])
                         self.assertEqual(writer.calls[0]['raw_candidate'],bad)
                         self.assertFalse(any(not ref['claim_ids'] for ref in writer.calls[0]['candidate'][name]['claim_references']))
                     else:
-                        self.assertEqual(s['status'],'failed');self.assertFalse(s['drafts'])
+                        self.assertEqual(s['status'],'draft_incomplete');self.assertFalse(s['drafts'])
+                        self.assertTrue(session.can_retry_writer())
                         self.assertEqual(s['draft_failure']['format'],name)
                         self.assertEqual(writer.calls[0]['raw_candidate'],bad)
 

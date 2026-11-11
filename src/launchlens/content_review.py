@@ -213,6 +213,7 @@ class ContentCall:
         model_inputs = deepcopy(inputs)
         if retry:
             model_inputs['previous_validation_diagnostic_data_only'] = deepcopy(state['draft_failure'])
+            model_inputs['eligible_claim_ids_for_retry_data_only'] = deepcopy(inputs['writer_brief']['draft_constraints']['allowed_claim_ids'])
         if package_stage:
             model_inputs.pop('projection_manifest', None)  # Audit ledger stays outside model context.
         payload = {'model':self._model, 'messages':[

@@ -305,7 +305,7 @@ def check_field_claims(draft, format_name):
 
 
 def citation_only_failures(value, inputs):
-    """Return missing-citation diagnostics ONLY after all other checks pass.
+    """Return citation diagnostics ONLY after all other checks pass.
 
     Inspection never changes text/references or admits a candidate. This full pass
     prevents an early citation error from masking a later policy/structure error.
@@ -314,35 +314,37 @@ def citation_only_failures(value, inputs):
         if type(value) is not dict or set(value)!=set(FORMATS):return []
         records=evidence_records(inputs);gaps=[]
         for name in FORMATS:
-            validate_draft(value[name],format_name=name,evidence_records=records)
+            draft=value[name]
+            if type(draft) is not dict:return []
+            citation_free=deepcopy(draft);citation_free['claim_references']=[]
+            # Validate every non-citation rule independently. A bad link, CTA,
+            # field type or tone structure must never become a citation retry.
+            validate_draft(citation_free,format_name=name,evidence_records=records)
             if inputs.get('tone_policy'):
                 from launchlens.voice_policy import validate_tone_structure
-                validate_tone_structure(value[name],name,inputs['tone_policy'],inputs['draft_constraints']['exact_cta'])
-            if name=='linkedin' and value[name]['content']['cta']!=CTA:return []
-            for path,text in text_fields(value[name]['content']):
+                validate_tone_structure(citation_free,name,inputs['tone_policy'],inputs['draft_constraints']['exact_cta'])
+            if name=='linkedin' and citation_free['content']['cta']!=CTA:return []
+            for path,text in text_fields(citation_free['content']):
                 if LINK.search(text):return []
                 if not (name=='campaign_brief' and path.startswith('restrictions_and_unknowns.')) and FORBIDDEN.search(text):return []
-            referenced={c for ref in value[name]['claim_references'] for c in ref['claim_ids']}
+            try:validate_draft(draft,format_name=name,evidence_records=records)
+            except ContractError as error:
+                path=error.diagnostic.get('field_path','')
+                if not (path.startswith('claim_references') or path.startswith('draft.claim_references')):return []
+                gaps.append(PackageError(name,"structure_or_evidence_reference",**error.diagnostic).diagnostic)
+                continue
+            referenced={c for ref in draft['claim_references'] for c in ref['claim_ids']}
             if referenced!=set(inputs['draft_constraints']['allowed_claim_ids']):
                 gaps.append(PackageError(name,'objective_claim_coverage','claim_references','objective_claim_coverage').diagnostic)
-            gaps.extend(field_claim_gaps(value[name],name))
+            gaps.extend(field_claim_gaps(draft,name))
         return gaps
-    except (ContractError,DraftValidationError,PackageError):return []
+    except (ContractError,DraftValidationError,PackageError,KeyError,TypeError):return []
 
 
 def project_package_context(inputs):
-    """US uses accepted projection unchanged. UK preserves complete scoped context.
-
-    The frozen US projection pins its launch hash: never counterfeit it for UK.
-    UK's explicit restricted view therefore retains all original caveats/conflicts.
-    """
+    """One Writer input builder for Proceed and answered Clarify paths."""
     from launchlens.writer_context import project_writer_input
-    if inputs['validated_request']['market_id']=='US':return project_writer_input(inputs)
-    check(inputs['validated_request']['market_id']=='UK','permission_denied')
-    view=deepcopy(inputs)
-    return {'model_input':view,'manifest':{'authoritative_input_sha256':digest(inputs),
-        'model_input_sha256':digest(view),'policy_id':'uk_complete_authority_v1',
-        'note':'Complete scoped input retained; US-only frozen projection not reused'}}
+    return project_writer_input(inputs,allow_restricted_clarify=True)
 
 
 def normalize_package(value):

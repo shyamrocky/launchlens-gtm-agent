@@ -67,20 +67,27 @@ def selected_text(value, spans, source, ledger, excluded_reason="Outside reviewe
     return parts
 
 
-def project_writer_input(inputs, *, policy=None):
+def project_writer_input(inputs, *, policy=None, allow_restricted_clarify=False):
     """Return a model view plus audit manifest, never a replacement evidence authority."""
     policy=deepcopy(load_policy() if policy is None else policy)
     original=deepcopy(inputs);context=inputs['research_context'];request=validate_request(inputs['validated_request'])
-    require(request['market_id']=='US' and set(inputs['draft_constraints']['allowed_claim_ids'])==set(objective_claims(request)),
+    restricted=allow_restricted_clarify and context['launch'].get('decision')=='Clarify'
+    require(set(inputs['draft_constraints']['allowed_claim_ids'])==set(objective_claims(request)),
             'Unsupported Writer projection scope')
     launch=context['launch'];pmm=context['pmm']
-    require(launch.get('authority')=='synthetic_launch_decision' and launch.get('decision')=='Proceed' and launch.get('promotional_draft_allowed') is True
-            and launch.get('publishing_allowed') is False and launch.get('conditions')==[]
+    if restricted:
+        require(launch.get('decision')=='Clarify' and launch.get('promotional_draft_allowed') is False
+                and launch.get('conditions') and inputs['draft_constraints']['availability_wording_allowed'] is False,
+                'Restricted drafting scope is not sufficient')
+    require(launch.get('authority')=='synthetic_launch_decision'
+            and (restricted or (launch.get('decision')=='Proceed' and launch.get('promotional_draft_allowed') is True
+                and launch.get('conditions')==[]))
+            and launch.get('publishing_allowed') is False
             and all(launch.get(k)==request[k] for k in ['product_id','market_id','evaluation_date']),
             'Launch permission or scope is not sufficient')
     require(pmm.get('status')=='ok' and pmm.get('authority')=='synthetic_pmm_guidance',
             'Complete PMM context required')
-    require(identity(pmm)==policy['pmm_sha256'] and identity(launch)==policy['launch_sha256'],
+    require(identity(pmm)==policy['pmm_sha256'] and (restricted or identity(launch)==policy['launch_sha256']),
             'PMM or launch changed; review new caveats/conflicts before projection')
     ledger=[];leaves=pmm_leaves(pmm);chosen={s['source']:s for s in policy['pmm_selection']}
     require(set(chosen)<=set(leaves),'Reviewed PMM field is unavailable')
@@ -132,8 +139,17 @@ def project_writer_input(inputs, *, policy=None):
     for i,row in enumerate(launch['readiness_evidence']):
         values=row['values'];item={k:deepcopy(values[k]) for k in policy['readiness_fields']}
         source=f'research_context.launch.readiness_evidence.{i}.values.Evidence / Reference'
-        text=values['Evidence / Reference'];spans=policy.get('readiness_selection',{}).get(str(i),
-              [[0,len(text),'Retain scope, caveats and conditional permission']])
+        text=values['Evidence / Reference']
+        spans=(None if restricted else policy.get('readiness_selection',{}).get(str(i)))
+        if restricted and ' Public fact references: ' in text:
+            # This source locator names other PROD IDs; retain both surrounding
+            # operational qualifications while excluding the unrelated ID list.
+            marker=' Public fact references: data/public_sources/coca_cola_cherry_float_product_brief.md (PROD-001 to PROD-004) and data/public_sources/product_source_manifest.csv.'
+            require(text.count(marker)==1,'Unreviewed readiness source locator changed')
+            start=text.index(marker);end=start+len(marker)
+            spans=[[0,start,'Keep scoped handoff qualification'],
+                   [end,len(text),'Keep market-specific product restrictions']]
+        spans=spans or [[0,len(text),'Retain scope, caveats and conditional permission']]
         item['Evidence / Reference']=selected_text(text,spans,source,ledger)
         operational_restrictions.append(item)
     operations['readiness_restrictions']=operational_restrictions
@@ -143,10 +159,15 @@ def project_writer_input(inputs, *, policy=None):
                        'decision':'include' if field in operations else 'retain_in_authority',
                        'reason':'Keep permission, scope and restrictions; omit operational trace/IDs/coordination metadata'})
     model=deepcopy(inputs)
+    boundaries=(deepcopy(policy['material_boundaries']) if not restricted else [
+        'PMM positioning is strategy, not operational permission. Readiness remains Clarify; regional availability is unconfirmed. Human guidance permits drafting only without availability wording.',
+        policy['material_boundaries'][1],
+        'The planned launch date is fictional calendar data, not confirmed shelf availability. Do not claim launch timing, availability, or purchase permission.',
+        policy['material_boundaries'][3]])
     model['research_context']={'lower_trust_data_only':True,
         'pmm':{'authority':pmm['authority'],'guidance':guidance},
         'launch':operations,'claims':sorted(claims,key=lambda v:v['claim_id']),
-        'claim_context':pool,'material_boundaries':deepcopy(policy['material_boundaries'])}
+        'claim_context':pool,'material_boundaries':boundaries}
     visible=set(re.findall(r'PROD-\d{3}',canonical(model)))
     require(visible<=set(inputs['draft_constraints']['allowed_claim_ids']),
             'Ineligible claim ID remains; do not strip a material caveat to pass')

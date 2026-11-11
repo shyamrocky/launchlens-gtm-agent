@@ -24,7 +24,8 @@ from launchlens.live_research import (MODEL, ResearchModel, LiveResearchTools, E
     MAX_REQUEST_BYTES, dumps, strict_json, tool_schemas)
 from launchlens.package_content import CONFIG_SHA256, configuration, load_package_prompt
 from launchlens.voice_policy import BRAND_POLICY_ID, POLICY_SHA256
-from launchlens.writer_context import load_policy, project_writer_input
+from launchlens.writer_context import load_policy
+from launchlens.package_content import project_package_context as project_writer_input
 from launchlens.writer_comparison import ProtectedStore, money
 from launchlens.writer_providers import ProviderHTTP, read_selected_keys
 
@@ -620,7 +621,7 @@ class LivePackageRun:
         transports = {r:LiveTransport(r,self.guard,keys,wire_factory=wire_factory) for r in ROLES}
         self.controller = ResearchModel(transports['controller'],mode='live_package')
         self.writer,self.reviewer,self.reviser = [ContentCall(transports[r],stage=r,
-            model_id=profile()['roles'][r]['model_id'],projector=(project_writer_input if permission['request']['market_id']=='US' else __import__('launchlens.package_content',fromlist=['project_package_context']).project_package_context))
+            model_id=profile()['roles'][r]['model_id'],projector=project_writer_input)
             for r in ['package_writer','package_reviewer','package_revision']]
         self.tools = tools if tools is not None else LiveResearchTools(NotionReader(NotionHTTP(keys['NOTION_API_KEY'])),PineconeHTTP(keys['PINECONE_API_KEY']))
         self.session = FoundationSession(self.controller,self.tools,mode='live_package',writer=self.writer,
@@ -647,7 +648,7 @@ class LivePackageRun:
             self._persist(state)
             if on_update is not None:return on_update(update,state)
         state = self.session.run(run_id,on_update=checkpoint)
-        if self.guard.permission.get('standing_budget') and state['status']=='draft_incomplete' and (state.get('draft_failure') or {}).get('rule') in {'field_claim_coverage','objective_claim_coverage'} and self.session.can_retry_writer():
+        if self.guard.permission.get('standing_budget') and state['status']=='draft_incomplete' and self.session.can_retry_writer():
             state=self.session.retry_writer(run_id,on_update=checkpoint)
         try:self._save(state)
         except Exception:

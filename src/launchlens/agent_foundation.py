@@ -881,9 +881,9 @@ class FoundationSession:
                 code=(state.get('draft_failure') or {}).get('code')
                 from launchlens.package_content import citation_only_failures
                 calls=getattr(self._writer,'calls',[])
-                missing_only=(failure_stage=='draft_validation' and code in {'field_claim_coverage','objective_claim_coverage'} and
+                citation_only=(failure_stage=='draft_validation' and
                     calls and bool(citation_only_failures(calls[-1].get('candidate'),prepare_package_input(state))))
-                if missing_only and (self._execution_guard is None or not self._execution_guard.closed):
+                if citation_only and (self._execution_guard is None or not self._execution_guard.closed):
                     state['status']='draft_incomplete'
                 if failure_stage in {'draft_writing','draft_validation'} and rule in technical and code not in {'objective_claim_coverage','field_claim_coverage','prohibited_wording','prohibited_link','cta_mismatch'}:
                     if self._execution_guard is None or not self._execution_guard.closed:
@@ -946,12 +946,18 @@ class FoundationSession:
 
     def _writer_failure_retryable(self,state):
         failure=state.get('draft_failure') or {}
-        if failure.get('rule') in {'field_claim_coverage','objective_claim_coverage'}:
+        if failure.get('stage')=='draft_validation' and failure.get('code') in {
+                'structure_or_evidence_reference','invalid_claim_reference','field_claim_coverage',
+                'objective_claim_coverage'}:
             from launchlens.package_content import citation_only_failures
             calls=getattr(self._writer,'calls',[])
-            try:return bool(calls and citation_only_failures(calls[-1].get('candidate'),prepare_package_input(state)))
-            except Exception:return False
-        return failure.get('rule') not in {'invalid_claim_reference','evidence_validation_failed','prohibited_wording','prohibited_link','cta_mismatch'}
+            try:
+                if calls and citation_only_failures(calls[-1].get('candidate'),prepare_package_input(state)):
+                    return True
+            except Exception:pass
+            if failure.get('code') != 'structure_or_evidence_reference':return False
+        return failure.get('rule') not in {'invalid_claim_reference','invalid_content_field_reference',
+            'evidence_validation_failed','prohibited_wording','prohibited_link','cta_mismatch'}
 
     def recover_writer_candidate(self,run_id,candidate,*,on_update=None):
         """Explicit saved-response revalidation; no research/Controller/Writer call."""
