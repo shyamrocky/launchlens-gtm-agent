@@ -1,3 +1,52 @@
+## E2E corrections and citation repair sync — November 10, 2026
+
+**Authority:** owner explicitly requested Git sync after approving M2-D054 and
+M2-D055, implementation/offline verification, and separate app restarts. Publish
+these completed canonical changes to the existing private main. This authorizes
+this scoped publication only, not new inference, content approval or another
+milestone. Starting local/remote main both equal966a935; destination isPrivate=true.
+
+**Included:** deferred suggestion selection followed by explicit Create next
+version; exact-only Reviewer funding; shared execute/resume/continue citation retry;
+validated receipt-based approval for other-market handoff and reload; support for
+the previously owner-authorized USD2 shared demo cap without reset; immutable
+candidate/reference-only citation repair, complete detected citation diagnostics,
+strict source/field/ID validation, full package admission and fresh Reviewer;
+versioned repair prompt, synthetic regressions and actual mocked UI-flow tests.
+The private ledger/session implementing the earlier cap extension are excluded.
+No inheritance extension, model/provider/profile change, extra retry or revision
+allowance change. Existing prompts and historical contracts remain intact.
+
+**Verification:**692 fresh offline tests PASS in a clean canonical copy:
+462 harness +116 UI +114 root. Root page/chunk prerequisites were regenerated
+only in that temporary copy from unchanged canonical inputs. No workspace,
+credentials, saved runs or response artifacts were copied. Existing interpreters
+used; no dependency installation. Coverage includes actual suggestion clicks and
+Create next version, actual approval checkbox/button and written receipts,
+reload and US↔UK Start, actual UK Continue/resume and interrupted checkpoint
+continuation, all three synthetic citation failure shapes, immutable-text repair,
+rejection of a rewritten retry introducing a new omission, malformed patches,
+accounting restore and single-retry guards. These are offline engineering results,
+not a fresh live content-quality result. Canonical Python/JSON syntax:166 files PASS.
+Exact staged paths/content, credential values/patterns, whitespace and new links
+reviewed before publication. Source data, generated/private runtime artifacts,
+approvals, ledgers, credentials and MEMORY remain local; all2,340 protected original
+file hashes are preserved during this sync.
+
+**Runtime/status:** owner-authorized restart after M2-D055 already completed at
+localhost8520; health returned ok. No restart, live calls, run execution, retroactive
+repair, archive/reset, new content approval, budget change or MEMORY append during
+Git sync. Historical pending-approval/restart labels below retain their dated scope;
+M2-D054/D055 implementation is complete and this publication records that checkpoint.
+
+**Publication boundary:**23 explicitly reviewed canonical files. Exclude workspace,
+.env/credentials, generated/private data, Writer responses/checkpoints, decisions,
+approval/authorization receipts, accounting and local environments. Only code and
+synthetic tests describing the cap extension are published, never its private ledger.
+Normal fast-forward push; no visibility, Git identity configuration or history rewrite.
+
+---
+
 ## Revision checkpoint sync — November 10, 2026
 
 **Authority:** owner explicitly requested “git sync” after diagnosis of three

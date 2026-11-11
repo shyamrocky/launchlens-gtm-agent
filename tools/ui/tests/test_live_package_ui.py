@@ -33,19 +33,23 @@ class LivePackageUITests(unittest.TestCase):
         snapshot_write=patch('launchlens.run_archive.write_private',return_value=None)
         snapshot_write.start();self.addCleanup(snapshot_write.stop)
 
-    def start_live(self,wire=None):
+    def start_live(self,wire=None,*,market="US",authorization=None):
         import tempfile
         from launchlens.writer_comparison import ProtectedStore
         folder=tempfile.TemporaryDirectory();self.addCleanup(folder.cleanup)
-        wire=wire or Wire();run=LivePackageRun(permission(),KEYS,tools=ReviewFixtureTools(),wire_factory=wire,now=NOW,
+        wire=wire or Wire();grant=authorization or permission()
+        if market!='US':
+            from launchlens.live_package import preflight
+            grant['request']=request(market);grant['scope_sha256']=preflight(request=request(market))['scope_sha256']
+        run=LivePackageRun(grant,KEYS,tools=ReviewFixtureTools(),wire_factory=wire,now=NOW,
             store=ProtectedStore(Path(folder.name)/'mock-live-run'))
         class Reader:
             def get_launch_context(self,market):return ReviewFixtureTools().read_launch({'market_id':market})
         snapshot=fetch_inventory(load_display(),Reader())
         app=AppTest.from_file(str(ROOT/'streamlit_app.py'),default_timeout=20).run()
-        with patch('launchlens.inventory_ui.fetch_inventory',return_value=snapshot),             patch('launchlens.live_package.readiness',return_value={'ready':True,'request':request(),'message':'MOCK authorization'}),             patch('launchlens.live_package.create_live_run',return_value=run) as factory:
+        with patch('launchlens.inventory_ui.fetch_inventory',return_value=snapshot),             patch('launchlens.live_package.readiness',return_value={'ready':True,'request':request(market),'message':'MOCK authorization'}),             patch('launchlens.live_package.create_live_run',return_value=run) as factory:
             app.selectbox(key='ui-mode').select('Live agent').run()
-            app.button(key='open-US').click().run()
+            app.button(key='open-'+market).click().run()
             self.assertFalse(app.button(key='prepare-start').disabled)
             self.assertEqual(factory.call_count,0);self.assertFalse(wire.calls)
             app.button(key='prepare-start').click().run()
@@ -64,21 +68,68 @@ class LivePackageUITests(unittest.TestCase):
         self.assertFalse(any(b.label in ['Continue agent','Create Version 2','Review Version 2'] for b in app.button))
         self.assertEqual(len(wire.calls),calls)
 
-    def test_approved_us_run_does_not_block_uk_start(self):
+    def clarification_wire(self):
+        from launchlens.offline_fixtures import action
+        return Wire(actions=[action('read_pmm_brief','pmm'),action('check_launch','launch'),
+            action('request_clarification','ask',market_id='UK',question='How should the UK run proceed?'),
+            action('generate_package','write')])
+
+    def test_real_approval_receipt_allows_other_market_in_session_and_after_reload(self):
         from launchlens.live_package import SavedRunView
-        app,run,wire=self.start_live()
-        state=run.snapshot();state['human_accepted']=True;state['status']='approved'
-        app.session_state['offline_run']=SavedRunView(
-            {'state':state,'capture':run.capture(),'authorization':run.guard.permission},run.store.path)
-        app.button(key='home').click().run()
-        app.button(key='open-UK').click().run()
-        uk_request=app.session_state['selected_request']
-        with patch('launchlens.live_package.readiness',return_value={
-            'ready':True,'request':uk_request,'message':'MOCK authorization'}):
-            app.run()
-        self.assertFalse(app.exception)
-        self.assertFalse(app.button(key='prepare-start').disabled)
-        self.assertEqual(len(wire.calls),6)
+        from launchlens.package_presentation import effective_approval
+        import json
+        for source,target in [('US','UK'),('UK','US')]:
+            with self.subTest(source=source):
+                app,run,wire=self.start_live(self.clarification_wire() if source=='UK' else None,market=source)
+                if source=='UK':next(b for b in app.button if b.label=='Continue').click().run()
+                state=run.snapshot();calls=len(wire.calls)
+                app.button(key='home').click().run();app.button(key='open-'+target).click().run()
+                with patch('launchlens.live_package.readiness',return_value={'ready':True,'request':app.session_state['selected_request'],'message':'MOCK authorization'}):app.run()
+                self.assertTrue(app.button(key='prepare-start').disabled)  # No approval yet.
+                app.button(key='current').click().run()
+                next(c for c in app.checkbox if (c.key or '').startswith('run-approval-as-is-')).check().run()
+                app.button(key='approve-package').click().run();self.assertFalse(app.exception)
+                receipts=list(run.store.path.glob('human-internal-approval-*.json'))
+                self.assertEqual(len(receipts),1);receipt=json.loads(receipts[0].read_text())
+                self.assertTrue(receipt['internal_approved']);self.assertEqual(receipt['version'],state['package']['version'])
+                self.assertFalse(state['human_accepted']);self.assertEqual(state['status'],'awaiting_human_review')
+                self.assertEqual(run.snapshot(),state);self.assertEqual(len(wire.calls),calls)
+                app.button(key='home').click().run();app.button(key='open-'+source).click().run()
+                with patch('launchlens.live_package.readiness',return_value={'ready':True,'request':state['request'],'message':'MOCK authorization'}):app.run()
+                self.assertTrue(app.button(key='prepare-start').disabled)  # Same market still needs archive.
+                for reload in (False,True):
+                    if reload:
+                        view=SavedRunView({'state':state,'capture':run.capture(),'authorization':run.guard.permission},run.store.path)
+                        snapshot=fetch_inventory(load_display(),type('Reader',(),{'get_launch_context':lambda _,m:ReviewFixtureTools().read_launch({'market_id':m})})())
+                        with patch.dict(os.environ,{'LAUNCHLENS_UI_MODE':'live'}),patch('launchlens.live_package.current_resume_available',return_value=True),patch('launchlens.live_package.load_current_live_run',return_value=view),patch('launchlens.inventory_ui.fetch_inventory',return_value=snapshot):
+                            app=AppTest.from_file(str(ROOT/'streamlit_app.py'),default_timeout=20).run()
+                            self.assertFalse(app.exception)
+                            self.assertIn('run-internal-approval-'+state['run_id'],app.session_state)
+                            app.button(key='home').click().run()
+                    else:app.button(key='home').click().run()
+                    app.button(key='open-'+target).click().run()
+                    selected=app.session_state['selected_request']
+                    with patch('launchlens.live_package.readiness',return_value={'ready':True,'request':selected,'message':'MOCK authorization'}):app.run()
+                    self.assertFalse(app.exception);self.assertFalse(app.button(key='prepare-start').disabled)
+                    self.assertEqual(len(wire.calls),calls)
+                # The actual receipt cannot authorize a different version, even with old UI state.
+                stale=deepcopy(state);stale['package']['version']+=1
+                self.assertFalse(effective_approval(stale,store=run.store,record=receipt))
+                app.session_state['offline_run']=SavedRunView({'state':stale,'capture':run.capture(),'authorization':run.guard.permission},run.store.path)
+                with patch('launchlens.live_package.readiness',return_value={'ready':True,'request':selected,'message':'MOCK authorization'}):app.run()
+                self.assertTrue(app.button(key='prepare-start').disabled)
+                # Return to the actual approved receipt, then start the other market.
+                app.session_state['offline_run']=SavedRunView({'state':state,'capture':run.capture(),'authorization':run.guard.permission},run.store.path)
+                from launchlens.live_package import preflight
+                grant=permission();grant['request']=selected;grant['scope_sha256']=preflight(request=selected)['scope_sha256']
+                next_wire=self.clarification_wire() if target=='UK' else Wire()
+                next_run=LivePackageRun(grant,KEYS,tools=ReviewFixtureTools(),wire_factory=next_wire,now=NOW)
+                with patch('launchlens.live_package.readiness',return_value={'ready':True,'request':selected,'message':'MOCK authorization'}),patch('launchlens.live_package.create_live_run',return_value=next_run) as create:
+                    app.run();app.button(key='prepare-start').click().run()
+                    self.assertFalse(app.exception);self.assertEqual(create.call_count,1)
+                self.assertIs(app.session_state['offline_run'],next_run)
+                self.assertEqual(next_run.snapshot()['request']['market_id'],target)
+                self.assertEqual(run.snapshot(),state);self.assertEqual(len(wire.calls),calls)
 
     def test_live_mode_and_demo_mode_labels_and_no_unapproved_start(self):
         class Reader:
@@ -165,6 +216,113 @@ class LivePackageUITests(unittest.TestCase):
         self.assertNotEqual(app.session_state['inventory'].get('data_mode'),'offline')
         self.assertTrue(run.guard.closed);app.run();self.assertEqual(len(wire.calls),1)
         self.assertFalse(any('Generate again' in b.label for b in app.button))
+
+    def test_exact_suggestion_submission_only_needs_fresh_reviewer_budget(self):
+        import tempfile,json
+        from launchlens.review_decisions import grouped_findings,safe_hints
+        from ui_review_helpers import finish_pending
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'ledger.json';path.write_text(json.dumps({'ceiling_usd':'1.00','opening_accounted_usd':'0','claims':[],'accounted_usd':'0','remaining_usd':'1.00'}));path.chmod(0o600)
+            grant=permission();grant['standing_budget']=True
+            with patch('launchlens.live_package.BUILD_LEDGER',path):
+                app,run,wire=self.start_live(authorization=grant);before=run.snapshot()
+                group=next(g for g in grouped_findings(before) if g['needs_attention'] and safe_hints(g))
+                ledger=json.loads(path.read_text());ledger['opening_accounted_usd']='0.90'
+                from decimal import Decimal
+                ledger['accounted_usd']=str(Decimal('.90')+Decimal(ledger['accounted_usd']));ledger['remaining_usd']=str(Decimal('1')-Decimal(ledger['accounted_usd']))
+                path.write_text(json.dumps(ledger));unchanged=path.read_bytes()
+                self.assertFalse(run.guard.can_revise());self.assertTrue(run.guard.can_revise(writer_required=False))
+                show_card(app,group);app.button(key='use-'+group['id']).click().run()
+                self.assertEqual(run.snapshot(),before);self.assertEqual(path.read_bytes(),unchanged)
+                finish_pending(app);self.assertFalse(app.button(key='create-next-version').disabled)
+                app.button(key='create-next-version').click().run();self.assertFalse(app.exception)
+                self.assertEqual(run.snapshot()['package']['version'],2);self.assertEqual(len(run.reviser.calls),0)
+                self.assertEqual(len(run.reviewer.calls),2)
+
+    def test_actual_continue_automatically_retries_missing_blog_title_once(self):
+        import tempfile,json
+        from launchlens.package_content import load_package_prompt
+        for kind in ('missing_title','twice','mixed','no_permission','unknown_usage','exhausted'):
+            with self.subTest(kind=kind),tempfile.TemporaryDirectory() as tmp:
+                path=Path(tmp)/'ledger.json'
+                # setUp prevents catalog writes; create this synthetic ledger directly.
+                path.write_text(json.dumps({'ceiling_usd':'1.00','opening_accounted_usd':'0','claims':[],'accounted_usd':'0','remaining_usd':'1.00'}));path.chmod(0o600)
+                wire=self.clarification_wire()
+                class CitationWire:
+                    calls=wire.calls
+                    def __call__(_,model,validator):
+                        http=wire(model,validator)
+                        def wrapped(payload):
+                            response=http(payload)
+                            if 'citation repair Writer' in payload['messages'][0]['content'] and kind=='twice':
+                                value=json.loads(response.body);patch=json.loads(value['choices'][0]['message']['content'])
+                                patch['references']={k:[] for k in patch['references']}
+                                value['choices'][0]['message']['content']=json.dumps(patch)
+                                return WireResponse(200,json.dumps(value).encode(),{})
+                            if payload['messages'][0]['content']==load_package_prompt('package_writer'):
+                                count=sum(p['messages'][0]['content']==load_package_prompt('package_writer') for p in wire.calls)
+                                if count==1 or kind=='twice':
+                                    value=json.loads(response.body);candidate=json.loads(value['choices'][0]['message']['content'])
+                                    candidate['blog']['content']['title']='Cherry Float combines cherry with vanilla notes.'
+                                    candidate['blog']['claim_references']=[r for r in candidate['blog']['claim_references'] if r['content_field']!='title']
+                                    if kind=='mixed':candidate['email']['content']['body']='Buy now at https://example.com'
+                                    if kind=='unknown_usage':value.pop('usage')
+                                    if kind=='exhausted':
+                                        ledger=json.loads(path.read_text());ledger['opening_accounted_usd']='0.98';path.write_text(json.dumps(ledger))
+                                    value['choices'][0]['message']['content']=json.dumps(candidate)
+                                    return WireResponse(200,json.dumps(value).encode(),{})
+                            return response
+                        return wrapped
+                grant=permission();grant['standing_budget']=True
+                if kind=='no_permission':grant['allow_one_explicit_writer_retry']=False
+                with patch('launchlens.live_package.BUILD_LEDGER',path):
+                    app,run,_=self.start_live(CitationWire(),market='UK',authorization=grant)
+                    paused=run.snapshot();self.assertEqual(paused['status'],'needs_clarification')
+                    next(b for b in app.button if b.label=='Continue').click().run()
+                    self.assertFalse(app.exception);after=run.snapshot()
+                    retry=kind in {'missing_title','twice'}
+                    self.assertEqual(len(run.writer.calls),2 if retry else 1)
+                    self.assertEqual(after['retry_attempts'],1 if retry else 0)
+                    self.assertFalse(after['restricted_drafting']['availability_wording_allowed'])
+                    self.assertTrue(after['failure_history'])
+                    if retry:
+                        diagnostic=after['failure_history'][0]
+                        self.assertEqual((diagnostic['stage'],diagnostic['format'],diagnostic['rule'],diagnostic['field_path']),('draft_validation','blog','field_claim_coverage','content.title'))
+                        self.assertEqual(run.writer.calls[1]['model_input']['previous_validation_diagnostic_data_only'],diagnostic)
+                    if kind=='missing_title':self.assertEqual(after['status'],'awaiting_human_review')
+                    else:self.assertFalse(after['package'])
+                    calls=len(wire.calls);app.run();self.assertEqual(len(wire.calls),calls)
+                    ledger=json.loads(path.read_text());self.assertEqual(len(ledger['claims']),len(run.guard.events))
+                    self.assertGreater(float(ledger['accounted_usd']),0)
+
+    def test_suggestion_choices_batch_on_create_with_exact_only_and_mixed_requests(self):
+        from launchlens.review_decisions import grouped_findings,safe_hints
+        from launchlens.package_content import package_value
+        for mixed in (False,True):
+            with self.subTest(mixed=mixed):
+                app,run,wire=self.start_live();before=run.snapshot();calls=deepcopy(run.capture())
+                groups=[g for g in grouped_findings(before) if g['needs_attention'] and safe_hints(g)]
+                chosen=groups[:1];self.assertEqual(len(chosen),1)
+                expected=[]
+                for g in chosen:
+                    show_card(app,g);app.button(key='use-'+g['id']).click().run()
+                    expected.extend((o,safe_hints(g)[0]) for o in g['occurrences'] if o['needs_attention'])
+                    self.assertEqual(run.snapshot(),before);self.assertEqual(run.capture(),calls)
+                if mixed:
+                    other=next(g for g in grouped_findings(before) if g['needs_attention'] and g['id'] not in {x['id'] for x in chosen})
+                    show_card(app,other);app.button(key='changes-'+other['id']).click().run()
+                from ui_review_helpers import finish_pending
+                finish_pending(app);app.button(key='create-next-version').click().run()
+                self.assertFalse(app.exception);after=run.snapshot()
+                self.assertEqual(after['package']['version'],2);self.assertEqual(after['revision_attempts'],1)
+                self.assertEqual(len(run.reviser.calls),1 if mixed else 0)
+                self.assertEqual(len(run.reviewer.calls),2)
+                self.assertEqual(after['review']['binding']['draft_version'],2)
+                for occurrence,replacement in expected:
+                    from launchlens.package_content import text_fields
+                    text=dict(text_fields(after['drafts'][occurrence['format']]['draft']['content']))[occurrence['content_field']]
+                    self.assertIn(replacement,text)
+                calls=len(wire.calls);app.run();self.assertEqual(len(wire.calls),calls)
 
     def test_uk_ui_continue_retrieves_missing_claims_then_writes_without_availability(self):
         """Exercise the UI's actual Continue value and live adapter, not a fabricated state."""

@@ -39,6 +39,29 @@ class DemoBudgetTests(unittest.TestCase):
   with self.assertRaisesRegex(LiveGateError,'Archived'):run._persist(run.snapshot())
   with self.assertRaisesRegex(LiveGateError,'Archived'):run.guard.reserve_revision({'draft_version':1})
   self.assertTrue(archive.download_package(archive.archived_runs()[0]))
+ def test_explicit_two_dollar_extension_preserves_ledger_identity_claims_and_active_guard(self):
+  grant=demo_permission(request());guard=RunBudget(grant,now=NOW);guard.arm(request())
+  event=guard.claim('controller','a'*64)
+  guard.complete(event,{'model':guard.plan['roles']['controller']['model_id'],'usage':{'prompt_tokens':100,'completion_tokens':50,'total_tokens':150}})
+  # An unresolved reservation also remains spent/reserved across the cap extension.
+  guard.claim('controller','b'*64)
+  session=archive.demo_session();before=archive.demo_budget();path=guard.standing.path
+  after=archive.raise_demo_budget()
+  self.assertEqual(archive.demo_session()['session_id'],session['session_id'])
+  self.assertEqual(archive.demo_session()['budget_ledger'],session['budget_ledger'])
+  self.assertEqual(guard.standing.path,path);self.assertEqual(after['ceiling_usd'],'2.00')
+  for key in ('claims','opening_accounted_usd','accounted_usd'):self.assertEqual(after[key],before[key])
+  self.assertEqual(Decimal(after['remaining_usd'])-Decimal(before['remaining_usd']),Decimal('1'))
+  self.assertEqual(len(after['ceiling_authorizations']),1)
+  self.assertEqual(archive.raise_demo_budget(),after)
+  for market in ('US','UK','IN'):
+   new=demo_permission(request(market));self.assertEqual(new['budget_ledger'],session['budget_ledger'])
+   self.assertIn('USD2.00',new['authorization_reference'])
+   self.assertEqual(new['aggregate_ceiling_usd'],grant['aggregate_ceiling_usd'])
+  # Pre-extension objects settle against the same ledger without resetting anything.
+  guard.complete(guard.events[-1],{'model':guard.plan['roles']['controller']['model_id'],'usage':{'prompt_tokens':100,'completion_tokens':50,'total_tokens':150}})
+  self.assertEqual(len(guard.standing.read()['claims']),2)
+  self.assertEqual(guard.standing.read()['ceiling_usd'],'2.00')
  def test_exhausted_shared_ledger_prevents_start_before_reading_keys(self):
   session=archive.demo_session();ledger=self.root/session['budget_ledger']
   value=archive.private_json(ledger);value.update(opening_accounted_usd='1.00',accounted_usd='1.00',remaining_usd='0.00')

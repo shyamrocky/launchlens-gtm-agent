@@ -90,7 +90,7 @@ def approval_matches(state,book,record):
     # instructions the owner may prepare for another version.
     if not record or book.get('binding')!=review_identity(state):return False
     accepted=record.get('approval_decisions',book)
-    return bool(record.get('binding')==review_identity(state) and
+    return bool(record.get('binding')==review_identity(state) and record.get('version')==state['package']['version'] and
         record.get('decisions_sha256')==digest(accepted) and accepted.get('binding')==review_identity(state) and
         record.get('internal_approved') is True and record.get('publishing_allowed') is False and
         not approval_issues(state,accepted))
@@ -136,6 +136,15 @@ def restored_approval(state,book,store):
                 candidates.append((path.stat().st_mtime_ns,record))
         except (ValueError,KeyError,TypeError):continue
     return max(candidates,key=lambda item:item[0])[1] if candidates else None
+
+
+def effective_approval(state,*,store=None,book=None,record=None):
+    """Shared exact-version approval check for display, archive and start eligibility."""
+    if not state.get('package') or not state.get('review'):return False
+    from launchlens.review_decisions import decision_book
+    if book is None:book=restored_decisions(state,store)
+    book=decision_book(state,book)
+    return approval_matches(state,book,record) or restored_approval(state,book,store) is not None
 
 
 def markdown_package(state,*,approved=False):

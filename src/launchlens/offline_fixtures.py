@@ -245,7 +245,7 @@ class PackageFixtureTransport:
         self.calls.append(deepcopy(payload))
         data = package_cases(); inputs = json.loads(payload['messages'][1]['content'])
         if self.stage == 'package_writer':
-            candidate = data['initial_package']
+            candidate = fixture_citation_repair(inputs) if inputs.get('citation_repair_protocol') else data['initial_package']
         elif self.stage == 'package_revision':
             candidate = data['revision_package']
             if inputs.get('revision_protocol'):candidate=fixture_revision_edits(inputs)
@@ -306,3 +306,15 @@ def fixture_revision_edits(inputs):
         if field['content_field'].endswith('body'):text+=' It offers a flavor story.'
         set_text(package,field['format'],field['content_field'],text)
     return fixture_edits(inputs,package)
+
+
+def fixture_citation_repair(inputs):
+    """Authored mock references only; not an evidence-entailment implementation."""
+    original=package_cases()['initial_package'];patch={}
+    for fmt,target in inputs['citation_repair_targets'].items():
+        known={r['content_field']:r['claim_ids'] for r in original[fmt]['claim_references']}
+        fields=target['required_fields']
+        if any(d['format']==fmt and d['rule']=='objective_claim_coverage' for d in inputs['citation_diagnostics_data_only']):
+            fields=list(dict.fromkeys([*fields,*(p for p in known if p in target['allowed_fields'])]))
+        patch[fmt]=[{'content_field':p,'claim_ids':known.get(p,inputs['writer_brief']['draft_constraints']['allowed_claim_ids'])} for p in fields]
+    return {'source_package_sha256':inputs['source_package_sha256'],'references':patch}

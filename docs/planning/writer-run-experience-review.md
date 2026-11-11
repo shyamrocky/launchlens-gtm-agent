@@ -1,3 +1,171 @@
+## M2-D054/D055 publication and restart status — November 10, 2026
+
+Owner approved the three E2E corrections and reference-only citation retry repair,
+then separately authorized app restart after each. Latest restart after M2-D055
+completed at localhost8520; health returned ok. Owner now requested private Git
+sync of this implementation. Fresh clean-copy verification:692 offline PASS
+(462 harness/116 UI/114 root); no live run or quality re-evaluation during sync.
+Private saved artifacts, approvals, pointers, USD2 budget accounting and MEMORY
+remain unchanged. No inheritance extension or further milestone. [Publication scope](repository-sync-2026-11-09.md#e2e-corrections-and-citation-repair-sync--november-10-2026).
+Historical pending-approval/restart/no-Git labels below describe earlier boundaries.
+
+---
+
+## M2-D055 — Immutable candidate and reference-only citation retry
+
+**Date/authority:** November 10, 2026. Owner approved retry repair only: the single
+citation retry keeps saved candidate text unchanged, receives all citation diagnostics,
+returns missing references only, and is followed by complete validation and fresh
+review. Inheritance work is explicitly excluded. **Status:** implemented and verified
+offline; app restart and owner live retest pending. No inference or Git sync.
+
+**Confirmed diagnosis:** saved UK failures in blog title, campaign positioning and
+email subject contain factual flavor/inspiration assertions. Creative titles already
+pass without references. The previous retry sent one diagnostic with the original
+brief and regenerated the whole package; one saved retry fixed positioning while
+changing37 text fields and introducing an uncited subject. Passing US V1 had identical
+citation instructions/schema/evidence/model settings; no UK-specific citation rule
+or causal market explanation was established. Actual saved requests/responses were
+read only. Maintained regressions use independently authored synthetic failure shapes.
+
+**Decision and rationale:** keep the existing Writer retry, harness and review gates,
+but constrain its output to source-bound reference additions/corrections. Alternatives
+rejected: another whole-package rewrite, automatically assigning evidence IDs, broad
+short-field inheritance, more retries and changing model/budget/revision limits.
+
+**Implementation:**
+
+- `citation_only_failures` inspects all formats and each reference rather than letting
+  one invalid reference hide later missing fields in that format. It returns the
+  complete detected citation diagnostic list after non-citation checks pass. Coverage
+  detection remains the existing narrow deterministic scan, not a general factuality
+  classifier. `field_claim_gaps` and its existing section-heading exception are
+  unchanged. Mixed policy/structure failures do not become automatic citation retries.
+- The same ContentCall Writer adapter uses `citation_references_v1` only on its one
+  eligible citation retry. Model input includes the immutable saved candidate, its
+  SHA256, all diagnostics, allowed target fields and original scoped evidence and
+  qualifications. A new hash-bound `package_citation_repair_v1.txt` prompt and dynamic
+  output schema permit only `{source_package_sha256, references}`. Prompt SHA256:
+  `cac30e755ed26913f9b3aabc091137b99ab2e3737610c8a9bc89d8aa145dcb71`.
+  Original prompts/contracts/profile hashes remain intact; the live transport accepts
+  this prompt only for the authorized second Writer attempt.
+- `citation_repair.merge` checks the source hash, exact diagnosed formats, allowed
+  paths, mandatory missing fields, nonempty eligible IDs and duplicate/extra entries.
+  It preserves valid existing citations and every content value, adding only returned
+  references. Existing invalid-reference recovery can correct references within its
+  diagnosed format without editing copy. Whole-package/prose responses, partial
+  repairs, stale bindings and out-of-scope patches are rejected. No copy is admitted
+  from a rejected patch. The merged complete package goes through unchanged full
+  admission, then its required independent fresh Reviewer. Original candidate, raw
+  reference patch, merged candidate, prompt identity, failures and actual costs remain
+  auditable. Failed repair stops after the same one retry; no third Writer call.
+
+Explicit non-citation format recovery retains its prior behavior; automatic recovery
+is citation-only. No new graph, provider, model, revision allowance or inheritance
+policy. References are evidence links, not semantic proof; the fresh Reviewer and
+human approval remain necessary. Unsupported unchanged copy may still fail repair
+or review; code never invents support or rewrites it to force admission.
+
+**Verification:**462 harness +116 UI +114 root =692 offline tests PASS in an isolated
+canonical copy without protected runtime inputs/credentials; existing interpreters,
+no install/dependency changes. Root document/chunk prerequisites regenerated only in
+that temporary copy. Ten new tests cover synthetic blog-title, positioning and
+subject failures through US execute and UK clarification/resume; all three gaps in
+one request; reference-only merge preserving all text and valid citations; the old
+retry-shaped rewritten package introducing a new subject omission; partial repairs;
+extra fields/formats, duplicates, stale hashes and invalid IDs; complete diagnostic
+collection despite invalid references; unchanged full-policy rejection; restored
+reference-patch captures/accounting without calls; and prompt attempt gating.
+Existing actual UK Continue AppTest, interrupted-checkpoint continuation, retry stop
+conditions, budget, approval and revision regressions also pass. Socket-blocked mock
+flows are engineering verification, not a new live content-quality result.
+
+All original source/configuration data, prompts, saved runs, receipts, decisions,
+approvals, current pointers, demo session, budget ledgers and MEMORY remain unchanged.
+No retroactive repair, refund, model/source call, archive/reset, restart or Git sync.
+Code/tests/prompt are in maintained project locations; workspace is continuity-only.
+Next: restart the app at8520, then owner retest/review. No further execution or next
+milestone is inferred from this implementation approval.
+
+---
+
+## M2-D054 — Deferred suggestions, continuation retry and receipt-based market handoff
+
+**Date/authority:** November 10, 2026. Owner explicitly approved all three diagnosed
+fixes, required regressions through the real UI/continuation flows, and raised the
+existing shared demo ceiling to USD2.00 as standing authorization without a ledger
+reset. **Status:** implemented and verified offline; app restart and owner live
+retest pending. No new inference, content approval or Git sync in this checkpoint.
+
+**Decision and rationale:** retain the existing harness, exact field edits,
+validation and independent fresh Reviewer. Correct the three entry-point mismatches
+rather than introducing a new pipeline, changing revision limits or weakening
+citation/approval checks. This supersedes the pending-approval wording in the
+historical diagnosis below. Alternatives rejected: immediate suggestion submission,
+market-specific bypasses, fabricated approved flags and a replacement budget ledger.
+
+- **Suggestion choices:** `agent_run_ui.review_page.choose` records the same
+  protected human-decision receipt as other choices and advances the card. It does
+  not queue execution, reserve budget, create a version or consume a revision.
+  Create next version submits the complete decision book once: literal replacements
+  execute in code; only selected rephrase fields use the Writer; the changed package
+  passes full validation and one fresh review. The submission budget check now
+  distinguishes exact-only from mixed requests, so an exact-only revision requires
+  only Reviewer capacity. Existing no-op accounting and three-revision cap remain.
+- **Citation recovery:** `LivePackageRun._execute_and_save` is shared by execute,
+  resume and continue_run, with the same protected checkpoint callback and single
+  citation-only retry. `field_claim_coverage` already qualified; no classifier
+  widening was needed. The original diagnostic goes to the retry; known usage,
+  explicit retry permission, call limits and funding are required. The retry
+  eligibility check verifies that the next Writer reservation is affordable;
+  actual claims still enforce the ceiling. Mixed policy failures, unknown billing,
+  missing permission, exhausted funds and a second citation failure never cause
+  another automatic Writer call. Every actual call and original failure remains.
+- **Approval handoff:** `package_presentation.effective_approval` is shared by run
+  display, archive descriptors and Prepare. It validates the exact current version,
+  content/review binding, accepted wording decisions and protected receipt; it can
+  restore those receipts after reload. Approval continues to leave the raw harness
+  state untouched. Other-market starts recognize the receipt; same-market,
+  unapproved/stale-version and active-run guards remain.
+
+**Budget:** `run_archive.raise_demo_budget` is an explicit owner-only local
+operation, not an app action. It raises the SAME session/ledger from USD1.00 to
+USD2.00 and adds an authorization audit entry; opening accounting, all claims,
+unknown reservations and prior history remain. Repeating it cannot refill the
+ledger. Both existing USD1 ledgers and the approved USD2 ledger can settle claims.
+New demo permissions describe the actual shared ceiling; per-run reservation/call
+limits and model/profile hashes are unchanged. Archive, Refresh and Start never
+raise or reset the cap. The authorized local extension retains USD0.7171925
+accounted across105 claims, leaving USD1.2828075 available.
+
+**Verification:** 452 harness +116 UI +114 root =682 tests PASS offline in a clean
+canonical copy, using existing interpreters and no dependency installation.
+Document/chunk prerequisites were regenerated only in that temporary copy.
+The final approval regression was rerun after adding actual other-market Start
+and guard assertions and passed. Socket connections are prohibited by the relevant
+mock tests. Regression fixtures remain minimal, independently authored inputs;
+no saved responses, protected run records or workspace dependency was introduced.
+
+Actual AppTest flows cover suggestion clicks with unchanged version/captures/ledger,
+Create next version for exact-only and mixed choices, reviewer-only funding,
+UK Continue/resume with a missing blog title citation, one retry maximum and every
+stop condition above. A real interrupted graph checkpoint exercises continue_run.
+Approval tests click the checkbox and Approve package, verify the written receipt,
+reload through saved-run restoration, navigate US→UK and UK→US, click Start for the
+other market and reject unapproved, same-market and stale-version cases. No test
+fabricates approved status/human_accepted flags. Existing full validation and fresh
+review tests remain intact. These are mocked-flow engineering checks, not a new
+live content-quality result.
+
+Saved runs, drafts, decisions, receipts, approvals, current pointers, prompts and
+source/configuration artifacts remain unchanged. Only the authorized demo session
+and its existing ledger change among protected runtime files. MEMORY is unchanged.
+No live model/source call, retry of a saved run, archive/reset or Git publication.
+Restart the app at8520 after this checkpoint, then the owner retests. Implementation
+approval is not marketing-content acceptance or permission for another milestone.
+
+---
+
 ## Known E2E issues pending approval
 
 November 10, 2026: owner reports final live E2E passed for US, UK and India.

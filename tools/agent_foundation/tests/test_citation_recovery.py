@@ -38,6 +38,10 @@ class CitationRecoveryTests(unittest.TestCase):
    http=wire(model,validator)
    def wrapped(payload):
     response=http(payload)
+    if 'citation repair Writer' in payload['messages'][0]['content'] and twice:
+     v=json.loads(response.body);d=json.loads(v['choices'][0]['message']['content'])
+     d['references']={k:[] for k in d['references']}
+     v['choices'][0]['message']['content']=json.dumps(d);return WireResponse(200,json.dumps(v).encode(),{})
     if payload['messages'][0]['content']==load_package_prompt('package_writer'):
      count=sum(v['messages'][0]['content']==load_package_prompt('package_writer') for v in wire.calls)
      if count==1 or twice:
@@ -107,6 +111,22 @@ class CitationRecoveryTests(unittest.TestCase):
      second=r.writer.calls[1]['model_input']
      self.assertEqual(second['previous_validation_diagnostic_data_only']['rule'],rule)
      self.assertEqual(second['eligible_claim_ids_for_retry_data_only'],['PROD-002','PROD-003'])
+ def test_actual_checkpoint_continue_uses_same_one_citation_retry(self):
+  class Disconnected(BaseException):pass
+  with tempfile.TemporaryDirectory() as tmp:
+   path=Path(tmp)/'ledger.json';path.write_text(json.dumps({'ceiling_usd':'1.00','opening_accounted_usd':'0','claims':[]}));path.chmod(0o600)
+   with patch('launchlens.live_package.BUILD_LEDGER',path):
+    grant=permission();grant['standing_budget']=True;wire=Wire()
+    run=LivePackageRun(grant,KEYS,tools=ReviewFixtureTools(),wire_factory=self.factory(wire),now=NOW)
+    def disconnect(_,state):
+     if (state.get('pending') or {}).get('name')=='generate_package':raise Disconnected()
+    rid=run.snapshot()['run_id']
+    with self.assertRaises(Disconnected):run.execute(rid,on_update=disconnect)
+    self.assertEqual(run.snapshot()['status'],'running');self.assertEqual(run.writer.calls,[])
+    state=run.continue_run(rid)
+    self.assertEqual(state['status'],'awaiting_human_review');self.assertEqual(state['retry_attempts'],1)
+    self.assertEqual(len(run.writer.calls),2);self.assertEqual(len(run.reviewer.calls),1)
+    self.assertEqual(state['failure_history'][0],run.writer.calls[1]['model_input']['previous_validation_diagnostic_data_only'])
  def test_second_citation_failure_never_causes_third_writer(self):
   r,s,wire=self.run_case(twice=True);after=r.retry_writer(s['run_id'])
   self.assertFalse(r.session.can_retry_writer());self.assertEqual(after['writing_attempts'],2);self.assertFalse(after['drafts']);self.assertEqual(after['retry_attempts'],1)

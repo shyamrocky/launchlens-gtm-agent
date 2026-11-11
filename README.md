@@ -1,3 +1,36 @@
+## Owner-authorized E2E and citation repair sync — November 10, 2026
+
+Owner requested Git sync of completed M2-D054/D055: deferred suggestion submission,
+receipt-based market handoff, continuation retry and immutable-candidate reference
+repair. The existing shared USD2 demo accounting stays private and unchanged by
+sync. Fresh clean-copy verification:692 offline PASS (462 harness/116 UI/114 root).
+No inheritance, new calls, run changes, budget reset or further milestone. App was
+already restarted at owner request; health passed. Historical pending approval /
+restart labels below describe earlier handoffs. [Publication scope and verification](docs/planning/repository-sync-2026-11-09.md#e2e-corrections-and-citation-repair-sync--november-10-2026).
+
+## Current checkpoint — M2-D055, November 10, 2026
+
+Owner-approved citation retry repair implemented: the single retry returns only
+missing/corrected references for the immutable saved candidate, receives all detected
+citation gaps, then passes full validation and fresh review. No inheritance work.
+692 offline tests PASS (462 harness/116 UI/114 root); synthetic failure shapes and
+actual continuation flows covered. Saved runs, original prompts/configuration and
+USD2 demo ledger/accounting remain unchanged. No live calls, reset or Git sync.
+App restart and owner retest pending. [Scope and results](docs/planning/writer-run-experience-review.md#m2-d055--immutable-candidate-and-reference-only-citation-retry).
+Earlier checkpoint labels below are historical.
+
+## Current checkpoint — M2-D054, November 10, 2026
+
+Owner-approved E2E corrections implemented: suggestions remain pending choices until
+Create next version; continuation paths share the bounded citation retry; other-market
+Prepare recognizes protected exact-version approval receipts. Real mocked UI flows
+and graph continuation tested:682 offline PASS (452 harness/116 UI/114 root).
+Owner-approved standing demo cap raised toUSD2.00 in the SAME ledger/session, with
+all105 claims and USD0.7171925 accounted retained; USD1.2828075 remains. No ledger
+reset, live calls, saved-run changes, MEMORY append or Git sync. App restart and
+owner retest pending. [Details and scope](docs/planning/writer-run-experience-review.md#m2-d054--deferred-suggestions-continuation-retry-and-receipt-based-market-handoff).
+Earlier pending-approval/checkpoint labels below are history, superseded for this scope.
+
 ## Owner-authorized revision checkpoint sync — November 10, 2026
 
 Owner requested Git sync of completed M2-D052/D053: shared revision avoidance and

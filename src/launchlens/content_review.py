@@ -214,6 +214,14 @@ class ContentCall:
             from launchlens.field_revisions import prompt
             instructions=prompt()
         model_inputs = deepcopy(inputs)
+        citation_retry=False
+        if retry:
+            from launchlens.package_content import citation_only_failures,prepare_package_input
+            citation_retry=bool(citation_only_failures(self.calls[0].get('candidate'),prepare_package_input(state)))
+        if citation_retry:
+            from launchlens.citation_repair import prepare,prompt,PROMPT_SHA256
+            model_inputs=prepare(state,model_inputs,self.calls[0]['candidate'])
+            instructions=prompt()
         if retry:
             model_inputs['previous_validation_diagnostic_data_only'] = deepcopy(state['draft_failure'])
             model_inputs['eligible_claim_ids_for_retry_data_only'] = deepcopy(inputs['writer_brief']['draft_constraints']['allowed_claim_ids'])
@@ -229,6 +237,7 @@ class ContentCall:
         if inputs.get('revision_command_id'):event['revision_command_id']=inputs['revision_command_id']
         if package_stage:
             event.update(model_input=deepcopy(model_inputs), model_input_sha256=digest(model_inputs))
+        if citation_retry:event.update(citation_repair_protocol=model_inputs['citation_repair_protocol'],citation_repair_prompt_sha256=PROMPT_SHA256,source_package_sha256=model_inputs['source_package_sha256'])
         self.calls.append(event); started = time.monotonic()
         try:
             response = self._transport(deepcopy(payload))
@@ -245,7 +254,10 @@ class ContentCall:
             except Exception:
                 raise ReviewError('invalid_json') from None
             event['raw_candidate'] = deepcopy(candidate)
-            if inputs.get('revision_protocol'):
+            if citation_retry:
+                from launchlens.citation_repair import merge
+                candidate=merge(state,model_inputs,candidate);event['normalizations']=[]
+            elif inputs.get('revision_protocol'):
                 from launchlens.field_revisions import merge
                 candidate=merge(state,inputs,candidate);event['normalizations']=[]
             elif self._stage in {'package_writer','package_revision'}:

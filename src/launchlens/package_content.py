@@ -342,16 +342,34 @@ def citation_only_failures(value, inputs):
             for path,text in text_fields(citation_free['content']):
                 if LINK.search(text):return []
                 if not (name=='campaign_brief' and path.startswith('restrictions_and_unknowns.')) and FORBIDDEN.search(text):return []
-            try:validate_draft(draft,format_name=name,evidence_records=records)
-            except ContractError as error:
-                path=error.diagnostic.get('field_path','')
-                if not (path.startswith('claim_references') or path.startswith('draft.claim_references')):return []
-                gaps.append(PackageError(name,"structure_or_evidence_reference",**error.diagnostic).diagnostic)
-                continue
-            referenced={c for ref in draft['claim_references'] for c in ref['claim_ids']}
+            # Inspect every reference separately so one invalid entry cannot hide
+            # uncited fields or another citation error in the same format.
+            valid=[];seen=set()
+            if type(draft['claim_references']) is not list:return []
+            for index,reference in enumerate(draft['claim_references']):
+                trial=deepcopy(draft);trial['claim_references']=[reference]
+                try:validate_draft(trial,format_name=name,evidence_records=records)
+                except ContractError as error:
+                    path=error.diagnostic.get('field_path','')
+                    if not (path.startswith('claim_references') or path.startswith('draft.claim_references')):return []
+                    diagnostic=deepcopy(error.diagnostic)
+                    diagnostic['field_path']=path.replace('claim_references.0','claim_references.'+str(index),1)
+                    if diagnostic.get('rule')=='invalid_claim_reference':
+                        for claim_index,claim in enumerate(reference['claim_ids']):
+                            if claim not in inputs['draft_constraints']['allowed_claim_ids']:
+                                item={**diagnostic,'field_path':'claim_references.'+str(index)+'.claim_ids.'+str(claim_index)}
+                                gaps.append(PackageError(name,'structure_or_evidence_reference',**item).diagnostic)
+                    else:gaps.append(PackageError(name,'structure_or_evidence_reference',**diagnostic).diagnostic)
+                    continue
+                if reference['content_field'] in seen:
+                    gaps.append(PackageError(name,'structure_or_evidence_reference','claim_references.'+str(index)+'.content_field','duplicate_field_reference').diagnostic)
+                    continue
+                seen.add(reference['content_field']);valid.append(reference)
+            checked=deepcopy(draft);checked['claim_references']=valid
+            referenced={c for ref in valid for c in ref['claim_ids']}
             if referenced!=set(inputs['draft_constraints']['allowed_claim_ids']):
                 gaps.append(PackageError(name,'objective_claim_coverage','claim_references','objective_claim_coverage').diagnostic)
-            gaps.extend(field_claim_gaps(draft,name))
+            gaps.extend(field_claim_gaps(checked,name))
         return gaps
     except (ContractError,DraftValidationError,PackageError,KeyError,TypeError):return []
 

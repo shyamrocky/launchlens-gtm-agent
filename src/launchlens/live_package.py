@@ -228,7 +228,7 @@ def demo_permission(request):
     value=authorization_template()
     from datetime import timedelta
     value.update(owner_authorized=True,authorization_id='DEMO-'+uuid4().hex,
-        authorization_reference='Owner standing USD1 demo approval, November 10, 2026; dry run and recording',
+        authorization_reference='Owner standing USD'+session.get('ceiling_usd','1.00')+' demo approval, November 10, 2026; dry run and recording',
         scope_sha256=plan['scope_sha256'],request=deepcopy(plan['request']),source_permissions_confirmed=True,
         acknowledge_catalog_not_entitlement=True,acknowledge_context_reservation_and_cap_assumptions=True,
         standing_budget=True,allow_automatic_refinement=True,budget_ledger=session['budget_ledger'],
@@ -263,7 +263,7 @@ class StandingBudget:
         gate(self.path.is_file() and not self.path.is_symlink() and not self.path.stat().st_mode&0o077,'Standing budget not provisioned privately')
         with self.path.open('r+') as stream:
             fcntl.flock(stream.fileno(),fcntl.LOCK_EX)
-            value=strict_json(stream.read());gate(value['ceiling_usd']=='1.00','Standing ceiling differs')
+            value=strict_json(stream.read());gate(value['ceiling_usd'] in {'1.00','2.00'},'Standing ceiling differs')
             result=operation(value)
             accounted=Decimal(value['opening_accounted_usd'])+sum(Decimal(e.get('estimated_usd',e['reserved_usd'])) for e in value['claims'])
             gate(accounted<=Decimal(value['ceiling_usd']),'Standing model budget exhausted')
@@ -501,7 +501,10 @@ class RunBudget:
         try:validate_authorization(self.permission,now=self._now)
         except Exception:return False
         with self.lock:
-            return (self.armed and not self.closed and not self.active and
+            reservation=Decimal(self.plan['roles']['package_writer']['per_call_reservation_usd'])
+            funded=self.cost+reservation<=money(self.permission['aggregate_ceiling_usd'])
+            if funded and self.standing:funded=Decimal(self.standing.read()['remaining_usd'])>=reservation
+            return (funded and self.armed and not self.closed and not self.active and
                 self.permission['allow_one_explicit_writer_retry'] and self.counts['package_writer']==1
                 and all(e['status']=='usage_accounted' for e in self.events)
                 and sum(n for r,n in self.counts.items() if r not in {'package_reviewer','package_revision'})+2<=12 and self.counts['controller']<self.plan['roles']['controller']['max_attempts'])
@@ -559,6 +562,10 @@ class LiveTransport:
         expected_prompt=load_package_prompt(stage,bound_package_hash)
         if self.role=='package_revision' and strict_json(payload['messages'][1]['content']).get('revision_protocol')=='targeted_fields_v1':
             from launchlens.field_revisions import prompt
+            expected_prompt=prompt()
+        if self.role=='package_writer' and strict_json(payload['messages'][1]['content']).get('citation_repair_protocol')=='citation_references_v1':
+            from launchlens.citation_repair import prompt
+            gate(self.guard.counts['package_writer']==1 and self.guard.permission['allow_one_explicit_writer_retry'], 'Citation repair requires the one authorized retry')
             expected_prompt=prompt()
         gate(payload['messages'][0] == {'role':'system','content':expected_prompt}, 'Prompt binding differs')
         wire = deepcopy(payload);wire['max_completion_tokens'] = spec['max_completion_tokens']
@@ -661,12 +668,18 @@ class LivePackageRun:
     def snapshot(self):return self.session.snapshot()
     @worker_command
     def execute(self, run_id, *, on_update=None):
+        return self._execute_and_save(run_id,lambda checkpoint:self.session.run(run_id,on_update=checkpoint),on_update)
+
+    def _execute_and_save(self,run_id,operation,on_update=None):
+        """Apply the same bounded citation recovery after every execution entry point."""
         def checkpoint(update,state):
             self._persist(state)
             if on_update is not None:return on_update(update,state)
-        state = self.session.run(run_id,on_update=checkpoint)
+        state = operation(checkpoint)
         if self.guard.permission.get('standing_budget') and state['status']=='draft_incomplete' and self.session.can_retry_writer():
-            state=self.session.retry_writer(run_id,on_update=checkpoint)
+            from launchlens.package_content import citation_only_failures,prepare_package_input
+            if self.writer.calls and citation_only_failures(self.writer.calls[-1].get('candidate'),prepare_package_input(state)):
+                state=self.session.retry_writer(run_id,on_update=checkpoint)
         try:self._save(state)
         except Exception:
             self.guard.stop()
@@ -705,10 +718,10 @@ class LivePackageRun:
         return self.execute(run_id)
     @worker_command
     def continue_run(self,run_id,*,on_update=None):
-        state=self.session.continue_run(run_id,on_update=on_update);self._save(state);return state
+        return self._execute_and_save(run_id,lambda checkpoint:self.session.continue_run(run_id,on_update=checkpoint),on_update)
     @worker_command
     def resume(self,run_id,reply,*,on_update=None):
-        state=self.session.resume(run_id,reply,on_update=on_update);self._save(state);return state
+        return self._execute_and_save(run_id,lambda checkpoint:self.session.resume(run_id,reply,on_update=checkpoint),on_update)
     @worker_command
     def recover_writer_candidate(self,run_id,*,on_update=None):
         calls=self.writer.calls

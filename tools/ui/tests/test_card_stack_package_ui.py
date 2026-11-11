@@ -31,6 +31,9 @@ class CardStackTests(unittest.TestCase):
   a=self.app();run=a.session_state['offline_run'];s=run.snapshot();g=next(g for g in grouped_findings(s) if g['needs_attention'] and safe_hints(g))
   writer_calls=len(run.reviser.calls);reviews=len(s['reviews'])
   show_card(a,g);a.button(key='use-'+g['id']).click().run()
+  self.assertEqual(run.snapshot(),s);self.assertEqual(len(run.reviser.calls),writer_calls);self.assertEqual(len(run.snapshot()['reviews']),reviews)
+  from ui_review_helpers import finish_pending
+  finish_pending(a);a.button(key='create-next-version').click().run()
   after=run.snapshot();self.assertFalse(a.exception)
   self.assertEqual(after['package']['version'],2);self.assertEqual(len(run.reviser.calls),writer_calls)
   self.assertEqual(len(after['reviews']),reviews+1)

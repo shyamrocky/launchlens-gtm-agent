@@ -36,12 +36,16 @@ if 'fixture_run' not in st.session_state:
     st.session_state['run-review-position-'+state['run_id']]=next(i for i,g in enumerate(groups) if g['phrase']=='favorite')
 run=st.session_state['fixture_run']
 if st.session_state.pop('run-command',None)=='execute':run.session.run(run.snapshot()['run_id'])
-review_page(run.snapshot(),run=run,embedded=True)
+review_page(run.snapshot(),run=run)
 '''
         with patch.object(socket.socket,'connect',side_effect=AssertionError('No network')) as net:
             app=AppTest.from_string(code,default_timeout=20).run()
             self.assertFalse(app.exception)
+            run=app.session_state['fixture_run'];before=run.snapshot()
             app.button(key='use-'+app.session_state['favorite_id']).click().run()
+            self.assertEqual(run.snapshot(),before);self.assertEqual(len(run.revisions),0);self.assertEqual(len(run.reviews),1)
+            from ui_review_helpers import finish_pending
+            finish_pending(app,run);app.button(key='create-next-version').click().run()
             self.assertFalse(app.exception)
             run=app.session_state['fixture_run'];state=run.snapshot()
             self.assertEqual(state['package']['version'],2)

@@ -48,7 +48,7 @@ class Wire:
             self.calls.append(deepcopy(payload))
             if self.override is not None:return self.override(payload)
             stage=next(k for k in ['package_controller','package_writer','package_reviewer','package_revision']
-                if payload['messages'][0]['content']==load_package_prompt(k) or (k=='package_revision' and 'field Revision Writer' in payload['messages'][0]['content']))
+                if payload['messages'][0]['content']==load_package_prompt(k) or (k=='package_revision' and 'field Revision Writer' in payload['messages'][0]['content']) or (k=='package_writer' and 'citation repair Writer' in payload['messages'][0]['content']))
             data=package_cases()
             if stage=='package_controller':
                 actions=self.actions or [action('read_pmm_brief','pmm'),action('check_launch','launch'),
@@ -60,7 +60,11 @@ class Wire:
                     {'id':chosen['id'],'type':'function','function':{'name':chosen['name'],'arguments':json.dumps({**chosen['arguments'],'why':'MOCK: collect scoped information for this campaign.'})}}]}}
             else:
                 inputs=json.loads(payload['messages'][1]['content'])
-                if stage=='package_writer':candidate=data['initial_package']
+                if stage=='package_writer':
+                    candidate=data['initial_package']
+                    if inputs.get('citation_repair_protocol'):
+                        from launchlens.offline_fixtures import fixture_citation_repair
+                        candidate=fixture_citation_repair(inputs)
                 elif stage=='package_revision':
                     candidate=data['revision_package']
                     if inputs.get('revision_protocol'):

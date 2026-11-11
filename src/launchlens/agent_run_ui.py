@@ -312,7 +312,7 @@ def run_page(display):
     if run is None or not getattr(run,'package',False):return _legacy_run_page(display)
     state=run.snapshot();request=state['request'];run_id=state['run_id'];live=getattr(run,'kind','demo')=='live'
     market='India' if request['market_id']=='IN' else request['market_id']
-    from launchlens.package_presentation import approval_matches,restored_decisions,restored_approval
+    from launchlens.package_presentation import effective_approval,restored_decisions,restored_approval
     from launchlens.review_decisions import decision_book
     decision_key='run-review-decisions-'+run_id
     if decision_key not in st.session_state and state.get('review'):
@@ -321,7 +321,7 @@ def run_page(display):
     if state.get('package') and state.get('review') and 'run-internal-approval-'+run_id not in st.session_state:
         receipt=restored_approval(state,decision_book(state,st.session_state.get(decision_key)),getattr(run,'store',None))
         if receipt is not None:st.session_state['run-internal-approval-'+run_id]=receipt
-    approved=approval_matches(state,decision_book(state,st.session_state.get('run-review-decisions-'+run_id)),st.session_state.get('run-internal-approval-'+run_id)) if state.get('package') and state.get('review') else False
+    approved=effective_approval(state,store=getattr(run,'store',None),book=st.session_state.get(decision_key),record=st.session_state.get('run-internal-approval-'+run_id))
     with st.container(key='agent-run'):
         if st.button(f'‹ {market} package setup',key='run-back',type='tertiary'):
             st.session_state['selected_request']=deepcopy(request);st.session_state['screen']='brief';st.rerun()
@@ -526,17 +526,6 @@ def review_page(state, *, run=None, saved=False, embedded=False):
             store=ProtectedStore(ROOT/'data/generated'/('human-review-'+uuid4().hex))
         if store is not None:store.write('human-decision-'+uuid4().hex+'.json',changed)
         st.session_state[key]=changed
-        if suggestion is not None:
-            if run is None or saved:st.error('An active run and fresh review capacity are required.');return
-            selected=record_decision(state,decision_book(state),group['id'],'request_changes',suggestion=suggestion)
-            for item in group['occurrences']:
-                if effective_choice(book,group,item)=='keep_wording':selected=record_decision(state,selected,item['id'],'keep_wording',occurrence=True)
-            feedback=revision_feedback(state,selected)
-            try:
-                request_revision=getattr(run,'request_revision',run.session.request_revision)
-                request_revision(state['run_id'],feedback,draft_version=state['package']['version'],draft_sha256=state['package']['package_sha256'])
-                st.session_state['run-command']='execute';st.session_state['run-show-package']=False;st.rerun()
-            except (ValueError,HarnessError):st.error('The replacement could not be queued for validation and fresh review.');return
         if occurrence is None:st.session_state[position]=index+1
         st.rerun()
     if index<len(groups):
@@ -667,7 +656,11 @@ def revision_action(state,run,book,notes='',*,saved=False,primary=False):
     from launchlens.package_presentation import progress
     version,sha=draft_identity(state);stats=progress(grouped_findings(state),book)
     eligible=run is not None and not saved and state['status']=='awaiting_human_review' and state.get('revision_request') is None and state['revision_attempts']<3
-    if eligible and getattr(run,'kind','demo')=='live':eligible=run.guard.can_revise()
+    if eligible and getattr(run,'kind','demo')=='live':
+        replacements=book.get('replacements',{})
+        writer_required=any(effective_choice(book,g,o)=='request_changes' and
+            not replacements.get(o['id'],replacements.get(g['id'])) for g in grouped_findings(state) for o in g['occurrences'])
+        eligible=run.guard.can_revise(writer_required=writer_required)
     submitted=st.button('Create Version '+str(version+1) if state['revision_attempts']<3 else 'Revision limit reached',key='create-next-version',type='primary' if primary else 'secondary',disabled=not eligible or stats['must_left']>0,width='stretch')
     if submitted:
         try:

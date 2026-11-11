@@ -1,3 +1,43 @@
+## Owner-authorized publication checkpoint — November 10, 2026
+
+Owner requested private Git sync of completed M2-D054/D055. Fresh clean canonical
+copy:692 offline tests PASS (462 harness/116 UI/114 root). Deferred suggestions,
+receipt-based market handoff and reference-only citation repair are implemented;
+no inheritance work. App restart after M2-D055 completed at owner request and local
+health passed. This sync adds no model/source calls, saved-run changes, budget
+changes, content approval or further milestone. Private artifacts and MEMORY stay
+local. [Exact scope and verification](repository-sync-2026-11-09.md#e2e-corrections-and-citation-repair-sync--november-10-2026).
+Earlier pending-restart/status notes below retain their historical checkpoint scope.
+
+## Current checkpoint — M2-D055, November 10, 2026
+
+Owner-approved citation retry repair implemented: unchanged saved candidate text,
+all detected citation diagnostics together, source-bound reference-only Writer
+response, code merge, complete package validation and fresh independent review.
+One retry maximum, actual costs retained; no inheritance work or limit changes.
+692 offline PASS (462 harness/116 UI/114 root), including the three synthetic
+failure shapes, retry-created omission rejection, actual UK Continue/resume and
+checkpoint continuation, malformed patches and accounting restore. Saved runs,
+original prompts/source/configuration, approvals, pointers and USD2 demo accounting
+unchanged; no live calls, reset, MEMORY append or Git sync. App restart and owner
+retest pending. [Decision, implementation and verification](writer-run-experience-review.md#m2-d055--immutable-candidate-and-reference-only-citation-retry).
+Earlier checkpoint and restart labels below retain their historical scope.
+
+## Current checkpoint — M2-D054, November 10, 2026
+
+Owner approved all three E2E corrections and a standing USD2.00 shared demo cap,
+without resetting the existing ledger. Suggestion clicks save choices; Create next
+version batches exact code replacements and any targeted Writer edits, then validates
+and fresh-reviews. All execution entry points share the one citation-only retry.
+Prepare recognizes validated exact-version approval receipts, including after reload.
+682 offline tests PASS (452 harness/116 UI/114 root), with real mocked UI flows,
+continuation/checkpoint paths, actual approval receipts and other-market Start.
+Only the authorized existing demo ledger/session change among protected records;
+105 claims and USD0.7171925 accounted remain, USD1.2828075 available. No live calls,
+run changes, reset or Git sync. App restart and owner live retest pending.
+[Decision, implementation, verification and limits](writer-run-experience-review.md#m2-d054--deferred-suggestions-continuation-retry-and-receipt-based-market-handoff).
+Earlier pending-approval/restart/run-status labels below are historical.
+
 ## Scoped engineering publication checkpoint — November 10, 2026
 
 Owner authorized Git sync of completed M2-D052/D053 and the synthetic-fixture /

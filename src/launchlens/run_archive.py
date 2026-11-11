@@ -88,12 +88,9 @@ def record_from_pointer(pointer):
     require((ROOT/store).resolve().is_relative_to((ROOT/'data/generated').resolve()), 'Invalid receipt store')
     version=(state.get('package') or {}).get('version',0)
     approved=state.get('human_accepted') is True
-    # A receipt must match this exact package/version; filenames alone grant nothing.
-    for path in (ROOT/store).glob('human-internal-approval-*.json'):
-        from launchlens.review_decisions import review_identity
-        receipt=private_json(path)
-        if (receipt.get('internal_approved') is True and receipt.get('publishing_allowed') is False and
-            receipt.get('binding')==review_identity(state) and receipt.get('version')==version): approved=True
+    from types import SimpleNamespace
+    from launchlens.package_presentation import effective_approval
+    approved=approved or effective_approval(state,store=SimpleNamespace(path=ROOT/store))
     return {'run_id':rid,'request':request,'version':version,'status':'approved' if approved else state['status'],
             'date':datetime.fromtimestamp((ROOT/pointer[key]['path']).stat().st_mtime,timezone.utc).isoformat(),
             'pointer':pointer,'store':store,'simulation_label':LABEL,'state_status':state['status']}
@@ -258,7 +255,7 @@ def demo_session():
     path=ROOT/'data/private/demo-session.json'
     if not path.exists():return None
     value=private_json(path)
-    require(value.get('owner_authorized') is True and value.get('ceiling_usd')=='1.00', 'Demo budget approval unavailable')
+    require(value.get('owner_authorized') is True and value.get('ceiling_usd') in {'1.00','2.00'}, 'Demo budget approval unavailable')
     rel=Path(value['budget_ledger'])
     require(rel.parent==Path('data/private') and rel.name.startswith('demo-budget-') and rel.suffix=='.json', 'Invalid demo ledger')
     return value
@@ -287,4 +284,24 @@ def provision_demo_budget():
         'budget_ledger':rel,'ceiling_usd':'1.00','created_at':datetime.now(timezone.utc).isoformat(),
         'scope':'Registered Cherry Float markets; demo dry run and recording only; stop at budget exhaustion',
         'profile_sha256':PROFILE_SHA256,'package_sha256':CONFIG_SHA256})
+    return value
+
+
+def raise_demo_budget():
+    """Explicit owner-only USD2 extension of the SAME ledger, never an app action."""
+    from launchlens.live_package import StandingBudget
+    session=demo_session();require(session is not None,'Demo session unavailable')
+    ledger=StandingBudget(ROOT/session['budget_ledger'])
+    def extend(value):
+        require(value['ceiling_usd'] in {'1.00','2.00'},'Unexpected demo ceiling')
+        if value['ceiling_usd']=='2.00':return
+        value.setdefault('ceiling_authorizations',[]).append({
+            'previous_ceiling_usd':value['ceiling_usd'],'ceiling_usd':'2.00',
+            'authorized_at':datetime.now(timezone.utc).isoformat(),
+            'reference':'Explicit owner standing USD2 demo cap approval, November 10, 2026; no ledger reset'})
+        value['ceiling_usd']='2.00'
+    value=ledger._update(extend)
+    if session['ceiling_usd']!='2.00':
+        session.update(ceiling_usd='2.00',ceiling_authorization='Explicit owner standing USD2 approval, November 10, 2026; original ledger and spending retained')
+        write_private(ROOT/'data/private/demo-session.json',session)
     return value

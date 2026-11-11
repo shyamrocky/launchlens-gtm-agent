@@ -441,9 +441,13 @@ def brief_page(display, snapshot):
         ready = readiness(request=request) if not offline else {'ready':False}
         live_allowed = ready['ready'] and ready.get('request') == request
         attached = existing.snapshot() if existing is not None else None
+        from launchlens.package_presentation import effective_approval
+        attached_approved = effective_approval(attached,store=getattr(existing,'store',None),
+            book=st.session_state.get('run-review-decisions-'+attached['run_id']),
+            record=st.session_state.get('run-internal-approval-'+attached['run_id'])) if attached else False
         existing_blocks = attached is not None and (offline or
             attached['request']['market_id']==market or
-            not (attached['status'] in {'approved','stopped'} or attached.get('human_accepted')))
+            not (attached['status'] in {'approved','stopped'} or attached.get('human_accepted') or attached_approved))
         if st.button("Start simulation" if offline else "Start agent", key="prepare-start", type="primary",
                      disabled=(not offline and not live_allowed) or existing_blocks or saved is not None,
                      help=ready.get('message') if not offline and not live_allowed else None):
