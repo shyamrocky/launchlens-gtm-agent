@@ -59,7 +59,7 @@ Owner refinement: 2026-11-04. Development memory has three complementary roles:
   verification evidence, with historical results preserved.
 
 The exact read/write triggers are maintained once in
-[AGENTS.md](../AGENTS.md#read-and-maintain-development-context). "Update memory"
+[AGENTS.md](history/AGENTS-before-submission.md#read-and-maintain-development-context). "Update memory"
 appends to MEMORY.md only; ordinary authorized work refreshes state/progress when
 material changes warrant it. Before handoff, check relevant files for currency.
 
