@@ -184,7 +184,7 @@ class LivePackageUITests(unittest.TestCase):
         initial=len(wire.calls)
         next(b for b in app.button if b.label=='Create Version 2').click().run()
         self.assertFalse(app.exception);after=run.snapshot()
-        self.assertEqual(app.title[0].value,'US package')
+        self.assertTrue(any('US package' in c.value for c in app.caption))
         self.assertTrue(any('Version 2' in x.value for x in app.caption))
         self.assertEqual(after['run_id'],before['run_id']);self.assertEqual(after['package']['version'],2)
         self.assertIn('Human prefers keeping ',after['revision_feedback'])
@@ -204,9 +204,9 @@ class LivePackageUITests(unittest.TestCase):
             app.run();self.assertEqual(resume.call_count,1)
             app.button(key='current').click().run();self.assertEqual(resume.call_count,1)
         self.assertFalse(app.exception);self.assertEqual(run.snapshot(),before)
-        self.assertEqual(len(wire.calls),count);self.assertEqual(app.title[0].value,'US package')
+        self.assertEqual(len(wire.calls),count);self.assertTrue(any('US package' in c.value for c in app.caption))
         app.button(key='run-review').click().run()
-        self.assertEqual(app.title[0].value,'US package');self.assertEqual(len(wire.calls),count)
+        self.assertTrue(any('US package' in c.value for c in app.caption));self.assertEqual(len(wire.calls),count)
 
     def test_live_provider_failure_never_falls_back_to_demo(self):
         wire=Wire(lambda p:WireResponse(429,b'{"error":"MOCK"}',{}))

@@ -38,7 +38,7 @@ class RefreshTests(unittest.TestCase):
   self.assertEqual(before['status'],'needs_clarification')
   a.button(key='home').click().run()
   self.assertFalse(a.exception)
-  self.assertIn('GTM Launches',' '.join(x.value for x in a.title))
+  self.assertFalse(a.title)
   self.assertTrue(a.button(key='source-active-run'))
   self.assertTrue(a.button(key='refresh').disabled);self.assertEqual(a.button(key='refresh').proto.help,REFRESH_BLOCKED_MESSAGE)
   self.assertTrue(a.selectbox(key='ui-mode').disabled)

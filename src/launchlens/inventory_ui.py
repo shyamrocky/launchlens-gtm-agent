@@ -503,7 +503,7 @@ def budget_caption():
     from launchlens.run_archive import demo_budget
     from decimal import Decimal
     value=demo_budget()
-    if value:st.caption('Demo budget left: $'+format(Decimal(value['remaining_usd']),'.2f')+' · shared by dry run and recording')
+    if value:st.caption('Budget left: $'+format(Decimal(value['remaining_usd']),'.2f'))
 
 
 def simulation_record(run):
@@ -618,7 +618,7 @@ def main():
             except (HarnessError,ValueError,TypeError,KeyError,OSError):
                 st.warning('Saved run could not be verified. Original artifacts are kept; no model action was replayed.')
     with st.container(key="page-header"):
-        brand, nav = st.columns([2, 3], vertical_alignment="center")
+        brand, nav, control = st.columns([2.2, 2.6, 2.1], vertical_alignment="center")
         brand.html('<div class="launchlens-brand">LaunchLens</div><p class="launchlens-tagline">Your launch-aware GTM agent.</p>')
         with nav, st.container(border=True, key="header-navigation"):
             back, current = st.columns(2)
@@ -636,15 +636,14 @@ def main():
                     except Exception:
                         st.error('The current package could not be resumed. No model calls were made.');st.stop()
                 st.session_state["screen"] = "run" if "offline_run" in st.session_state else "saved-review" if has_saved else "empty-run"
+        with control:
+            mode_control, budget_control = st.columns([2, 1], vertical_alignment="center", gap="small")
+            with mode_control:
+                mode=st.selectbox('Mode',['Live agent','Demo simulation'],key='ui-mode',format_func=lambda value:'Mode: '+value,label_visibility='collapsed', disabled=refresh_blocked())
+            with budget_control, st.container(key='launch-heading'):
+                budget_caption()
         active = "current" if st.session_state["screen"] in {"brief","run","saved-review","empty-run"} else "home"
         st.html(f'<style>.st-key-{active} button:not(:disabled) {{ color: #f0f4fa; font-weight: 600; }}</style>')
-    if st.session_state['screen']=='inventory':
-        with st.container(key='launch-heading'):
-            heading,control=st.columns([4,1],vertical_alignment='center')
-            heading.title('GTM Launches')
-            with heading:budget_caption()
-            with control:
-                mode=st.selectbox('Mode',['Live agent','Demo simulation'],key='ui-mode',format_func=lambda value:'Mode: '+value,label_visibility='collapsed', disabled=refresh_blocked())
     if mode=='Demo simulation':
         st.warning('OFFLINE SIMULATION — fixture inventory and scripted model choices. No live AI, Notion, Drive or Pinecone calls.')
     previous_mode=st.session_state.get('_data_mode')
@@ -681,9 +680,7 @@ def main():
     elif st.session_state["screen"] == "archives":
         archived_page()
     elif st.session_state["screen"] == "empty-run":
-        st.title('Current run')
         st.info('No current package. Choose a market from GTM Launches to start a fresh run.')
-        budget_caption()
         if st.button('Go to GTM launches',key='empty-home',type='primary'):
             st.session_state['screen']='inventory';st.rerun()
     elif st.session_state["screen"] == "saved-review":

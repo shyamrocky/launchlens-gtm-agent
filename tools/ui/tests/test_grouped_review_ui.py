@@ -22,7 +22,7 @@ class GroupedReviewUITests(unittest.TestCase):
   self.assertFalse(a.exception);return a
  def test_replaces_run_page_and_groups_before_highlighted_drafts(self):
   a=self.app();s=a.session_state['offline_run'].snapshot();g=grouped_findings(s)
-  self.assertEqual(a.title[0].value,'US package');self.assertEqual([t.label for t in a.tabs if t.label in {'Activity','Review','Package'}],['Activity','Review','Package']);self.assertEqual(len(a.tabs),3)
+  self.assertTrue(any('US package' in c.value for c in a.caption));self.assertEqual([t.label for t in a.tabs if t.label in {'Activity','Review','Package'}],['Activity','Review','Package']);self.assertEqual(len(a.tabs),3)
   self.assertTrue(any(str(len(unresolved_groups(g,decision_book(s))))+' must-decide' in c.value or 'must-decide left' in c.value for c in a.caption))
   self.assertIn('What the agent did',[h.value for h in a.subheader])
   self.assertNotIn('Reviewer findings · Independent assessment',[h.value for h in a.subheader])
@@ -59,7 +59,7 @@ class GroupedReviewUITests(unittest.TestCase):
   with patch('launchlens.inventory_ui.fetch_inventory',return_value=fixture_inventory(load_display())),patch('launchlens.review_decisions.saved_review_available',return_value=True),patch('launchlens.review_decisions.load_saved_review',return_value=state) as load:
    a.selectbox(key='ui-mode').select('Live agent').run();self.assertEqual(load.call_count,0)
    a.button(key='current').click().run();self.assertEqual(load.call_count,1);self.assertFalse(a.exception)
-   self.assertEqual(a.title[0].value,'Review US package');self.assertNotIn('offline_run',a.session_state)
+   self.assertTrue(any('Review US package' in c.value for c in a.caption));self.assertNotIn('offline_run',a.session_state)
    self.assertFalse(any(b.label=='Create Version 2' for b in a.button))
-   a.button(key='review-back').click().run();self.assertEqual(a.title[0].value,'GTM Launches')
+   a.button(key='review-back').click().run();self.assertFalse(a.title)
 if __name__=='__main__':unittest.main()

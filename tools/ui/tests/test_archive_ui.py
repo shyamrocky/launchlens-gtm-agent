@@ -25,7 +25,7 @@ class ArchiveUITests(unittest.TestCase):
   self.assertEqual(run.snapshot(),before);self.assertEqual(len(run.capture()['writer']),count)
   a.button(key='home').click().run();self.assertEqual(a.button(key='archives').label,'Archived packages (1) ›')
   self.assertFalse(any(b.key=='fresh-US' for b in a.button))
-  a.button(key='current').click().run();self.assertEqual(a.title[0].value,'Current run')
+  a.button(key='current').click().run();self.assertFalse(a.title)
   self.assertTrue(any('No current package' in n.value for n in a.info))
   a.button(key='home').click().run();a.button(key='archives').click().run()
   self.assertEqual(a.title[0].value,'Archived packages');self.assertEqual(len(a.get('download_button')),1)
@@ -53,7 +53,7 @@ class ArchiveUITests(unittest.TestCase):
   self.assertTrue(all(a.button(key=f'open-{market}') for market in ('UK','IN')))
   a.button(key='view-US').click().run()
   self.assertFalse(a.exception)
-  self.assertEqual(a.title[0].value,'US package')
+  self.assertTrue(any('US package' in c.value for c in a.caption))
   self.assertEqual(run.snapshot(),before)
  def test_approved_market_uses_view_package_label(self):
   a=self.start();run=a.session_state['offline_run'];a.button(key='home').click().run()

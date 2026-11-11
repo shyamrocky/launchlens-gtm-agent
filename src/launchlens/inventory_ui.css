@@ -1,7 +1,7 @@
 .stApp, .stApp input, .stApp button, .stApp label, .stApp h1, .stApp h2, .stApp h3, .stApp h4 { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 .stMain h1 { font-size: 32px; font-weight: 500; padding: 8px 0 12px; margin: 0; }
 .stMain h3, .stMain h4 { font-weight: 500; }
-.stMainBlockContainer { max-width: 1440px; padding: 1rem 2rem 2rem; }
+.stMainBlockContainer { max-width: 1440px; padding: .65rem 2rem 2rem; }
 .launchlens-brand { font-size: 28px; font-weight: 600; letter-spacing: -.04em; color: #9bbaff; margin: 0; line-height: 1.15; }
 .st-key-launch-card, .st-key-source-documents { border-color: #364356; background: #1b2430; border-radius: 16px; }
 .st-key-launch-card { padding: 22px 24px; gap: 12px; }
@@ -70,7 +70,7 @@
 }
 
 /* Compact header: one grouped navigation rectangle and closely attached status. */
-.st-key-page-header { gap: 6px; }
+.st-key-page-header { gap: 3px; }
 .st-key-page-header [data-testid="stCaptionContainer"] p { margin: 0; }
 .st-key-header-navigation { border-color: #364356; border-radius: 8px; background: #1b2430; padding: 6px 10px; }
 .st-key-header-navigation > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { gap: 4px; flex-wrap: nowrap; }
@@ -195,8 +195,9 @@
 }
 
 /* D037: compact home mode selection, no top execution bar. */
-.st-key-launch-heading [data-testid="stSelectbox"] { max-width:230px; margin-left:auto; }
-.st-key-launch-heading { margin:0 0 8px; }
+.st-key-page-header [data-testid="stSelectbox"] { width:100%; max-width:230px; margin-left:auto; }
+.st-key-launch-heading { gap:0; margin:0; }
+.st-key-launch-heading [data-testid="stCaptionContainer"] p { text-align:right; color:#9aa6b8; font-size:12px; line-height:1.35; }
 .st-key-source-documents .st-key-snapshot-caption { margin:8px 0 12px; }
 
 /* Activity phases: completed history stays available without crowding the current version. */
@@ -257,3 +258,11 @@
 .product-evidence-status.warn { color:#FF9F0A; }
 .st-key-source-documents .st-key-source-rebuild button { color:#b8c4d4; font-size:13px; padding:0; min-height:0; }
 .st-key-source-documents .st-key-source-rebuild button:hover { color:#9bbaff; }
+
+/* Compact shared header: let columns wrap naturally below laptop widths. */
+@media(max-width:800px) {
+ .st-key-page-header > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { flex-wrap:wrap; gap:8px; }
+ .st-key-page-header > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { min-width:min(100%,200px); }
+ .st-key-page-header [data-testid="stSelectbox"] { max-width:none; }
+ .st-key-launch-heading [data-testid="stCaptionContainer"] p { text-align:left; }
+}

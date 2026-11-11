@@ -39,14 +39,14 @@ class InventoryUITests(unittest.TestCase):
         app=self.app();self.assertFalse(app.exception)
         self.assertEqual(app.selectbox(key='ui-mode').label,'Mode')
         self.assertNotIn('Execution data',[x.label for x in app.selectbox])
-        self.assertEqual(app.title[0].value,'GTM Launches')
+        self.assertFalse(app.title)
         self.assertIn('Source documents',[s.value for s in app.subheader])
         self.assertTrue(any('Last checked' in c.value for c in app.caption))
 
     def test_real_render_contains_all_markets_and_no_generation_controls(self):
         app = self.app()
         self.assertEqual(len(app.exception), 0)
-        self.assertEqual(app.title[0].value, "GTM Launches")
+        self.assertFalse(app.title)
         self.assertTrue(all(app.button(key=f"open-{m}") for m in ("US", "UK", "IN")))
         labels = [b.label for b in app.button]
         self.assertFalse(any("Generate" in label or "Hide" in label or "Approve" in label for label in labels))
@@ -94,7 +94,7 @@ class InventoryUITests(unittest.TestCase):
                 self.assertEqual(app.date_input[0].value, when)
                 self.assertEqual(app.session_state["selected_request"]["market_id"], market)
                 app.button(key="home").click().run()
-                self.assertEqual(app.title[0].value, "GTM Launches")
+                self.assertFalse(app.title)
 
     def test_initial_read_once_refresh_once_and_no_calls_on_rerender(self):
         with patch("launchlens.inventory_ui.fetch_inventory", return_value=deepcopy(self.snapshot)) as fetch:
@@ -203,7 +203,7 @@ class InventoryUITests(unittest.TestCase):
             self.assertNotIn("<script>test</script>", html)
             self.assertTrue(app.button(key="prepare-start").disabled)
             app.button(key="prepare-back").click().run()
-            self.assertEqual(app.title[0].value, "GTM Launches")
+            self.assertFalse(app.title)
             self.assertTrue(all(app.button(key=f"open-{m}") for m in ("US", "UK", "IN")))
             app.button(key="current").click().run()
             app.button(key="home").click().run(); app.button(key="open-IN").click().run()

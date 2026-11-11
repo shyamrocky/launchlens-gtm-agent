@@ -171,13 +171,12 @@ def _legacy_run_page(display):
     with st.container(key='agent-run'):
         if st.button(f'‹ {market} package setup',key='run-back',type='tertiary'):
             st.session_state['selected_request']=deepcopy(request);st.session_state['screen']='brief';st.rerun()
-        st.title(f'{market} package')
         planned=(state.get('launch') or {}).get('planned_launch_date')
         if not planned:
             row=st.session_state.get('inventory',{}).get('markets',{}).get(request['market_id'],{})
             planned=row.get('planned_launch_date')
         from launchlens.inventory_ui import date_label
-        st.caption(display['product_name']+' · Planned launch: '+(date_label(planned) if planned else 'Not verified'))
+        st.caption(market+' package · '+display['product_name']+' · Planned launch: '+(date_label(planned) if planned else 'Not verified'))
         st.caption('Live agent · Human approval pending · Nothing published' if live else 'Demo simulation · Scripted actions and authored fixture drafts/reviews · No live calls')
         command=st.session_state.pop('run-command',None)
         with st.container(key='run-status-card'):
@@ -325,10 +324,9 @@ def run_page(display):
     with st.container(key='agent-run'):
         if st.button(f'‹ {market} package setup',key='run-back',type='tertiary'):
             st.session_state['selected_request']=deepcopy(request);st.session_state['screen']='brief';st.rerun()
-        st.title(market+' package')
         from launchlens.inventory_ui import date_label
         planned=(state.get('launch') or {}).get('planned_launch_date') or st.session_state.get('inventory',{}).get('markets',{}).get(request['market_id'],{}).get('planned_launch_date')
-        st.caption(display['product_name']+' · Planned launch: '+(date_label(planned) if planned else 'Not verified'))
+        st.caption(market+' package · '+display['product_name']+' · Planned launch: '+(date_label(planned) if planned else 'Not verified'))
         command=st.session_state.pop('run-command',None)
         read_only=getattr(run,'read_only',False)
         active=state['status'] in {'created','running'} or command is not None or getattr(run,'watching_worker',False)
@@ -504,7 +502,7 @@ def review_page(state, *, run=None, saved=False, embedded=False):
             if saved:st.session_state['screen']='inventory'
             else:st.session_state['run-show-package']=False
             st.rerun()
-        st.title('Review '+market+' package')
+        st.caption('Review '+market+' package')
     st.caption(f"Version {state['package']['version']} · {stats['decided']} of {stats['total']} decided · {stats['must_left']} must-decide left")
     if saved:st.caption('Saved assessment · No agent execution connected')
     unverified=state['review'].get('unverified_finding_count',0)
