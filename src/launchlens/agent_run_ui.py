@@ -1,6 +1,7 @@
 """PMM run view over the existing graph: explicit commands, no background worker."""
 from copy import deepcopy
 from html import escape
+from time import sleep
 import streamlit as st
 from launchlens.gtm_registry import HarnessError
 from launchlens.offline_ui_run import draft_identity
@@ -309,7 +310,15 @@ def run_summary_meta(state,run):
 def run_page(display):
     run=st.session_state.get('offline_run')
     if run is None or not getattr(run,'package',False):return _legacy_run_page(display)
-    state=run.snapshot();request=state['request'];run_id=state['run_id'];live=getattr(run,'kind','demo')=='live'
+    try:
+        state=run.snapshot()
+    except HarnessError as error:
+        if str(error) != 'Execution is running':raise
+        st.info('Agent is still working…')
+        sleep(2)
+        st.rerun()
+        return
+    request=state['request'];run_id=state['run_id'];live=getattr(run,'kind','demo')=='live'
     market='India' if request['market_id']=='IN' else request['market_id']
     from launchlens.package_presentation import effective_approval,restored_decisions,restored_approval
     from launchlens.review_decisions import decision_book
